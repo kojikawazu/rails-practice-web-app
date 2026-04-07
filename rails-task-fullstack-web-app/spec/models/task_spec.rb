@@ -17,8 +17,9 @@ RSpec.describe Task, type: :model do
   end
 
   describe 'enum status' do
-    it 'defaults to not_started' do
-      task = build(:task)
+    it 'defaults to not_started without factory' do
+      # factory を使わず Task.new でモデル本来のデフォルトを検証する
+      task = Task.new
       expect(task.not_started?).to be true
     end
 
