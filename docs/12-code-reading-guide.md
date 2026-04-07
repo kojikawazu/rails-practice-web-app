@@ -146,7 +146,7 @@ app/controllers/api/v1/tasks_controller.rb
 
 | ファイル | 内容 |
 |---|---|
-| `test/controllers/projects_controller_test.rb` | Miniteストでのコントローラーテスト |
+| `test/controllers/projects_controller_test.rb` | Minitestでのコントローラーテスト |
 | `spec/models/user_spec.rb` | shoulda-matchers でバリデーション検証 |
 | `spec/requests/projects_spec.rb` | RSpec リクエストスペック |
 
