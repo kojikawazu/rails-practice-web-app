@@ -22,6 +22,6 @@
 
 ## インフラ構成
 
-- **PostgreSQL**: docker-compose で起動（ポート 5432）
+- **PostgreSQL**: docker-compose で起動（ポート 5434）
 - **Rails**: ローカル実行（Docker 外）
 - Docker を使う理由: 現場での遭遇率が高い構成を体験するため

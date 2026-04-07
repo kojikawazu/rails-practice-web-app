@@ -43,7 +43,7 @@ APIクライアント → Rails（Router → Controller → Model → JSON） �
 ```
 docker-compose.yml
   └── db (postgres:16)
-        ├── Port: 5432:5432
+        ├── Port: 5434:5432
         └── Volume: pgdata → /var/lib/postgresql/data
 ```
 
