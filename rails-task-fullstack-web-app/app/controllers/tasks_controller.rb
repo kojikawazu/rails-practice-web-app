@@ -1,4 +1,5 @@
 class TasksController < ApplicationController
+  before_action :require_login
   before_action :set_project
   before_action :set_task, only: %i[show edit update destroy]
 
@@ -47,7 +48,7 @@ class TasksController < ApplicationController
   private
 
   def set_project
-    @project = Project.find(params[:project_id])
+    @project = current_user.projects.find(params[:project_id])
   end
 
   def set_task

@@ -10,26 +10,40 @@
   </head>
 
   <body>
-    <div class="app-frame">
-      <nav class="sidebar">
-        <div class="sidebar-header">Rails Task App</div>
-        <div class="sidebar-nav">
-          <%= link_to projects_path, class: "sidebar-item #{'active' if controller_name == 'projects' || controller_name == 'tasks'}" do %>
-            Projects
+    <% if logged_in? %>
+      <div class="app-frame">
+        <nav class="sidebar">
+          <div class="sidebar-header">Rails Task App</div>
+          <div class="sidebar-nav">
+            <%= link_to projects_path, class: "sidebar-item #{'active' if controller_name == 'projects' || controller_name == 'tasks'}" do %>
+              Projects
+            <% end %>
+          </div>
+          <div class="sidebar-footer">
+            <div style="display:flex; gap:8px; align-items:center;">
+              <div class="avatar"><%= current_user.name.first %></div>
+              <div>
+                <div style="font-size:13px; font-weight:600;"><%= current_user.name %></div>
+                <div style="font-size:11px; color:#94a3b8;"><%= current_user.email %></div>
+              </div>
+            </div>
+            <%= button_to "ログアウト", logout_path, method: :delete, class: "btn btn-sm", style: "margin-top:12px; width:100%; background:#1e293b; color:#f1f5f9; border-color:#334155;" %>
+          </div>
+        </nav>
+
+        <div class="main-area">
+          <% if notice.present? %>
+            <div class="flash flash-notice"><%= notice %></div>
           <% end %>
+          <% if alert.present? %>
+            <div class="flash flash-alert"><%= alert %></div>
+          <% end %>
+
+          <%= yield %>
         </div>
-      </nav>
-
-      <div class="main-area">
-        <% if notice.present? %>
-          <div class="flash flash-notice"><%= notice %></div>
-        <% end %>
-        <% if alert.present? %>
-          <div class="flash flash-alert"><%= alert %></div>
-        <% end %>
-
-        <%= yield %>
       </div>
-    </div>
+    <% else %>
+      <%= yield %>
+    <% end %>
   </body>
 </html>
