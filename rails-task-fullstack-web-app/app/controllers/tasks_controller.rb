@@ -3,7 +3,12 @@ class TasksController < ApplicationController
   before_action :set_task, only: %i[show edit update destroy]
 
   def index
-    redirect_to project_path(@project)
+    @tasks = @project.tasks
+
+    respond_to do |format|
+      format.html { redirect_to project_path(@project) }
+      format.json { render :index }
+    end
   end
 
   def show
