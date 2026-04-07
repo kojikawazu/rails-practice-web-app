@@ -1,9 +1,9 @@
-# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
-
 one:
-  title: MyString
-  description: MyText
+  title: テストプロジェクト
+  description: テスト用の説明
+  user: one
 
 two:
-  title: MyString
-  description: MyText
+  title: テストプロジェクト2
+  description: テスト用の説明2
+  user: two

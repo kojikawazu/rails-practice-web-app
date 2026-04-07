@@ -2,11 +2,13 @@ require "test_helper"
 
 class TasksControllerTest < ActionDispatch::IntegrationTest
   setup do
+    @user = users(:one)
     @project = projects(:one)
     @task = tasks(:one)
+    log_in_as(@user)
   end
 
-  test "should get index and redirect to project" do
+  test "should redirect index to project" do
     get project_tasks_url(@project)
     assert_response :redirect
   end
