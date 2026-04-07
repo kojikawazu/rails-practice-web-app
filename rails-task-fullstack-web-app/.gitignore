@@ -1,1 +1,16 @@
 config/master.key
+
+# Runtime artifacts
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep
+/tmp/pids/*
+!/tmp/pids/.keep
+/storage/*
+!/storage/.keep
+/tmp/storage/*
+!/tmp/storage/.keep
+
+# Bootsnap cache
+/tmp/cache/bootsnap/

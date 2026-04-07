@@ -22,17 +22,17 @@ default: &default
 
 development:
   <<: *default
-  database: rails_task_development
-  username: rails_task
-  password: password
+  database: <%= ENV.fetch("POSTGRES_DB", "rails_task_development") %>
+  username: <%= ENV.fetch("POSTGRES_USER", "rails_task") %>
+  password: <%= ENV.fetch("POSTGRES_PASSWORD", "password") %>
   host: localhost
   port: 5434
 
 test:
   <<: *default
   database: rails_task_test
-  username: rails_task
-  password: password
+  username: <%= ENV.fetch("POSTGRES_USER", "rails_task") %>
+  password: <%= ENV.fetch("POSTGRES_PASSWORD", "password") %>
   host: localhost
   port: 5434
 
