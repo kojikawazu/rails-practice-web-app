@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>シーケンス図: 認証フロー — Rails Task App</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="sequence-common.css">
+  <style>
+    body { padding: 40px 24px; max-width: 960px; margin: 0 auto; }
+    h1 { font-size: 24px; margin-bottom: 4px; }
+    .actor-header { grid-template-columns: 1fr 1fr 1fr 1fr 1fr; }
+    .step-row { grid-template-columns: 40px 180px 1fr 200px; }
+  </style>
+</head>
+<body>
+  <div class="back-link"><a href="index.html">← 画面一覧に戻る</a></div>
+  <h1>認証フロー</h1>
+  <p class="page-desc">ユーザー登録 → ログイン → プロジェクト一覧到達までのシーケンス</p>
+
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="showTab('tab-signup', this)">新規登録（正常系）</button>
+    <button class="tab-btn" onclick="showTab('tab-login', this)">ログイン（正常系）</button>
+    <button class="tab-btn" onclick="showTab('tab-error', this)">認証エラー（異常系）</button>
+  </div>
+
+  <!-- 新規登録 -->
+  <div id="tab-signup" class="tab-panel active">
+    <div class="seq-wrapper">
+      <div class="seq-title">ユーザー新規登録</div>
+      <div class="seq-subtitle">name / email / password を入力して登録 → セッション開始 → 一覧画面へ</div>
+
+      <div class="actor-header">
+        <div class="seq-actor-box actor-user">ユーザー</div>
+        <div class="seq-actor-box actor-front">ブラウザ (ERB)</div>
+        <div class="seq-actor-box actor-server">UsersController</div>
+        <div class="seq-actor-box actor-server">User Model</div>
+        <div class="seq-actor-box actor-db">PostgreSQL</div>
+      </div>
+
+      <div class="step-row">
+        <div class="step-num">1</div>
+        <div class="step-lbl">登録フォーム表示</div>
+        <div class="step-diag"><div class="av"><div class="av-line"></div><div class="ah-r"></div></div></div>
+        <div class="step-note">GET /signup → new アクション</div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">2</div>
+        <div class="step-lbl">フォーム入力・送信</div>
+        <div class="step-diag"><div class="av"><div class="av-line"></div><div class="ah-r"></div></div></div>
+        <div class="step-note">POST /users（name, email, password）</div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">3</div>
+        <div class="step-lbl">Strong Parameters</div>
+        <div class="step-diag"><div class="av"><div class="av-line"></div><div class="ah-r"></div></div></div>
+        <div class="step-note">params.require(:user).permit(...)</div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">4</div>
+        <div class="step-lbl">バリデーション + 保存</div>
+        <div class="step-diag"><div class="av"><div class="av-line"></div><div class="ah-r"></div></div></div>
+        <div class="step-note">User.new → save（bcrypt でハッシュ化）</div>
+      </div>
+      <div class="block-row success">✓ 保存成功</div>
+      <div class="step-row">
+        <div class="step-num">5</div>
+        <div class="step-lbl">セッション設定</div>
+        <div class="step-diag"><div class="av"><div class="av-line s d"></div><div class="ah-l s"></div></div></div>
+        <div class="step-note">session[:user_id] = user.id</div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">6</div>
+        <div class="step-lbl">リダイレクト</div>
+        <div class="step-diag"><div class="av"><div class="av-line s d"></div><div class="ah-l s"></div></div></div>
+        <div class="step-note">redirect_to projects_path + flash[:notice]</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ログイン -->
+  <div id="tab-login" class="tab-panel">
+    <div class="seq-wrapper">
+      <div class="seq-title">ログイン</div>
+      <div class="seq-subtitle">email / password で認証 → セッション開始 → 一覧画面へ</div>
+
+      <div class="actor-header">
+        <div class="seq-actor-box actor-user">ユーザー</div>
+        <div class="seq-actor-box actor-front">ブラウザ (ERB)</div>
+        <div class="seq-actor-box actor-server">SessionsController</div>
+        <div class="seq-actor-box actor-server">User Model</div>
+        <div class="seq-actor-box actor-db">PostgreSQL</div>
+      </div>
+
+      <div class="step-row">
+        <div class="step-num">1</div>
+        <div class="step-lbl">ログインフォーム表示</div>
+        <div class="step-diag"><div class="av"><div class="av-line"></div><div class="ah-r"></div></div></div>
+        <div class="step-note">GET /login → new アクション</div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">2</div>
+        <div class="step-lbl">メール・パスワード送信</div>
+        <div class="step-diag"><div class="av"><div class="av-line"></div><div class="ah-r"></div></div></div>
+        <div class="step-note">POST /sessions（email, password）</div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">3</div>
+        <div class="step-lbl">ユーザー検索</div>
+        <div class="step-diag"><div class="av"><div class="av-line"></div><div class="ah-r"></div></div></div>
+        <div class="step-note">User.find_by(email: ...)</div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">4</div>
+        <div class="step-lbl">パスワード照合</div>
+        <div class="step-diag"><div class="av"><div class="av-line s d"></div><div class="ah-l s"></div></div></div>
+        <div class="step-note">user.authenticate(password) → bcrypt比較</div>
+      </div>
+      <div class="block-row success">✓ 認証成功</div>
+      <div class="step-row">
+        <div class="step-num">5</div>
+        <div class="step-lbl">セッション設定</div>
+        <div class="step-diag"><div class="av"><div class="av-line s d"></div><div class="ah-l s"></div></div></div>
+        <div class="step-note">session[:user_id] = user.id</div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">6</div>
+        <div class="step-lbl">リダイレクト</div>
+        <div class="step-diag"><div class="av"><div class="av-line s d"></div><div class="ah-l s"></div></div></div>
+        <div class="step-note">redirect_to projects_path</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- エラー -->
+  <div id="tab-error" class="tab-panel">
+    <div class="seq-wrapper">
+      <div class="seq-title">認証エラー</div>
+      <div class="seq-subtitle">不正な入力やパスワード不一致時のエラーハンドリング</div>
+
+      <div class="actor-header">
+        <div class="seq-actor-box actor-user">ユーザー</div>
+        <div class="seq-actor-box actor-front">ブラウザ (ERB)</div>
+        <div class="seq-actor-box actor-server">SessionsController</div>
+        <div class="seq-actor-box actor-server">User Model</div>
+        <div class="seq-actor-box actor-db">PostgreSQL</div>
+      </div>
+
+      <div class="step-row">
+        <div class="step-num">1</div>
+        <div class="step-lbl">メール・パスワード送信</div>
+        <div class="step-diag"><div class="av"><div class="av-line"></div><div class="ah-r"></div></div></div>
+        <div class="step-note">POST /sessions（不正な認証情報）</div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">2</div>
+        <div class="step-lbl">ユーザー検索</div>
+        <div class="step-diag"><div class="av"><div class="av-line"></div><div class="ah-r"></div></div></div>
+        <div class="step-note">User.find_by(email: ...)</div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">3</div>
+        <div class="step-lbl">パスワード照合失敗</div>
+        <div class="step-diag"><div class="av"><div class="av-line e d"></div><div class="ah-l e"></div></div></div>
+        <div class="step-note">authenticate → false / ユーザー未存在</div>
+      </div>
+      <div class="block-row error">✗ 認証失敗</div>
+      <div class="step-row">
+        <div class="step-num">4</div>
+        <div class="step-lbl">エラー表示</div>
+        <div class="step-diag"><div class="av"><div class="av-line e d"></div><div class="ah-l e"></div></div></div>
+        <div class="step-note">flash.now[:alert] + render :new</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-line solid"></div>リクエスト（実線）</div>
+    <div class="legend-item"><div class="legend-line dashed"></div>レスポンス（破線）</div>
+    <div class="legend-item"><div class="legend-line success"></div>成功</div>
+    <div class="legend-item"><div class="legend-line error"></div>エラー</div>
+  </div>
+
+  <script>
+  function showTab(id, el) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    el.classList.add('active');
+  }
+  </script>
+</body>
+</html>

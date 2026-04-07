@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ログイン — Rails Task App</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .auth-container { width: 100%; max-width: 400px; padding: 0 24px; }
+    .auth-logo { font-size: 28px; font-weight: 800; text-align: center; margin-bottom: 8px; }
+    .auth-sub { text-align: center; color: var(--color-text-sub); font-size: 14px; margin-bottom: 32px; }
+  </style>
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-logo">Rails Task App</div>
+    <p class="auth-sub">プロジェクト・タスクを管理する</p>
+
+    <div class="card">
+      <h2 style="font-size:18px; margin-bottom:20px;">ログイン</h2>
+      <form onsubmit="event.preventDefault(); alert('ログインしました（モック）'); location.href='app-projects.html';">
+        <div class="form-group">
+          <label>メールアドレス</label>
+          <input type="email" class="input" placeholder="user@example.com">
+        </div>
+        <div class="form-group">
+          <label>パスワード</label>
+          <input type="password" class="input" placeholder="6文字以上">
+        </div>
+        <button type="submit" class="btn btn-primary btn-full btn-lg" style="margin-top:8px;">ログイン</button>
+      </form>
+      <hr class="divider">
+      <p class="text-center text-sub" style="font-size:14px;">
+        アカウントをお持ちでない方は <a href="auth-signup.html">新規登録</a>
+      </p>
+    </div>
+
+    <p class="text-center mt-lg"><a href="index.html" style="font-size:13px; color:var(--color-text-muted);">← 画面一覧に戻る</a></p>
+  </div>
+  <div class="screen-label">auth-login.html · /login</div>
+</body>
+</html>

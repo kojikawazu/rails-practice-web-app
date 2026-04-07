@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>プロジェクト詳細 — Rails Task App</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .project-meta { display: flex; gap: 24px; margin-bottom: 24px; font-size: 14px; color: var(--color-text-sub); }
+    .task-filters { display: flex; gap: 8px; margin-bottom: 16px; }
+    .filter-btn { padding: 6px 14px; border-radius: var(--radius-full); border: 1px solid var(--color-border); background: var(--color-surface); font-size: 13px; cursor: pointer; }
+    .filter-btn.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+  </style>
+</head>
+<body>
+  <div class="desktop-frame">
+    <nav class="sidebar">
+      <div class="sidebar-header">Rails Task App</div>
+      <div class="sidebar-nav">
+        <a href="app-projects.html" class="sidebar-item active">📁 プロジェクト</a>
+      </div>
+      <div class="sidebar-footer">
+        <div class="flex gap-sm" style="align-items:center;">
+          <div class="avatar">山</div>
+          <div style="font-size:13px;">山田太郎</div>
+        </div>
+      </div>
+    </nav>
+
+    <div class="desktop-main">
+      <div class="desktop-topbar">
+        <div>
+          <div style="font-size:12px; margin-bottom:4px;"><a href="app-projects.html">← プロジェクト一覧</a></div>
+          <h1>Webサイトリニューアル</h1>
+        </div>
+        <div class="flex gap-sm">
+          <button class="btn btn-outline" onclick="location.href='app-project-edit.html'">編集</button>
+          <button class="btn btn-danger" onclick="if(confirm('このプロジェクトを削除しますか？関連するタスクもすべて削除されます。')) alert('削除しました（モック）');">削除</button>
+        </div>
+      </div>
+      <div class="desktop-content">
+        <!-- Project Info -->
+        <div class="card mb-lg">
+          <p style="font-size:14px; color:var(--color-text-sub);">コーポレートサイトのリニューアルプロジェクト</p>
+          <div class="project-meta" style="margin-top:12px; margin-bottom:0;">
+            <span>作成日: 2026-04-01</span>
+            <span>タスク: 5件</span>
+          </div>
+        </div>
+
+        <!-- Tasks -->
+        <div class="flex-between mb-md">
+          <h2 style="font-size:18px;">タスク一覧</h2>
+          <button class="btn btn-primary btn-sm" onclick="location.href='app-task-new.html'">+ タスク追加</button>
+        </div>
+
+        <div class="task-filters">
+          <button class="filter-btn active">すべて (5)</button>
+          <button class="filter-btn">未着手 (2)</button>
+          <button class="filter-btn">進行中 (2)</button>
+          <button class="filter-btn">完了 (1)</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>タスク名</th>
+                <th>ステータス</th>
+                <th>期日</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="cursor:pointer" onclick="location.href='app-task-show.html'">
+                <td><strong>デザインカンプ作成</strong></td>
+                <td><span class="badge badge-green">完了</span></td>
+                <td class="text-sub">2026-04-05</td>
+                <td><button class="btn btn-sm" onclick="event.stopPropagation(); location.href='app-task-edit.html'">編集</button></td>
+              </tr>
+              <tr style="cursor:pointer" onclick="location.href='app-task-show.html'">
+                <td><strong>HTML/CSSコーディング</strong></td>
+                <td><span class="badge badge-yellow">進行中</span></td>
+                <td class="text-sub">2026-04-10</td>
+                <td><button class="btn btn-sm" onclick="event.stopPropagation(); location.href='app-task-edit.html'">編集</button></td>
+              </tr>
+              <tr style="cursor:pointer" onclick="location.href='app-task-show.html'">
+                <td><strong>バックエンド実装</strong></td>
+                <td><span class="badge badge-yellow">進行中</span></td>
+                <td class="text-sub">2026-04-15</td>
+                <td><button class="btn btn-sm" onclick="event.stopPropagation(); location.href='app-task-edit.html'">編集</button></td>
+              </tr>
+              <tr style="cursor:pointer" onclick="location.href='app-task-show.html'">
+                <td><strong>テスト実施</strong></td>
+                <td><span class="badge badge-grey">未着手</span></td>
+                <td class="text-sub">2026-04-20</td>
+                <td><button class="btn btn-sm" onclick="event.stopPropagation(); location.href='app-task-edit.html'">編集</button></td>
+              </tr>
+              <tr style="cursor:pointer" onclick="location.href='app-task-show.html'">
+                <td><strong>本番公開</strong></td>
+                <td><span class="badge badge-grey">未着手</span></td>
+                <td class="text-sub">2026-04-25</td>
+                <td><button class="btn btn-sm" onclick="event.stopPropagation(); location.href='app-task-edit.html'">編集</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="screen-label">app-project-show.html · /projects/:id</div>
+</body>
+</html>

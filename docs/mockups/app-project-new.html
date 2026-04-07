@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>プロジェクト作成 — Rails Task App</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="desktop-frame">
+    <nav class="sidebar">
+      <div class="sidebar-header">Rails Task App</div>
+      <div class="sidebar-nav">
+        <a href="app-projects.html" class="sidebar-item active">📁 プロジェクト</a>
+      </div>
+      <div class="sidebar-footer">
+        <div class="flex gap-sm" style="align-items:center;">
+          <div class="avatar">山</div>
+          <div style="font-size:13px;">山田太郎</div>
+        </div>
+      </div>
+    </nav>
+
+    <div class="desktop-main">
+      <div class="desktop-topbar">
+        <h1>プロジェクト作成</h1>
+      </div>
+      <div class="desktop-content">
+        <div class="card" style="max-width:600px;">
+          <form onsubmit="event.preventDefault(); alert('プロジェクトを作成しました（モック）'); location.href='app-projects.html';">
+            <div class="form-group">
+              <label>タイトル <span style="color:var(--color-red)">*</span></label>
+              <input type="text" class="input" placeholder="プロジェクト名を入力（100文字以内）">
+            </div>
+            <div class="form-group">
+              <label>説明</label>
+              <textarea class="textarea" placeholder="プロジェクトの概要を入力"></textarea>
+            </div>
+            <div class="flex gap-sm" style="margin-top:24px;">
+              <button type="submit" class="btn btn-primary">作成する</button>
+              <button type="button" class="btn" onclick="location.href='app-projects.html'">キャンセル</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="screen-label">app-project-new.html · /projects/new</div>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>タスク編集 — Rails Task App</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="desktop-frame">
+    <nav class="sidebar">
+      <div class="sidebar-header">Rails Task App</div>
+      <div class="sidebar-nav">
+        <a href="app-projects.html" class="sidebar-item active">📁 プロジェクト</a>
+      </div>
+      <div class="sidebar-footer">
+        <div class="flex gap-sm" style="align-items:center;">
+          <div class="avatar">山</div>
+          <div style="font-size:13px;">山田太郎</div>
+        </div>
+      </div>
+    </nav>
+
+    <div class="desktop-main">
+      <div class="desktop-topbar">
+        <div>
+          <div style="font-size:12px; margin-bottom:4px;"><a href="app-task-show.html">← タスク詳細に戻る</a></div>
+          <h1>タスク編集</h1>
+        </div>
+      </div>
+      <div class="desktop-content">
+        <div class="card" style="max-width:600px;">
+          <form onsubmit="event.preventDefault(); alert('更新しました（モック）'); location.href='app-task-show.html';">
+            <div class="form-group">
+              <label>タイトル <span style="color:var(--color-red)">*</span></label>
+              <input type="text" class="input" value="HTML/CSSコーディング">
+            </div>
+            <div class="form-group">
+              <label>ステータス <span style="color:var(--color-red)">*</span></label>
+              <select class="select">
+                <option value="not_started">未着手</option>
+                <option value="in_progress" selected>進行中</option>
+                <option value="completed">完了</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>期日</label>
+              <input type="date" class="input" value="2026-04-10">
+            </div>
+            <div class="flex gap-sm" style="margin-top:24px;">
+              <button type="submit" class="btn btn-primary">更新する</button>
+              <button type="button" class="btn" onclick="location.href='app-task-show.html'">キャンセル</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="screen-label">app-task-edit.html · /projects/:project_id/tasks/:id/edit</div>
+</body>
+</html>

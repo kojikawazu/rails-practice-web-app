@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>タスク詳細 — Rails Task App</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .detail-grid { display: grid; grid-template-columns: 120px 1fr; gap: 12px 16px; font-size: 14px; }
+    .detail-label { color: var(--color-text-sub); font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="desktop-frame">
+    <nav class="sidebar">
+      <div class="sidebar-header">Rails Task App</div>
+      <div class="sidebar-nav">
+        <a href="app-projects.html" class="sidebar-item active">📁 プロジェクト</a>
+      </div>
+      <div class="sidebar-footer">
+        <div class="flex gap-sm" style="align-items:center;">
+          <div class="avatar">山</div>
+          <div style="font-size:13px;">山田太郎</div>
+        </div>
+      </div>
+    </nav>
+
+    <div class="desktop-main">
+      <div class="desktop-topbar">
+        <div>
+          <div style="font-size:12px; margin-bottom:4px;"><a href="app-project-show.html">← Webサイトリニューアル</a></div>
+          <h1>HTML/CSSコーディング</h1>
+        </div>
+        <div class="flex gap-sm">
+          <button class="btn btn-outline" onclick="location.href='app-task-edit.html'">編集</button>
+          <button class="btn btn-danger" onclick="if(confirm('このタスクを削除しますか？')) { alert('削除しました（モック）'); location.href='app-project-show.html'; }">削除</button>
+        </div>
+      </div>
+      <div class="desktop-content">
+        <div class="card" style="max-width:600px;">
+          <div class="detail-grid">
+            <div class="detail-label">タイトル</div>
+            <div>HTML/CSSコーディング</div>
+            <div class="detail-label">ステータス</div>
+            <div><span class="badge badge-yellow">進行中</span></div>
+            <div class="detail-label">期日</div>
+            <div>2026-04-10</div>
+            <div class="detail-label">プロジェクト</div>
+            <div><a href="app-project-show.html">Webサイトリニューアル</a></div>
+            <div class="detail-label">作成日</div>
+            <div class="text-sub">2026-04-03</div>
+            <div class="detail-label">更新日</div>
+            <div class="text-sub">2026-04-07</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="screen-label">app-task-show.html · /projects/:project_id/tasks/:id</div>
+</body>
+</html>

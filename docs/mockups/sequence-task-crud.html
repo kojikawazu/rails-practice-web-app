@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>シーケンス図: タスクCRUD — Rails Task App</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="sequence-common.css">
+  <style>
+    body { padding: 40px 24px; max-width: 960px; margin: 0 auto; }
+    h1 { font-size: 24px; margin-bottom: 4px; }
+    .actor-header { grid-template-columns: 1fr 1fr 1fr 1fr 1fr; }
+    .step-row { grid-template-columns: 40px 180px 1fr 220px; }
+  </style>
+</head>
+<body>
+  <div class="back-link"><a href="index.html">← 画面一覧に戻る</a></div>
+  <h1>タスクCRUDフロー</h1>
+  <p class="page-desc">プロジェクト詳細画面からのタスク作成・ステータス更新・削除のシーケンス</p>
+
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="showTab('tab-create', this)">タスク作成</button>
+    <button class="tab-btn" onclick="showTab('tab-update', this)">ステータス更新</button>
+    <button class="tab-btn" onclick="showTab('tab-delete', this)">タスク削除</button>
+    <button class="tab-btn" onclick="showTab('tab-error', this)">バリデーションエラー</button>
+  </div>
+
+  <!-- タスク作成 -->
+  <div id="tab-create" class="tab-panel active">
+    <div class="seq-wrapper">
+      <div class="seq-title">タスク作成（正常系）</div>
+      <div class="seq-subtitle">プロジェクト詳細 → タスク作成フォーム → 保存 → 一覧に反映</div>
+
+      <div class="actor-header">
+        <div class="seq-actor-box actor-user">ユーザー</div>
+        <div class="seq-actor-box actor-front">ブラウザ (ERB)</div>
+        <div class="seq-actor-box actor-server">TasksController</div>
+        <div class="seq-actor-box actor-server">Task Model</div>
+        <div class="seq-actor-box actor-db">PostgreSQL</div>
+      </div>
+
+      <div class="step-row">
+        <div class="step-num">1</div>
+        <div class="step-lbl">「タスク追加」クリック</div>
+        <div class="step-diag"><div class="av"><div class="av-line"></div><div class="ah-r"></div></div></div>
+        <div class="step-note">GET /projects/:id/tasks/new</div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">2</div>
+        <div class="step-lbl">フォーム表示</div>
+        <div class="step-diag"><div class="av"><div class="av-line d"></div><div class="ah-l"></div></div></div>
+        <div class="step-note">new アクション → ERB レンダリング</div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">3</div>
+        <div class="step-lbl">フォーム入力・送信</div>
+        <div class="step-diag"><div class="av"><div class="av-line"></div><div class="ah-r"></div></div></div>
+        <div class="step-note">POST /projects/:id/tasks（title, status, due_date）</div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">4</div>
+        <div class="step-lbl">Strong Parameters</div>
+        <div class="step-diag"><div class="av"><div class="av-line"></div><div class="ah-r"></div></div></div>
+        <div class="step-note">params.require(:task).permit(:title, :status, :due_date)</div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">5</div>
+        <div class="step-lbl">バリデーション + 保存</div>
+        <div class="step-diag"><div class="av"><div class="av-line"></div><div class="ah-r"></div></div></div>
+        <div class="step-note">project.tasks.build → save</div>
+      </div>
+      <div class="block-row success">✓ 保存成功</div>
+      <div class="step-row">
+        <div class="step-num">6</div>
+        <div class="step-lbl">リダイレクト</div>
+        <div class="step-diag"><div class="av"><div class="av-line s d"></div><div class="ah-l s"></div></div></div>
+        <div class="step-note">redirect_to project_path + flash[:notice]</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ステータス更新 -->
+  <div id="tab-update" class="tab-panel">
+    <div class="seq-wrapper">
+      <div class="seq-title">ステータス更新（正常系）</div>
+      <div class="seq-subtitle">タスク編集画面でステータスを変更 → 保存</div>
+
+      <div class="actor-header">
+        <div class="seq-actor-box actor-user">ユーザー</div>
+        <div class="seq-actor-box actor-front">ブラウザ (ERB)</div>
+        <div class="seq-actor-box actor-server">TasksController</div>
+        <div class="seq-actor-box actor-server">Task Model</div>
+        <div class="seq-actor-box actor-db">PostgreSQL</div>
+      </div>
+
+      <div class="step-row">
+        <div class="step-num">1</div>
+        <div class="step-lbl">「編集」クリック</div>
+        <div class="step-diag"><div class="av"><div class="av-line"></div><div class="ah-r"></div></div></div>
+        <div class="step-note">GET /projects/:id/tasks/:id/edit</div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">2</div>
+        <div class="step-lbl">編集フォーム表示</div>
+        <div class="step-diag"><div class="av"><div class="av-line d"></div><div class="ah-l"></div></div></div>
+        <div class="step-note">edit アクション → 既存値をフォームに設定</div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">3</div>
+        <div class="step-lbl">ステータス変更・送信</div>
+        <div class="step-diag"><div class="av"><div class="av-line"></div><div class="ah-r"></div></div></div>
+        <div class="step-note">PATCH /projects/:id/tasks/:id（status: in_progress→completed）</div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">4</div>
+        <div class="step-lbl">更新</div>
+        <div class="step-diag"><div class="av"><div class="av-line"></div><div class="ah-r"></div></div></div>
+        <div class="step-note">task.update(task_params)</div>
+      </div>
+      <div class="block-row success">✓ 更新成功</div>
+      <div class="step-row">
+        <div class="step-num">5</div>
+        <div class="step-lbl">リダイレクト</div>
+        <div class="step-diag"><div class="av"><div class="av-line s d"></div><div class="ah-l s"></div></div></div>
+        <div class="step-note">redirect_to project_task_path + flash[:notice]</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 削除 -->
+  <div id="tab-delete" class="tab-panel">
+    <div class="seq-wrapper">
+      <div class="seq-title">タスク削除（正常系）</div>
+      <div class="seq-subtitle">確認ダイアログ → 削除 → プロジェクト詳細へリダイレクト</div>
+
+      <div class="actor-header">
+        <div class="seq-actor-box actor-user">ユーザー</div>
+        <div class="seq-actor-box actor-front">ブラウザ (ERB)</div>
+        <div class="seq-actor-box actor-server">TasksController</div>
+        <div class="seq-actor-box actor-server">Task Model</div>
+        <div class="seq-actor-box actor-db">PostgreSQL</div>
+      </div>
+
+      <div class="step-row">
+        <div class="step-num">1</div>
+        <div class="step-lbl">「削除」クリック</div>
+        <div class="step-diag"><div class="av"><div class="av-line"></div><div class="ah-r"></div></div></div>
+        <div class="step-note">confirm ダイアログ表示</div>
+      </div>
+      <div class="block-row condition">? ユーザーが「OK」を選択</div>
+      <div class="step-row">
+        <div class="step-num">2</div>
+        <div class="step-lbl">削除リクエスト</div>
+        <div class="step-diag"><div class="av"><div class="av-line"></div><div class="ah-r"></div></div></div>
+        <div class="step-note">DELETE /projects/:id/tasks/:id</div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">3</div>
+        <div class="step-lbl">レコード削除</div>
+        <div class="step-diag"><div class="av"><div class="av-line"></div><div class="ah-r"></div></div></div>
+        <div class="step-note">task.destroy（物理削除）</div>
+      </div>
+      <div class="block-row success">✓ 削除成功</div>
+      <div class="step-row">
+        <div class="step-num">4</div>
+        <div class="step-lbl">リダイレクト</div>
+        <div class="step-diag"><div class="av"><div class="av-line s d"></div><div class="ah-l s"></div></div></div>
+        <div class="step-note">redirect_to project_path + flash[:notice]</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- バリデーションエラー -->
+  <div id="tab-error" class="tab-panel">
+    <div class="seq-wrapper">
+      <div class="seq-title">バリデーションエラー（異常系）</div>
+      <div class="seq-subtitle">タイトル未入力でタスク作成 → エラー表示</div>
+
+      <div class="actor-header">
+        <div class="seq-actor-box actor-user">ユーザー</div>
+        <div class="seq-actor-box actor-front">ブラウザ (ERB)</div>
+        <div class="seq-actor-box actor-server">TasksController</div>
+        <div class="seq-actor-box actor-server">Task Model</div>
+        <div class="seq-actor-box actor-db">PostgreSQL</div>
+      </div>
+
+      <div class="step-row">
+        <div class="step-num">1</div>
+        <div class="step-lbl">空のフォーム送信</div>
+        <div class="step-diag"><div class="av"><div class="av-line"></div><div class="ah-r"></div></div></div>
+        <div class="step-note">POST /projects/:id/tasks（title: ""）</div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">2</div>
+        <div class="step-lbl">バリデーション実行</div>
+        <div class="step-diag"><div class="av"><div class="av-line"></div><div class="ah-r"></div></div></div>
+        <div class="step-note">validates :title, presence: true</div>
+      </div>
+      <div class="block-row error">✗ バリデーション失敗（save → false）</div>
+      <div class="step-row">
+        <div class="step-num">3</div>
+        <div class="step-lbl">エラー表示</div>
+        <div class="step-diag"><div class="av"><div class="av-line e d"></div><div class="ah-l e"></div></div></div>
+        <div class="step-note">render :new + @task.errors でエラーメッセージ表示</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-line solid"></div>リクエスト（実線）</div>
+    <div class="legend-item"><div class="legend-line dashed"></div>レスポンス（破線）</div>
+    <div class="legend-item"><div class="legend-line success"></div>成功</div>
+    <div class="legend-item"><div class="legend-line error"></div>エラー</div>
+  </div>
+
+  <script>
+  function showTab(id, el) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    el.classList.add('active');
+  }
+  </script>
+</body>
+</html>

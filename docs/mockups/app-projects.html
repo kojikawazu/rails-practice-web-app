@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>プロジェクト一覧 — Rails Task App</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="desktop-frame">
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="sidebar-header">Rails Task App</div>
+      <div class="sidebar-nav">
+        <a href="app-projects.html" class="sidebar-item active">📁 プロジェクト</a>
+      </div>
+      <div class="sidebar-footer">
+        <div class="flex gap-sm" style="align-items:center;">
+          <div class="avatar">山</div>
+          <div>
+            <div style="font-size:13px; font-weight:600;">山田太郎</div>
+            <div style="font-size:11px; color:var(--color-dark-text-sub);">user@example.com</div>
+          </div>
+        </div>
+        <button class="btn btn-sm" style="margin-top:12px; width:100%; background:var(--color-dark-surface); color:var(--color-dark-text); border-color:var(--color-dark-border);" onclick="location.href='auth-login.html'">ログアウト</button>
+      </div>
+    </nav>
+
+    <!-- Main -->
+    <div class="desktop-main">
+      <div class="desktop-topbar">
+        <h1>プロジェクト一覧</h1>
+        <button class="btn btn-primary" onclick="location.href='app-project-new.html'">+ 新規作成</button>
+      </div>
+      <div class="desktop-content">
+        <div class="flash flash-success" id="flash">プロジェクトを作成しました。</div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>プロジェクト名</th>
+                <th>説明</th>
+                <th>タスク数</th>
+                <th>作成日</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="cursor:pointer" onclick="location.href='app-project-show.html'">
+                <td><strong>Webサイトリニューアル</strong></td>
+                <td class="text-sub">コーポレートサイトのリニューアルプロジェクト</td>
+                <td><span class="badge badge-grey">5</span></td>
+                <td class="text-sub">2026-04-01</td>
+                <td><button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); location.href='app-project-edit.html'">編集</button></td>
+              </tr>
+              <tr style="cursor:pointer" onclick="location.href='app-project-show.html'">
+                <td><strong>モバイルアプリ開発</strong></td>
+                <td class="text-sub">iOS/Androidアプリの新規開発</td>
+                <td><span class="badge badge-grey">3</span></td>
+                <td class="text-sub">2026-04-03</td>
+                <td><button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); location.href='app-project-edit.html'">編集</button></td>
+              </tr>
+              <tr style="cursor:pointer" onclick="location.href='app-project-show.html'">
+                <td><strong>社内ツール改善</strong></td>
+                <td class="text-sub">業務効率化のための社内ツール改修</td>
+                <td><span class="badge badge-grey">8</span></td>
+                <td class="text-sub">2026-04-05</td>
+                <td><button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); location.href='app-project-edit.html'">編集</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="screen-label">app-projects.html · /projects</div>
+</body>
+</html>

@@ -1,0 +1,93 @@
+/* ===== Sequence Diagram Common Styles ===== */
+
+.back-link { margin-bottom: 24px; }
+.back-link a { font-size: 14px; color: var(--color-primary); }
+.page-desc { color: var(--color-text-sub); font-size: 14px; margin-bottom: 24px; }
+
+/* Tab Navigation */
+.tab-nav { display: flex; gap: 4px; margin-bottom: 24px; border-bottom: 2px solid var(--color-border); }
+.tab-btn {
+  padding: 10px 20px; font-size: 14px; font-weight: 600;
+  background: none; border: none; color: var(--color-text-sub);
+  cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px;
+  transition: all 0.15s;
+}
+.tab-btn:hover { color: var(--color-text); }
+.tab-btn.active { color: var(--color-primary); border-bottom-color: var(--color-primary); }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* Sequence Wrapper */
+.seq-wrapper {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-md); padding: 24px; margin-bottom: 24px;
+  overflow-x: auto;
+}
+.seq-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+.seq-subtitle { font-size: 13px; color: var(--color-text-sub); margin-bottom: 20px; }
+
+/* Actor Header */
+.actor-header {
+  display: grid; gap: 8px; margin-bottom: 16px; padding-bottom: 16px;
+  border-bottom: 2px solid var(--color-border);
+}
+.seq-actor-box {
+  text-align: center; padding: 10px 8px; border-radius: var(--radius-sm);
+  font-size: 12px; font-weight: 700;
+}
+.actor-user { background: #ede9fe; color: #5b21b6; }
+.actor-front { background: #dbeafe; color: #1d4ed8; }
+.actor-server { background: #dcfce7; color: #166534; }
+.actor-auth { background: #fef9c3; color: #854d0e; }
+.actor-db { background: #f3e8ff; color: #6b21a8; }
+
+/* Step Row */
+.step-row {
+  display: grid; gap: 8px; align-items: center;
+  padding: 8px 0; min-height: 40px;
+}
+.step-num {
+  font-size: 11px; font-weight: 700; color: var(--color-text-muted);
+  text-align: center;
+}
+.step-lbl { font-size: 12px; font-weight: 600; }
+.step-diag { position: relative; display: flex; align-items: center; justify-content: center; }
+.step-note { font-size: 11px; color: var(--color-text-muted); font-style: italic; }
+
+/* Arrow Visuals */
+.av { display: flex; align-items: center; width: 100%; position: relative; }
+.av-line {
+  flex: 1; height: 2px; background: var(--color-primary);
+}
+.av-line.d { background: repeating-linear-gradient(90deg, var(--color-primary) 0, var(--color-primary) 6px, transparent 6px, transparent 10px); }
+.av-line.s { background: var(--color-green); }
+.av-line.s.d { background: repeating-linear-gradient(90deg, var(--color-green) 0, var(--color-green) 6px, transparent 6px, transparent 10px); }
+.av-line.e { background: var(--color-red); }
+.av-line.e.d { background: repeating-linear-gradient(90deg, var(--color-red) 0, var(--color-red) 6px, transparent 6px, transparent 10px); }
+.ah-r { width: 0; height: 0; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-left: 8px solid var(--color-primary); }
+.ah-l { width: 0; height: 0; border-top: 5px solid transparent; border-bottom: 5px solid transparent; border-right: 8px solid var(--color-primary); }
+.ah-r.s { border-left-color: var(--color-green); }
+.ah-l.s { border-right-color: var(--color-green); }
+.ah-r.e { border-left-color: var(--color-red); }
+.ah-l.e { border-right-color: var(--color-red); }
+
+/* Block Row */
+.block-row {
+  padding: 6px 12px; border-radius: var(--radius-sm);
+  font-size: 12px; font-weight: 700; margin: 8px 0;
+}
+.block-row.condition { background: var(--color-yellow-bg); color: #854d0e; }
+.block-row.success { background: var(--color-green-bg); color: #166534; }
+.block-row.error { background: var(--color-red-bg); color: #991b1b; }
+
+/* Legend */
+.legend {
+  display: flex; flex-wrap: wrap; gap: 16px; margin-top: 24px; padding: 16px;
+  background: var(--color-grey-bg); border-radius: var(--radius-sm); font-size: 12px;
+}
+.legend-item { display: flex; align-items: center; gap: 8px; }
+.legend-line { width: 30px; height: 2px; }
+.legend-line.solid { background: var(--color-primary); }
+.legend-line.dashed { background: repeating-linear-gradient(90deg, var(--color-primary) 0, var(--color-primary) 6px, transparent 6px, transparent 10px); }
+.legend-line.success { background: var(--color-green); }
+.legend-line.error { background: var(--color-red); }

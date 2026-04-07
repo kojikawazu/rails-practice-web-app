@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rails Task App — 画面モック一覧</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { padding: 40px 24px; max-width: 900px; margin: 0 auto; }
+    .page-header { text-align: center; margin-bottom: 40px; }
+    .page-header h1 { font-size: 28px; font-weight: 800; }
+    .page-header p { color: var(--color-text-sub); font-size: 14px; margin-top: 8px; }
+    .section-title {
+      font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--color-text-muted); margin-bottom: 16px; margin-top: 40px;
+      padding-bottom: 8px; border-bottom: 2px solid var(--color-border);
+    }
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
+    .screen-card {
+      background: var(--color-surface); border: 1px solid var(--color-border);
+      border-radius: var(--radius-md); padding: 20px; transition: all 0.15s;
+      cursor: pointer;
+    }
+    .screen-card:hover { border-color: var(--color-primary); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+    .screen-card a { text-decoration: none; color: inherit; display: block; }
+    .screen-icon { font-size: 28px; margin-bottom: 8px; }
+    .role-tag {
+      display: inline-block; padding: 2px 8px; border-radius: var(--radius-full);
+      font-size: 10px; font-weight: 700; margin-bottom: 8px;
+    }
+    .role-common { background: #f3f4f6; color: #374151; }
+    .role-user { background: #ede9fe; color: #5b21b6; }
+    .screen-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .screen-path { font-size: 12px; color: var(--color-text-muted); margin-bottom: 6px; font-family: monospace; }
+    .screen-desc { font-size: 13px; color: var(--color-text-sub); }
+
+    .data-hint { margin-top: 40px; }
+    .data-hint h3 { font-size: 16px; margin-bottom: 12px; }
+    .data-hint ul { padding-left: 20px; font-size: 14px; color: var(--color-text-sub); }
+    .data-hint li { margin-bottom: 6px; }
+    .data-hint code { background: var(--color-grey-bg); padding: 1px 6px; border-radius: 3px; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="page-header">
+    <div style="font-size:40px; margin-bottom:8px;">📋</div>
+    <h1>Rails Task App</h1>
+    <p>画面モック一覧 — フルスタックRails（Project 1）</p>
+  </div>
+
+  <!-- Sequence Diagrams -->
+  <div class="section-title">シーケンス図 — 主要フローの可視化</div>
+  <div class="card-grid">
+    <div class="screen-card">
+      <a href="sequence-auth.html">
+        <div class="screen-icon">🔐</div>
+        <span class="role-tag role-common">共通</span>
+        <div class="screen-name">認証フロー</div>
+        <div class="screen-path">sequence-auth.html</div>
+        <div class="screen-desc">登録・ログイン・認証エラーのシーケンス</div>
+      </a>
+    </div>
+    <div class="screen-card">
+      <a href="sequence-task-crud.html">
+        <div class="screen-icon">🔄</div>
+        <span class="role-tag role-user">ユーザー</span>
+        <div class="screen-name">タスクCRUDフロー</div>
+        <div class="screen-path">sequence-task-crud.html</div>
+        <div class="screen-desc">タスクの作成・更新・削除・エラーのシーケンス</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Auth -->
+  <div class="section-title">認証 — ログイン・ユーザー登録</div>
+  <div class="card-grid">
+    <div class="screen-card">
+      <a href="auth-login.html">
+        <div class="screen-icon">🔑</div>
+        <span class="role-tag role-common">共通</span>
+        <div class="screen-name">ログイン画面</div>
+        <div class="screen-path">/login</div>
+        <div class="screen-desc">メール・パスワードでログイン</div>
+      </a>
+    </div>
+    <div class="screen-card">
+      <a href="auth-signup.html">
+        <div class="screen-icon">📝</div>
+        <span class="role-tag role-common">共通</span>
+        <div class="screen-name">ユーザー登録画面</div>
+        <div class="screen-path">/signup</div>
+        <div class="screen-desc">名前・メール・パスワードで新規登録</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Projects -->
+  <div class="section-title">プロジェクト — CRUD操作</div>
+  <div class="card-grid">
+    <div class="screen-card">
+      <a href="app-projects.html">
+        <div class="screen-icon">📁</div>
+        <span class="role-tag role-user">ユーザー</span>
+        <div class="screen-name">プロジェクト一覧</div>
+        <div class="screen-path">/projects</div>
+        <div class="screen-desc">自分のプロジェクトをテーブル表示</div>
+      </a>
+    </div>
+    <div class="screen-card">
+      <a href="app-project-new.html">
+        <div class="screen-icon">➕</div>
+        <span class="role-tag role-user">ユーザー</span>
+        <div class="screen-name">プロジェクト作成</div>
+        <div class="screen-path">/projects/new</div>
+        <div class="screen-desc">タイトル・説明を入力して作成</div>
+      </a>
+    </div>
+    <div class="screen-card">
+      <a href="app-project-show.html">
+        <div class="screen-icon">📋</div>
+        <span class="role-tag role-user">ユーザー</span>
+        <div class="screen-name">プロジェクト詳細</div>
+        <div class="screen-path">/projects/:id</div>
+        <div class="screen-desc">プロジェクト情報 + タスク一覧</div>
+      </a>
+    </div>
+    <div class="screen-card">
+      <a href="app-project-edit.html">
+        <div class="screen-icon">✏️</div>
+        <span class="role-tag role-user">ユーザー</span>
+        <div class="screen-name">プロジェクト編集</div>
+        <div class="screen-path">/projects/:id/edit</div>
+        <div class="screen-desc">タイトル・説明を編集</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Tasks -->
+  <div class="section-title">タスク — CRUD操作</div>
+  <div class="card-grid">
+    <div class="screen-card">
+      <a href="app-task-new.html">
+        <div class="screen-icon">📌</div>
+        <span class="role-tag role-user">ユーザー</span>
+        <div class="screen-name">タスク作成</div>
+        <div class="screen-path">/projects/:id/tasks/new</div>
+        <div class="screen-desc">タイトル・ステータス・期日を入力</div>
+      </a>
+    </div>
+    <div class="screen-card">
+      <a href="app-task-show.html">
+        <div class="screen-icon">📄</div>
+        <span class="role-tag role-user">ユーザー</span>
+        <div class="screen-name">タスク詳細</div>
+        <div class="screen-path">/projects/:id/tasks/:id</div>
+        <div class="screen-desc">タスクの詳細情報を表示</div>
+      </a>
+    </div>
+    <div class="screen-card">
+      <a href="app-task-edit.html">
+        <div class="screen-icon">✏️</div>
+        <span class="role-tag role-user">ユーザー</span>
+        <div class="screen-name">タスク編集</div>
+        <div class="screen-path">/projects/:id/tasks/:id/edit</div>
+        <div class="screen-desc">タスク情報を編集・ステータス変更</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div class="section-title">エラー — エラー画面</div>
+  <div class="card-grid">
+    <div class="screen-card">
+      <a href="error-404.html">
+        <div class="screen-icon">🚫</div>
+        <span class="role-tag role-common">共通</span>
+        <div class="screen-name">404 Not Found</div>
+        <div class="screen-path">/404</div>
+        <div class="screen-desc">ページが見つからない場合のエラー</div>
+      </a>
+    </div>
+  </div>
+
+  <!-- Data Model Hint -->
+  <div class="data-hint">
+    <div class="section-title">データモデルヒント — 画面UIから導出されるテーブル候補</div>
+    <ul>
+      <li><code>users</code>: id, name, email, password_digest, created_at, updated_at</li>
+      <li><code>projects</code>: id, title, description, user_id (FK→users), created_at, updated_at</li>
+      <li><code>tasks</code>: id, title, status (enum: 0=not_started, 1=in_progress, 2=completed), due_date, project_id (FK→projects), created_at, updated_at</li>
+    </ul>
+  </div>
+</body>
+</html>
