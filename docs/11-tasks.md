@@ -6,7 +6,7 @@
 |---|---------------|------|------|
 | Day 1 | 環境構築 + scaffold一本通す | Rails環境セットアップ、scaffold体験 | Project 1 |
 | Day 2 | 手書きCRUD | scaffoldなしで Controller/Model/View を実装 | Project 1 |
-| Day 3 | 関連付け | User モデル + 認証（後回し）| Project 1 |
+| Day 3 | 関連付け | User モデル + 認証（has_secure_password）| Project 1 |
 | Day 4 | 仕上げ | RSpec、コード整理、README | Project 1 |
 | Day 5+ | APIモード | Project 1 の知識をベースにAPI版を構築 | Project 2 |
 
@@ -36,28 +36,34 @@
 - [x] JSON エンドポイントのネストルーティング対応
 - [x] テスト14件全パス → PR #2 マージ
 
-### Day 3：関連付け
+### Day 3：User認証
 
-- [ ] User モデル + 認証（has_secure_password）← **後回し**
-- [x] has_many / belongs_to の関連付け実装（Project → Task は Day 1-2 で完了）
-- [x] ネストしたルーティング（projects/:id/tasks）← Day 2 で完了
-- [ ] 3モデル（User / Project / Task）の完成 ← User 待ち
+- [x] User モデル + has_secure_password（bcrypt）
+- [x] SessionsController（login/logout）
+- [x] UsersController（signup）
+- [x] ApplicationController に認証ヘルパー（current_user, require_login）
+- [x] Projects/Tasks を current_user にスコープ
+- [x] ログイン・登録 View + レイアウト更新
+- [x] テスト28件全パス → PR #3 マージ
 
-### Day 4：仕上げ
+### Day 4：RSpec
 
-- [ ] RSpec セットアップ
-- [ ] Model spec の作成
-- [ ] Request spec の作成
-- [ ] コード整理・README更新
-- [ ] GitHub最終push
+- [x] RSpec セットアップ（rspec-rails, factory_bot_rails, faker, shoulda-matchers）
+- [x] User/Project/Task モデルスペック
+- [x] Sessions/Projects/Tasks リクエストスペック
+- [x] config/ci.rb に RSpec ステップ追加
+- [x] Task デフォルトステータス実装 → PR #4 マージ
 
-### Day 5+：APIモード（Project 2）
+### Day 5：APIモード（Project 2）
 
-- [ ] `rails new --api` でAPIプロジェクト作成
-- [ ] 同じ3モデルをAPI版で実装
-- [ ] JSONレスポンスの設計・実装
-- [ ] RSpec（Request spec中心）
-- [ ] フルスタック版との差分を整理
+- [x] `rails new --api` でAPIプロジェクト作成
+- [x] User/Project/Task モデル実装（フルスタック版と同一バリデーション）
+- [x] JWT認証（JsonWebToken モジュール）
+- [x] Api::V1::AuthController（signup/login）
+- [x] Api::V1::ProjectsController（CRUD）
+- [x] Api::V1::TasksController（CRUD）
+- [x] rack-cors 設定
+- [x] RSpec リクエストスペック18件
 
 ## 進捗
 
@@ -65,6 +71,6 @@
 |---------------|-----------|
 | Day 1 | ✅ 完了（PR #1 マージ済み） |
 | Day 2 | ✅ 完了（PR #2 マージ済み） |
-| Day 3 | 🔶 一部完了（認証は後回し） |
-| Day 4 | 未着手 |
-| Day 5+ | 未着手 |
+| Day 3 | ✅ 完了（PR #3 マージ済み） |
+| Day 4 | ✅ 完了（PR #4 マージ済み） |
+| Day 5 | ✅ 完了（PR #5 マージ待ち） |
