@@ -2,47 +2,48 @@ require "test_helper"
 
 class TasksControllerTest < ActionDispatch::IntegrationTest
   setup do
+    @project = projects(:one)
     @task = tasks(:one)
   end
 
-  test "should get index" do
-    get tasks_url
-    assert_response :success
+  test "should get index and redirect to project" do
+    get project_tasks_url(@project)
+    assert_response :redirect
   end
 
   test "should get new" do
-    get new_task_url
+    get new_project_task_url(@project)
     assert_response :success
   end
 
   test "should create task" do
     assert_difference("Task.count") do
-      post tasks_url, params: { task: { due_date: @task.due_date, project_id: @task.project_id, status: @task.status, title: @task.title } }
+      post project_tasks_url(@project), params: { task: { due_date: @task.due_date, status: "not_started", title: "New task" } }
     end
 
-    assert_redirected_to task_url(Task.last)
+    assert_redirected_to project_url(@project)
   end
 
   test "should show task" do
-    get task_url(@task)
+    get project_task_url(@project, @task)
     assert_response :success
   end
 
   test "should get edit" do
-    get edit_task_url(@task)
+    get edit_project_task_url(@project, @task)
     assert_response :success
   end
 
   test "should update task" do
-    patch task_url(@task), params: { task: { due_date: @task.due_date, project_id: @task.project_id, status: @task.status, title: @task.title } }
-    assert_redirected_to task_url(@task)
+    patch project_task_url(@project, @task), params: { task: { due_date: @task.due_date, status: "in_progress", title: @task.title } }
+    assert_redirected_to project_task_url(@project, @task)
   end
 
   test "should destroy task" do
     assert_difference("Task.count", -1) do
-      delete task_url(@task)
+      delete project_task_url(@project, @task)
     end
 
-    assert_redirected_to tasks_url
+    assert_redirected_to project_url(@project)
   end
 end

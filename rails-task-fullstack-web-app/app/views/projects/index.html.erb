@@ -1,16 +1,29 @@
-<p style="color: green"><%= notice %></p>
-
-<% content_for :title, "Projects" %>
-
-<h1>Projects</h1>
-
-<div id="projects">
-  <% @projects.each do |project| %>
-    <%= render project %>
-    <p>
-      <%= link_to "Show this project", project %>
-    </p>
-  <% end %>
+<div class="page-header">
+  <h1>プロジェクト一覧</h1>
+  <%= link_to "新規作成", new_project_path, class: "btn btn-primary" %>
 </div>
 
-<%= link_to "New project", new_project_path %>
+<table>
+  <thead>
+    <tr>
+      <th>プロジェクト名</th>
+      <th>説明</th>
+      <th>タスク数</th>
+      <th>作成日</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @projects.each do |project| %>
+      <tr style="cursor:pointer" onclick="location.href='<%= project_path(project) %>'">
+        <td><strong><%= project.title %></strong></td>
+        <td class="text-sub"><%= truncate(project.description, length: 50) %></td>
+        <td><span class="badge badge-grey"><%= project.tasks.count %></span></td>
+        <td class="text-sub"><%= project.created_at.strftime("%Y-%m-%d") %></td>
+        <td>
+          <%= link_to "編集", edit_project_path(project), class: "btn btn-sm", onclick: "event.stopPropagation()" %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

@@ -1,11 +1,6 @@
-<% content_for :title, "New project" %>
-
-<h1>New project</h1>
+<div style="font-size:12px; margin-bottom:4px;"><%= link_to "← プロジェクト一覧", projects_path %></div>
+<div class="page-header">
+  <h1>プロジェクト作成</h1>
+</div>
 
 <%= render "form", project: @project %>
-
-<br>
-
-<div>
-  <%= link_to "Back to projects", projects_path %>
-</div>

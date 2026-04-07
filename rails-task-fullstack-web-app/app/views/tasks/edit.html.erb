@@ -1,12 +1,6 @@
-<% content_for :title, "Editing task" %>
-
-<h1>Editing task</h1>
+<div style="font-size:12px; margin-bottom:4px;"><%= link_to "← タスク詳細に戻る", project_task_path(@project, @task) %></div>
+<div class="page-header">
+  <h1>タスク編集</h1>
+</div>
 
 <%= render "form", task: @task %>
-
-<br>
-
-<div>
-  <%= link_to "Show this task", @task %> |
-  <%= link_to "Back to tasks", tasks_path %>
-</div>
