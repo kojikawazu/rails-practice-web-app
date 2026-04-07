@@ -1,10 +1,54 @@
-<p style="color: green"><%= notice %></p>
+<div style="font-size:12px; margin-bottom:4px;"><%= link_to "← プロジェクト一覧", projects_path %></div>
 
-<%= render @project %>
-
-<div>
-  <%= link_to "Edit this project", edit_project_path(@project) %> |
-  <%= link_to "Back to projects", projects_path %>
-
-  <%= button_to "Destroy this project", @project, method: :delete %>
+<div class="page-header">
+  <h1><%= @project.title %></h1>
+  <div class="flex gap-sm">
+    <%= link_to "編集", edit_project_path(@project), class: "btn" %>
+    <%= button_to "削除", project_path(@project), method: :delete, class: "btn btn-danger",
+        data: { turbo_confirm: "このプロジェクトを削除しますか？関連するタスクもすべて削除されます。" } %>
+  </div>
 </div>
+
+<div class="card mb-md">
+  <p class="text-sub"><%= @project.description %></p>
+  <div class="mt-sm text-muted" style="font-size:13px;">
+    作成日: <%= @project.created_at.strftime("%Y-%m-%d") %> / タスク: <%= @tasks.count %>件
+  </div>
+</div>
+
+<div class="page-header">
+  <h2 style="font-size:18px;">タスク一覧</h2>
+  <%= link_to "タスク追加", new_project_task_path(@project), class: "btn btn-primary btn-sm" %>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>タスク名</th>
+      <th>ステータス</th>
+      <th>期日</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @tasks.each do |task| %>
+      <tr style="cursor:pointer" onclick="location.href='<%= project_task_path(@project, task) %>'">
+        <td><strong><%= task.title %></strong></td>
+        <td>
+          <% case task.status %>
+          <% when "completed" %>
+            <span class="badge badge-green">完了</span>
+          <% when "in_progress" %>
+            <span class="badge badge-yellow">進行中</span>
+          <% else %>
+            <span class="badge badge-grey">未着手</span>
+          <% end %>
+        </td>
+        <td class="text-sub"><%= task.due_date&.strftime("%Y-%m-%d") %></td>
+        <td>
+          <%= link_to "編集", edit_project_task_path(@project, task), class: "btn btn-sm", onclick: "event.stopPropagation()" %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
