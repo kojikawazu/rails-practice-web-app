@@ -46,4 +46,4 @@
 | `.claude/rules/testing.md` | 全体 | RSpec / FactoryBot / Shoulda Matchers テスト方針 |
 | `.claude/rules/fullstack.md` | `rails-task-fullstack-web-app/app/**` | Rails MVC フルスタック設計ルール |
 | `.claude/rules/api.md` | `rails-task-api-web-app/app/**` | Rails API モード設計ルール |
-| `.claude/rules/database.md` | `*/app/models/**, */db/**` | ActiveRecord 命名規約・マイグレーション・クエリ規約 |
+| `.claude/rules/database.md` | 両プロジェクトの `app/models/`, `db/` | ActiveRecord 命名規約・マイグレーション・クエリ規約 |

@@ -18,7 +18,7 @@ globs: "rails-task-fullstack-web-app/app/models/**,rails-task-fullstack-web-app/
 
 | カラム | 型 | 説明 |
 |--------|------|------|
-| id | UUID or BIGINT | 主キー（`t.timestamps` で自動追加される `created_at`, `updated_at` とは別） |
+| id | UUID or BIGINT | 主キー（Rails デフォルトは BIGINT の自動採番） |
 | created_at | TIMESTAMP | 作成日時（`t.timestamps` で自動追加） |
 | updated_at | TIMESTAMP | 更新日時（`t.timestamps` で自動追加） |
 | deleted_at | TIMESTAMP NULL | 論理削除日時（要件に応じて。`paranoia` gem 等） |
