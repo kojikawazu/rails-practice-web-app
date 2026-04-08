@@ -35,3 +35,15 @@
 ### ドキュメント
 
 - **ドキュメント更新**: 作業が完了したら、ルートドキュメント（CLAUDE.md / README.md / docs/）の更新が必要かどうか確認し、必要であれば更新する。
+
+### ルールファイル一覧
+
+| ファイル | スコープ | 内容 |
+|---------|---------|------|
+| `.claude/rules/coding-standards.md` | 全体 | Ruby / Bundler / RuboCop コーディング規約 |
+| `.claude/rules/error-handling.md` | 全体 | バリデーション・例外処理・HTTP ステータスコード方針 |
+| `.claude/rules/security.md` | 全体 | 認証・CORS・インジェクション対策・シークレット管理 |
+| `.claude/rules/testing.md` | 全体 | RSpec / FactoryBot / Shoulda Matchers テスト方針 |
+| `.claude/rules/fullstack.md` | `rails-task-fullstack-web-app/app/**` | Rails MVC フルスタック設計ルール |
+| `.claude/rules/api.md` | `rails-task-api-web-app/app/**` | Rails API モード設計ルール |
+| `.claude/rules/database.md` | `*/app/models/**, */db/**` | ActiveRecord 命名規約・マイグレーション・クエリ規約 |
