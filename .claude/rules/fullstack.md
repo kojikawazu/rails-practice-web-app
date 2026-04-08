@@ -21,9 +21,9 @@ app/
 │   └── layouts/
 ├── services/             # ビジネスロジック
 ├── helpers/              # ビューヘルパー
-├── assets/               # CSS / JS
-│   ├── stylesheets/
-│   └── javascript/
+├── javascript/           # Importmap / Stimulus エントリポイント
+├── assets/               # CSS
+│   └── stylesheets/
 ├── serializers/          # JSON レスポンス用（API エンドポイントがある場合）
 └── validators/           # カスタムバリデーター
 config/

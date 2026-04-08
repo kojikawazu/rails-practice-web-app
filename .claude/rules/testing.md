@@ -12,9 +12,8 @@ globs:
 
 ## テストツール
 
-| テスト種別 | ツール |
-|-----------|--------|
-| ユニットテスト / モデルテスト | RSpec + Shoulda Matchers |
-| コントローラーテスト | RSpec + request specs |
-| E2E テスト | RSpec + Capybara |
-| スモークテスト | scripts/smoke-test.sh |
+| テスト種別 | ツール | 対象 |
+|-----------|--------|------|
+| ユニットテスト / モデルテスト | RSpec + Shoulda Matchers | 両プロジェクト |
+| コントローラーテスト | RSpec + request specs | 両プロジェクト |
+| E2E テスト | RSpec + Capybara | rails-task-fullstack-web-app のみ（capybara gem 必須） |
