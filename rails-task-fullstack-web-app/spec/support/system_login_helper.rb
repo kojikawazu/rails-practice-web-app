@@ -5,6 +5,8 @@ module SystemLoginHelper
     fill_in "メールアドレス", with: user.email
     fill_in "パスワード", with: password
     click_button "ログイン"
+    # Turbo の非同期送信が完了し、セッションが確立するまで待つ（レース防止）。
+    expect(page).to have_current_path(projects_path)
   end
 end
 

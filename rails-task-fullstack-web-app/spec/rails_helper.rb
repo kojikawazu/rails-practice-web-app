@@ -43,6 +43,9 @@ RSpec.configure do |config|
   # If you're not using ActiveRecord, or you'd prefer not to run each of your
   # examples within a transaction, remove the following line or assign false
   # instead of true.
+  # Rails 7.1+ / rspec-rails 7 は system test（type: :system）でテストスレッドと
+  # Capybara サーバースレッドが DB コネクションを共有するため、トランザクション
+  # フィクスチャのまま selenium でもテストデータが見える（コミット不要・レースなし）。
   config.use_transactional_fixtures = true
 
   # You can uncomment this line to turn off ActiveRecord support entirely.

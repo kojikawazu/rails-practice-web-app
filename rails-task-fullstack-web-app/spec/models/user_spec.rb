@@ -19,6 +19,18 @@ RSpec.describe User, type: :model do
       expect(user).not_to be_valid
     end
 
+    it 'is valid with a name of exactly 50 characters' do
+      expect(build(:user, name: 'a' * 50)).to be_valid
+    end
+
+    it 'is invalid with a name of 51 characters' do
+      expect(build(:user, name: 'a' * 51)).not_to be_valid
+    end
+
+    it 'is valid with a password of exactly 6 characters' do
+      expect(build(:user, password: 'abcdef', password_confirmation: 'abcdef')).to be_valid
+    end
+
     it 'is invalid with a password shorter than 6 characters on create' do
       user = build(:user, password: 'short', password_confirmation: 'short')
       expect(user).not_to be_valid

@@ -102,8 +102,38 @@
 
 サポート: `spec/support/capybara.rb`（rack_test ドライバ）/ `spec/support/system_login_helper.rb`（`sign_in_as`）
 
+## 追加補強（第2段）
+
+第1段で「スコープ外」としていた以下を追加実装した。
+
+### 境界値テスト（model spec）
+
+| # | テストケース | 入力 | 期待結果 | ファイル | 状態 |
+|---|---|---|---|---|---|
+| B-1 | プロジェクト title 上限 | 100文字 / 101文字 | valid / invalid | `spec/models/project_spec.rb` | ✅ |
+| B-2 | タスク title 上限 | 200文字 / 201文字 | valid / invalid | `spec/models/task_spec.rb` | ✅ |
+| B-3 | ユーザー name 上限 | 50文字 / 51文字 | valid / invalid | `spec/models/user_spec.rb` | ✅ |
+| B-4 | パスワード下限 | 6文字 | valid（最小境界） | `spec/models/user_spec.rb` | ✅ |
+
+### turbo_confirm（削除確認ダイアログ）の JS テスト
+
+| # | テストケース | 操作 | 期待結果 | 状態 |
+|---|---|---|---|---|
+| J-1 | キャンセルで残る | `dismiss_confirm { 削除 }` | プロジェクトが削除されない | ✅ |
+| J-2 | 承認でタスク削除 | `accept_confirm { 削除 }` | タスクが削除される | ✅ |
+| J-3 | 承認でプロジェクト削除 | `accept_confirm { 削除 }` | プロジェクトが削除される | ✅ |
+
+- ファイル: `spec/system/delete_confirmation_spec.rb`（`:js` タグ）
+- ドライバ: **selenium / headless Chrome**。`spec/support/capybara.rb` で `:js` のみ selenium、他は rack_test。
+- 通常の `rspec` からは除外（`filter_run_excluding js: true`）。実行は `rspec --tag js` または CI。
+- **DB 可視性**: Rails 7.1+/rspec-rails 7 の system test はテスト/サーバースレッドで DB コネクションを共有するため、トランザクションフィクスチャ（`use_transactional_fixtures = true`）のまま selenium でもテストデータが見える。
+- **安定化**: selenium の連続ログインが sandbox 環境で不安定だったため、(a) `sign_in_as` に遷移完了待ち（`have_current_path`）を追加、(b) `Capybara.default_max_wait_time = 5`、(c) J-1〜J-3 を 1 ログイン・1 example に集約。3 回連続実行でグリーンを確認。
+
+### テスト総数
+
+- 通常スイート: **81 examples / 0 failures**（rack_test、JS 除外）
+- JS スイート: **1 example / 0 failures**（`rspec --tag js`）
+
 ## スコープ外（明示）
 
-- 削除時の `turbo_confirm`（JS ダイアログ）の挙動 → selenium ドライバが必要。別途。
 - API 版（`rails-task-api-web-app/`）は既に認可（他ユーザー→404）テスト済みのため対象外。
-- 境界値（タイトルちょうど100/200文字）→ 今回は presence/scope を優先し、必要なら次段で追加。

@@ -9,6 +9,14 @@ RSpec.describe Task, type: :model do
     it { is_expected.to validate_presence_of(:title) }
     it { is_expected.to validate_length_of(:title).is_at_most(200) }
 
+    it 'is valid with a title of exactly 200 characters' do
+      expect(build(:task, title: 'a' * 200)).to be_valid
+    end
+
+    it 'is invalid with a title of 201 characters' do
+      expect(build(:task, title: 'a' * 201)).not_to be_valid
+    end
+
     it 'is invalid with an unknown status' do
       task = build(:task)
       task.status = 99
