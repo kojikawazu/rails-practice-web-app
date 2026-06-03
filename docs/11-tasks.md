@@ -65,6 +65,12 @@
 - [x] rack-cors 設定
 - [x] RSpec リクエストスペック18件
 
+### 追加対応（機能・テスト・CI）
+
+- [x] 確認画面（入力→確認→確定）をフルスタック版に追加（PR #8）
+- [x] テスト補強：認可(404)・確認画面E2E・初期表示・境界値・turbo_confirm(JS)（PR #9）
+- [ ] CI（GitHub Actions, テストのみ）導入：両アプリの Minitest + RSpec、JS system spec を別ジョブで自動実行
+
 ## 進捗
 
 | マイルストーン | ステータス |

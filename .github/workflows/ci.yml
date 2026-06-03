@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["**.md", "docs/**"]
+  pull_request:
+    paths-ignore: ["**.md", "docs/**"]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test (${{ matrix.app }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [rails-task-fullstack-web-app, rails-task-api-web-app]
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: rails_task
+          POSTGRES_PASSWORD: password
+        ports: ["5434:5432"]
+        options: >-
+          --health-cmd "pg_isready -U rails_task"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      RAILS_ENV: test
+      POSTGRES_USER: rails_task
+      POSTGRES_PASSWORD: password
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+          working-directory: ${{ matrix.app }}
+
+      - name: Prepare test DB
+        working-directory: ${{ matrix.app }}
+        run: bin/rails db:test:prepare
+
+      - name: Minitest
+        working-directory: ${{ matrix.app }}
+        run: bin/rails test
+
+      - name: RSpec
+        working-directory: ${{ matrix.app }}
+        run: bundle exec rspec
+
+  system-js:
+    name: System (:js, headless Chrome)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: rails_task
+          POSTGRES_PASSWORD: password
+        ports: ["5434:5432"]
+        options: >-
+          --health-cmd "pg_isready -U rails_task"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      RAILS_ENV: test
+      POSTGRES_USER: rails_task
+      POSTGRES_PASSWORD: password
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+          working-directory: rails-task-fullstack-web-app
+
+      - name: Prepare test DB
+        working-directory: rails-task-fullstack-web-app
+        run: bin/rails db:test:prepare
+
+      - name: RSpec (:js system specs)
+        working-directory: rails-task-fullstack-web-app
+        run: bundle exec rspec --tag js
