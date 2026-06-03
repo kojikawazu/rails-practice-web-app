@@ -107,4 +107,61 @@ RSpec.describe "Projects", type: :request do
       expect(response).to redirect_to(projects_path)
     end
   end
+
+  describe "GET /projects (絞り込み表示)" do
+    it "shows only the current user's projects" do
+      mine = create(:project, user: user, title: "自分のプロジェクトXYZ")
+      theirs = create(:project, user: create(:user), title: "他人のプロジェクトXYZ")
+      log_in
+      get projects_path
+      expect(response.body).to include(mine.title)
+      expect(response.body).not_to include(theirs.title)
+    end
+  end
+
+  describe "GET /projects/:id (タスクのステータスバッジ表示)" do
+    it "renders status badges for each task state" do
+      create(:task, project: project, status: :not_started)
+      create(:task, project: project, status: :in_progress)
+      create(:task, project: project, status: :completed)
+      log_in
+      get project_path(project)
+      expect(response.body).to include("未着手")
+      expect(response.body).to include("進行中")
+      expect(response.body).to include("完了")
+    end
+  end
+
+  describe "他ユーザーのプロジェクトへのアクセス（認可）" do
+    let(:other_project) { create(:project, user: create(:user)) }
+
+    before { log_in }
+
+    it "returns 404 on show" do
+      get project_path(other_project)
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "returns 404 on edit" do
+      get edit_project_path(other_project)
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "returns 404 on update" do
+      patch project_path(other_project), params: { project: { title: "乗っ取り" } }
+      expect(response).to have_http_status(:not_found)
+      expect(other_project.reload.title).not_to eq("乗っ取り")
+    end
+
+    it "returns 404 on destroy" do
+      delete project_path(other_project)
+      expect(response).to have_http_status(:not_found)
+      expect(Project.exists?(other_project.id)).to be(true)
+    end
+
+    it "returns 404 on confirm (member)" do
+      post confirm_project_path(other_project), params: { project: { title: "乗っ取り" } }
+      expect(response).to have_http_status(:not_found)
+    end
+  end
 end
