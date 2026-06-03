@@ -1,0 +1,44 @@
+<div class="page-header">
+  <h1>入力内容の確認</h1>
+</div>
+
+<p class="text-sub" style="margin-bottom:16px;">以下の内容で<%= @task.persisted? ? "更新" : "作成" %>します。よろしければ「<%= @task.persisted? ? "更新する" : "作成する" %>」を押してください。</p>
+
+<div class="card" style="max-width:600px;">
+  <div style="display:grid; grid-template-columns:120px 1fr; gap:12px 16px; font-size:14px;">
+    <div class="text-sub" style="font-weight:600;">タイトル</div>
+    <div><%= @task.title %></div>
+
+    <div class="text-sub" style="font-weight:600;">ステータス</div>
+    <div>
+      <% case @task.status %>
+      <% when "completed" %>
+        <span class="badge badge-green">完了</span>
+      <% when "in_progress" %>
+        <span class="badge badge-yellow">進行中</span>
+      <% else %>
+        <span class="badge badge-grey">未着手</span>
+      <% end %>
+    </div>
+
+    <div class="text-sub" style="font-weight:600;">期日</div>
+    <div><%= @task.due_date&.strftime("%Y-%m-%d") || "-" %></div>
+  </div>
+
+  <div class="flex gap-sm" style="margin-top:24px;">
+    <%# 「修正する」: 入力値を confirm へ再送(back=1)し、入力フォームへ戻す（独立フォーム）。 %>
+    <%= button_to "修正する",
+          (@task.persisted? ? confirm_project_task_path(@project, @task) : confirm_project_tasks_path(@project)),
+          method: :post,
+          params: { task: { title: @task.title, status: @task.status, due_date: @task.due_date }, back: 1 },
+          class: "btn" %>
+
+    <%# 「作成する/更新する」: form_with(model:) の既定送信先 create(POST) / update(PATCH) で保存する。 %>
+    <%= form_with(model: [@project, @task]) do |form| %>
+      <%= form.hidden_field :title %>
+      <%= form.hidden_field :status %>
+      <%= form.hidden_field :due_date %>
+      <%= form.submit(@task.persisted? ? "更新する" : "作成する", class: "btn btn-primary") %>
+    <% end %>
+  </div>
+</div>

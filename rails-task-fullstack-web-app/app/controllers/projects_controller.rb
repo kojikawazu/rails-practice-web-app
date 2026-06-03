@@ -17,6 +17,22 @@ class ProjectsController < ApplicationController
   def edit
   end
 
+  # 確認画面の表示。DB には保存せず valid? で検証のみ行う。
+  # id 有無で新規(build)／編集(find)を切り替える。
+  def confirm
+    @project = params[:id] ? current_user.projects.find(params[:id]) : current_user.projects.build
+    @project.assign_attributes(project_params)
+
+    # 確認画面の「修正する」押下時は入力フォームへ戻す（入力値は保持）。
+    return render(@project.persisted? ? :edit : :new) if params[:back].present?
+
+    if @project.valid?
+      render :confirm
+    else
+      render(@project.persisted? ? :edit : :new, status: :unprocessable_entity)
+    end
+  end
+
   def create
     @project = current_user.projects.build(project_params)
 

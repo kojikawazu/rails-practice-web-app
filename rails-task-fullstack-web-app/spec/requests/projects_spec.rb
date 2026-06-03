@@ -49,6 +49,46 @@ RSpec.describe "Projects", type: :request do
     end
   end
 
+  describe "POST /projects/confirm" do
+    it "renders confirm without creating a project" do
+      log_in
+      expect {
+        post confirm_projects_path, params: { project: { title: "確認用", description: "説明" } }
+      }.not_to change(Project, :count)
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include("入力内容の確認")
+    end
+
+    it "renders new with 422 on invalid params" do
+      log_in
+      post confirm_projects_path, params: { project: { title: "" } }
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    it "returns to the form when back is pressed" do
+      log_in
+      post confirm_projects_path, params: { project: { title: "確認用", description: "説明" }, back: 1 }
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include("確認する")
+    end
+  end
+
+  describe "POST /projects/:id/confirm" do
+    it "renders confirm without updating the project" do
+      log_in
+      post confirm_project_path(project), params: { project: { title: "編集確認" } }
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include("入力内容の確認")
+      expect(project.reload.title).not_to eq("編集確認")
+    end
+
+    it "renders edit with 422 on invalid params" do
+      log_in
+      post confirm_project_path(project), params: { project: { title: "" } }
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+  end
+
   describe "PATCH /projects/:id" do
     it "updates and redirects" do
       log_in

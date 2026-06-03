@@ -14,7 +14,7 @@
 
   <div class="card">
     <h2 style="font-size:18px; margin-bottom:20px;">ユーザー登録</h2>
-    <%= form_with(model: @user, url: signup_path) do |form| %>
+    <%= form_with(model: @user, url: signup_confirm_path) do |form| %>
       <div class="form-group">
         <%= form.label :name, "名前" %>
         <%= form.text_field :name, class: "form-input", placeholder: "山田太郎" %>
@@ -32,7 +32,7 @@
         <%= form.label :password_confirmation, "パスワード（確認）" %>
         <%= form.password_field :password_confirmation, class: "form-input", placeholder: "もう一度入力" %>
       </div>
-      <%= form.submit "登録する", class: "btn btn-primary", style: "width:100%; margin-top:8px;" %>
+      <%= form.submit "確認する", class: "btn btn-primary", style: "width:100%; margin-top:8px;" %>
     <% end %>
 
     <hr style="margin:24px 0; border:none; border-top:1px solid #e2e8f0;">
