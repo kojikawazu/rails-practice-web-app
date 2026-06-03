@@ -22,6 +22,22 @@ class TasksController < ApplicationController
   def edit
   end
 
+  # 確認画面の表示。DB には保存せず valid? で検証のみ行う。
+  # id 有無で新規(build)／編集(find)を切り替える（@project は set_project で取得済み）。
+  def confirm
+    @task = params[:id] ? @project.tasks.find(params[:id]) : @project.tasks.build
+    @task.assign_attributes(task_params)
+
+    # 確認画面の「修正する」押下時は入力フォームへ戻す（入力値は保持）。
+    return render(@task.persisted? ? :edit : :new) if params[:back].present?
+
+    if @task.valid?
+      render :confirm
+    else
+      render(@task.persisted? ? :edit : :new, status: :unprocessable_entity)
+    end
+  end
+
   def create
     @task = @project.tasks.build(task_params)
 

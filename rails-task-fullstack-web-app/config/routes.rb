@@ -1,12 +1,18 @@
 Rails.application.routes.draw do
-  get    "signup", to: "users#new"
-  post   "signup", to: "users#create"
+  get    "signup",         to: "users#new"
+  post   "signup/confirm", to: "users#confirm", as: :signup_confirm
+  post   "signup",         to: "users#create"
   get    "login",  to: "sessions#new"
   post   "login",  to: "sessions#create"
   delete "logout", to: "sessions#destroy"
 
   resources :projects do
-    resources :tasks
+    collection { post :confirm }
+    member     { post :confirm }
+    resources :tasks do
+      collection { post :confirm }
+      member     { post :confirm }
+    end
   end
 
   root "projects#index"
