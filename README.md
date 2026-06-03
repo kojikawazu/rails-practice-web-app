@@ -1,5 +1,7 @@
 # Rails Task Web App
 
+[![CI](https://github.com/kojikawazu/rails-task-web-app/actions/workflows/ci.yml/badge.svg)](https://github.com/kojikawazu/rails-task-web-app/actions/workflows/ci.yml)
+
 ## Overview
 
 Railsトレーニング用プロジェクト。同じドメイン（タスク管理）で2つの構成を構築し、差分で学ぶ。
@@ -41,6 +43,7 @@ Railsトレーニング用プロジェクト。同じドメイン（タスク管
 
 ```
 rails-task-web-app/
+├── .github/workflows/ci.yml       # GitHub Actions（テスト CI）
 ├── CLAUDE.md
 ├── README.md
 ├── docker-compose.yml             # PostgreSQL コンテナ定義
@@ -52,6 +55,27 @@ rails-task-web-app/
 ├── rails-task-fullstack-web-app/  # Project 1: フルスタック
 └── rails-task-api-web-app/        # Project 2: APIモード
 ```
+
+## Test / CI
+
+GitHub Actions（`.github/workflows/ci.yml`）で、`main` への push と全 PR で**両プロジェクトのテスト**を自動実行する（デプロイは対象外）。
+
+| ジョブ | 内容 |
+|---|---|
+| `Test (matrix)` | 両アプリで Minitest（`bin/rails test`）+ RSpec（`bundle exec rspec`） |
+| `System (:js)` | フルスタック版の JS system spec（`rspec --tag js`、headless Chrome） |
+
+ローカル実行:
+
+```bash
+docker compose up -d                          # PostgreSQL 起動
+cd rails-task-fullstack-web-app
+bundle exec rails db:test:prepare
+bundle exec rspec                             # 通常スイート（JS 除外）
+bundle exec rspec --tag js                    # JS system spec（要 Chrome）
+```
+
+> 仕様書・ドキュメント（`**.md` / `docs/`）のみの変更では CI はスキップされる（`paths-ignore`）。
 
 ## Docs
 
