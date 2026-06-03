@@ -107,4 +107,48 @@ RSpec.describe "Tasks", type: :request do
       expect(response).to redirect_to(project_path(project))
     end
   end
+
+  describe "他ユーザーのタスクへのアクセス（認可）" do
+    let(:other_project) { create(:project, user: create(:user)) }
+    let!(:other_task) { create(:task, project: other_project) }
+
+    before { log_in }
+
+    it "returns 404 on show (project not in scope)" do
+      get project_task_path(other_project, other_task)
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "returns 404 on edit" do
+      get edit_project_task_path(other_project, other_task)
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "returns 404 on update" do
+      patch project_task_path(other_project, other_task), params: { task: { title: "乗っ取り" } }
+      expect(response).to have_http_status(:not_found)
+      expect(other_task.reload.title).not_to eq("乗っ取り")
+    end
+
+    it "returns 404 on destroy" do
+      delete project_task_path(other_project, other_task)
+      expect(response).to have_http_status(:not_found)
+      expect(Task.exists?(other_task.id)).to be(true)
+    end
+
+    it "returns 404 when creating a task under another user's project" do
+      expect {
+        post project_tasks_path(other_project), params: { task: { title: "侵入タスク", status: "not_started" } }
+      }.not_to change(Task, :count)
+      expect(response).to have_http_status(:not_found)
+    end
+  end
+
+  describe "存在しないプロジェクト配下のタスク（異常系）" do
+    it "returns 404 for a nonexistent project_id" do
+      log_in
+      get new_project_task_path(project_id: 999_999)
+      expect(response).to have_http_status(:not_found)
+    end
+  end
 end
