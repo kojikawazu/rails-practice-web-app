@@ -33,6 +33,16 @@
     <div class="text-sub" style="font-weight:600;">終了日</div>
     <div><%= @task.end_date&.strftime("%Y-%m-%d") || "-" %></div>
 
+    <div class="text-sub" style="font-weight:600;">プレビュー URL</div>
+    <div>
+      <% if @task.preview_url.present? %>
+        <%# 詳細画面では iframe を出さず、安全なリンクのみ（rel=noopener noreferrer）。 %>
+        <%= link_to @task.preview_url, @task.preview_url, target: "_blank", rel: "noopener noreferrer" %>
+      <% else %>
+        -
+      <% end %>
+    </div>
+
     <div class="text-sub" style="font-weight:600;">プロジェクト</div>
     <div><%= link_to @project.title, project_path(@project) %></div>
 

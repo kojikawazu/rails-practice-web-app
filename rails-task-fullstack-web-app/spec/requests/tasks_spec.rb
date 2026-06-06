@@ -248,4 +248,78 @@ RSpec.describe "Tasks", type: :request do
       expect(response).to redirect_to(project_task_path(project, task))
     end
   end
+
+  describe "GET /projects/:project_id/tasks/confirm（確認画面の再読み込み・戻る対策）" do
+    it "新規(コレクション)の GET confirm は新規フォームへリダイレクトする（404 にしない）" do
+      log_in
+      get confirm_project_tasks_path(project)
+      expect(response).to redirect_to(new_project_task_path(project))
+    end
+
+    it "編集(メンバー)の GET confirm は編集フォームへリダイレクトする" do
+      log_in
+      get confirm_project_task_path(project, task)
+      expect(response).to redirect_to(edit_project_task_path(project, task))
+    end
+  end
+
+  describe "プレビュー URL（フォーム→確認→作成）" do
+    it "確認画面で http(s) URL が sandbox iframe としてプレビューされる" do
+      log_in
+      post confirm_project_tasks_path(project), params: {
+        task: { title: "URL付きタスク", status: "not_started", preview_url: "https://example.com" }
+      }
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include('<iframe')
+      expect(response.body).to include('sandbox="allow-scripts allow-same-origin"')
+      expect(response.body).to include('https://example.com')
+    end
+
+    it "自ホストの URL は確認に進まない（自オリジン埋め込み＝sandbox 脱獄経路を拒否）" do
+      log_in
+      # request spec の既定ホストは www.example.com
+      post confirm_project_tasks_path(project), params: {
+        task: { title: "自ホスト", status: "not_started", preview_url: "http://www.example.com/admin" }
+      }
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).not_to include("<iframe")
+    end
+
+    it "localhost の URL は確認に進まない（内部アドレス埋め込みを拒否）" do
+      log_in
+      post confirm_project_tasks_path(project), params: {
+        task: { title: "ローカル", status: "not_started", preview_url: "http://localhost:3000/" }
+      }
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    it "確認→作成で preview_url が永続化される" do
+      log_in
+      expect {
+        post project_tasks_path(project), params: {
+          task: { title: "URL付きタスク", status: "not_started", preview_url: "https://example.com/x" }
+        }
+      }.to change(Task, :count).by(1)
+      expect(Task.order(:id).last.preview_url).to eq("https://example.com/x")
+    end
+
+    it "javascript: スキームは確認に進まず 422・iframe を描画しない（XSS 防止）" do
+      log_in
+      post confirm_project_tasks_path(project), params: {
+        task: { title: "悪意URL", status: "not_started", preview_url: "javascript:alert(document.cookie)" }
+      }
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).not_to include("<iframe")
+    end
+
+    it "javascript: スキームは作成もできない（422）" do
+      log_in
+      expect {
+        post project_tasks_path(project), params: {
+          task: { title: "悪意URL", status: "not_started", preview_url: "javascript:alert(1)" }
+        }
+      }.not_to change(Task, :count)
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+  end
 end

@@ -68,6 +68,7 @@ Task
 | status | integer | NOT NULL, DEFAULT 0 | enum（0: not_started, 1: in_progress, 2: completed） |
 | start_date | date | | 開始日（フルスタック版。終了日とともに任意） |
 | end_date | date | | 終了日（任意。入力時は終了日 >= 開始日） |
+| preview_url | string | | 参考リンク（任意。http/https のみ。確認画面で sandbox iframe プレビュー） |
 | project_id | bigint | NOT NULL, FK | projects.id |
 
 > フルスタック版は期間管理（start_date / end_date）を採用する。API版（Project 2）は単一の `due_date`（期日）のままで、両者は意図的に異なる（API仕様は `07-api-specification.md` 参照）。
