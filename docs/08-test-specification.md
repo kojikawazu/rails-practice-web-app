@@ -2,12 +2,15 @@
 
 ## テスト戦略
 
-学習目的のため、以下の2レベルに絞る:
+学習目的のため、以下の3レベルで構成する:
 
 | レベル | 目的 | 対象 |
 |--------|------|------|
 | Model spec | バリデーション・関連付けの検証 | User, Project, Task |
-| Request spec | エンドポイントの動作検証 | 各CRUDアクション |
+| Request spec | エンドポイントの動作検証 | 各CRUDアクション・複製・認可 |
+| System spec | 画面操作フローの検証（確認画面・削除確認・複製） | フルスタック版のみ |
+
+> System spec のうち Turbo 必須の挙動（確認画面遷移・`turbo_confirm` ダイアログ）は `:js` タグを付け、headless Chrome（selenium）で実行する（`rspec --tag js`）。それ以外は `rack_test` で駆動する。
 
 ## テスト環境
 
@@ -30,9 +33,17 @@
 
 | 対象 | テスト内容 |
 |------|-----------|
-| Projects | index/show/create/update/destroy の正常系 / 未ログイン時のリダイレクト |
-| Tasks | index/show/create/update/destroy の正常系 / 存在しないprojectでの404 |
+| Projects | index/show/create/update/destroy の正常系 / 複製(duplicate)の正常系・create フロー合流 / 他ユーザーリソースの404 / 未ログイン時のリダイレクト |
+| Tasks | index/show/create/update/destroy の正常系 / 複製(duplicate)の正常系・create フロー合流 / 他ユーザーリソースの404 / 存在しないprojectでの404 |
 | Sessions | ログイン成功/失敗 / ログアウト |
+
+### System spec
+
+| 対象 | テスト内容 |
+|------|-----------|
+| 確認画面フロー（rack_test） | 登録・プロジェクト/タスク作成の 入力→確認→確定 / 「修正する」で入力値保持 / 不正入力でフォーム留まり |
+| 確認画面フロー（`:js` / Turbo 有効） | 実ブラウザで 登録・作成・複製 の 入力→確認画面表示→確定 が完了すること（Turbo Drive 退行の回帰ガード） |
+| 削除確認（`:js`） | `turbo_confirm` ダイアログの承認/キャンセル挙動 |
 
 ## カバレッジ目標
 
