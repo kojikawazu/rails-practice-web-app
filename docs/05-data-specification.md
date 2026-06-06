@@ -82,6 +82,19 @@ Task
 | projects | user_id | INDEX |
 | tasks | project_id | INDEX |
 
+## 画像添付（Active Storage）
+
+フルスタック版のタスク画像添付は **Active Storage** を使用し、blob 本体は **MinIO（S3 互換）** に保存する。
+
+- Task と画像の関連: `has_many_attached :images`（1タスクに複数枚）
+- 管理テーブル（Active Storage 標準）: `active_storage_blobs` / `active_storage_attachments` / `active_storage_variant_records`
+- 添付制約（モデルバリデーション `images_format_and_size` で担保）:
+  - 形式: `image/png` / `image/jpeg` / `image/gif` / `image/webp`
+  - サイズ: 1枚あたり 5MB 以下
+- サムネイル: `variant(resize_to_limit: ...)` を `mini_magick`（ImageMagick）で動的生成し `active_storage_variant_records` にキャッシュ
+
+> API 版（Project 2）は画像添付を持たない（意図的な差分）。
+
 ## データフロー
 
 ```

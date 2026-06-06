@@ -72,6 +72,10 @@
 - [x] CI（GitHub Actions, テストのみ）導入：両アプリの Minitest + RSpec、JS system spec を別ジョブで自動実行（PR #10）
 - [x] プロジェクト/タスクの複製機能を追加（既存の確認→作成フローへ合流・本体のみ複製）（PR #11）
 - [x] 確認画面フローを Turbo Drive 下で動作させる修正＋`:js` system spec で回帰ガード（PR #12）
+- [x] 複製・Turbo 対応を各ドキュメント/モックへ同期（PR #13）
+- [x] `:js` system spec のフレーク対策（アサーション堅牢化＋`rspec-retry`）（PR #14）
+- [x] タスクに開始日・終了日を追加し flatpickr で選択（due_date 廃止）（PR #15）
+- [x] タスクに画像添付機能を追加（Active Storage + MinIO・複数枚＋サムネ）。アップロードは新規/編集フォームから行い、確認画面フローに合流（file input は確認ステップで blob 化し `signed_id` を round-trip）。詳細画面はサムネ表示＋個別削除、編集フォームは既存画像の削除予約に対応（PR #16）
 
 ## 進捗
 

@@ -33,11 +33,13 @@ Railsトレーニング用プロジェクト。同じドメイン（タスク管
 
 ### セットアップ手順（Day 1 で実施予定）
 
-1. `.env.example` をコピーして `.env` を作成
-2. `docker compose up -d` で PostgreSQL を起動
+1. `.env.example` をコピーして `.env` を作成（PostgreSQL と MinIO の接続情報）
+2. `docker compose up -d` で PostgreSQL と MinIO を起動（MinIO はバケットも自動作成）
 3. `rails new` でプロジェクト作成（`-d postgresql`）
 4. `rails db:create && rails db:migrate`
 5. `rails server` → `http://localhost:3000` で動作確認
+
+> **画像ストレージ（MinIO）**: フルスタック版のタスク画像添付は Active Storage + MinIO（S3 互換）を使う。`docker compose up -d` で MinIO（API: `http://localhost:9000` / コンソール: `http://localhost:9001`）が起動し、`createbuckets` コンテナがバケットを作成する。認証情報は `.env`（`MINIO_ROOT_USER` / `AWS_ACCESS_KEY_ID` 等）で管理し、ローカルでサムネイル生成するには ImageMagick または libvips が必要。
 
 ## Directory Structure
 

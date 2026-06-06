@@ -6,6 +6,17 @@ local:
   service: Disk
   root: <%= Rails.root.join("storage") %>
 
+# MinIO（S3 互換）。認証情報は .env から ENV 経由で供給する（ハードコードしない）。
+# MinIO は path-style アクセスのため force_path_style: true が必須。
+minio:
+  service: S3
+  endpoint: <%= ENV.fetch("MINIO_ENDPOINT", "http://localhost:9000") %>
+  access_key_id: <%= ENV["AWS_ACCESS_KEY_ID"] %>
+  secret_access_key: <%= ENV["AWS_SECRET_ACCESS_KEY"] %>
+  region: us-east-1
+  bucket: <%= ENV.fetch("S3_BUCKET", "rails-task-dev") %>
+  force_path_style: true
+
 # Use bin/rails credentials:edit to set the AWS secrets (as aws:access_key_id|secret_access_key)
 # amazon:
 #   service: S3

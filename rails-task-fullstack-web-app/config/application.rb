@@ -6,6 +6,12 @@ require "rails/all"
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
 
+# .env はモノレポ直下（DB / MinIO の接続情報を両アプリ・docker-compose で共有）に置くため、
+# アプリ root の親ディレクトリから明示的に読み込む（既存の ENV は上書きしない）。
+if defined?(Dotenv)
+  Dotenv.load(File.expand_path("../../.env", __dir__))
+end
+
 module RailsTaskFullstackWebApp
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
@@ -23,5 +29,8 @@ module RailsTaskFullstackWebApp
     #
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
+
+    # サムネイル生成は ImageMagick（mini_magick）を使う（この環境に libvips が無いため）。
+    config.active_storage.variant_processor = :mini_magick
   end
 end
