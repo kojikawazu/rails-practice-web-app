@@ -75,4 +75,7 @@ group :test do
 
   # One-liner matchers for validations and associations
   gem "shoulda-matchers", "~> 6.0"
+
+  # Retry flaky selenium :js system specs (native full-page submit timing)
+  gem "rspec-retry", "~> 0.6.2"
 end
