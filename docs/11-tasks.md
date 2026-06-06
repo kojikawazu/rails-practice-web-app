@@ -76,6 +76,7 @@
 - [x] `:js` system spec のフレーク対策（アサーション堅牢化＋`rspec-retry`）（PR #14）
 - [x] タスクに開始日・終了日を追加し flatpickr で選択（due_date 廃止）（PR #15）
 - [x] タスクに画像添付機能を追加（Active Storage + MinIO・複数枚＋サムネ）。アップロードは新規/編集フォームから行い、確認画面フローに合流（file input は確認ステップで blob 化し `signed_id` を round-trip）。詳細画面はサムネ表示＋個別削除、編集フォームは既存画像の削除予約に対応（PR #16）
+- [ ] タスクにプレビュー URL（`preview_url`）を追加。確認画面で sandbox iframe プレビュー。http/https のみ許可（スキーム検証＋sandbox の多層防御で XSS/トップナビ乗っ取りを抑止）
 
 ## 進捗
 

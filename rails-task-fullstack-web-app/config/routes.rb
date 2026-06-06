@@ -10,9 +10,11 @@ Rails.application.routes.draw do
     collection { post :confirm }
     member     { post :confirm; get :duplicate }
     resources :tasks do
-      collection { post :confirm }
+      # 確認画面は POST 専用だが、リロード/戻る操作で GET される場合があるため GET も受け、
+      # アクション側でフォームへリダイレクトする（show ルートに誤って落ちるのを防ぐ）。
+      collection { match :confirm, via: %i[get post] }
       member do
-        post :confirm
+        match :confirm, via: %i[get post]
         get :duplicate
         # 画像の追加は新規/編集フォーム（confirm→create/update）に集約。
         # 詳細画面からの個別削除のみ専用ルートを残す。

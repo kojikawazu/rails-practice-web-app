@@ -38,8 +38,16 @@ class TasksController < ApplicationController
   # 画像はファイル input を確認画面の hidden で持ち回れないため、ここで一旦
   # サーバー経由で blob を作り、signed_id を round-trip させる（JS不要）。
   def confirm
+    # 確認画面は POST 専用。リロード/戻る等で GET された場合は入力フォームへ戻す
+    # （show ルートへ誤って落ちて 404 になるのを防ぐ。入力値は保持できないため作り直し）。
+    if request.get?
+      target = params[:id] ? edit_project_task_path(@project, params[:id]) : new_project_task_path(@project)
+      return redirect_to(target, alert: "確認画面は再読み込みできません。入力し直してください。")
+    end
+
     @task = params[:id] ? @project.tasks.find(params[:id]) : @project.tasks.build
     @task.assign_attributes(task_params)
+    @task.app_host = request.host # 自オリジン埋め込み拒否の判定用
     @remove_image_ids = remove_image_ids
 
     # 新規アップロードを事前検証。不正なら blob を作らずフォームへ戻す（オーファン防止）。
@@ -65,6 +73,7 @@ class TasksController < ApplicationController
 
   def create
     @task = @project.tasks.build(task_params)
+    @task.app_host = request.host
     attach_signed_images(@task)
 
     if @task.save
@@ -77,6 +86,7 @@ class TasksController < ApplicationController
 
   def update
     @task.assign_attributes(task_params)
+    @task.app_host = request.host
     attach_signed_images(@task)
 
     if @task.save
@@ -111,7 +121,7 @@ class TasksController < ApplicationController
   end
 
   def task_params
-    params.require(:task).permit(:title, :status, :start_date, :end_date)
+    params.require(:task).permit(:title, :status, :start_date, :end_date, :preview_url)
   end
 
   # フォームから送られた新規アップロードファイル（ActionDispatch::Http::UploadedFile）。

@@ -27,6 +27,28 @@
     <div class="text-sub" style="font-weight:600;">終了日</div>
     <div><%= @task.end_date&.strftime("%Y-%m-%d") || "-" %></div>
 
+    <div class="text-sub" style="font-weight:600;">プレビュー URL</div>
+    <div>
+      <% if @task.preview_url.present? %>
+        <%# モデルで http/https のみ許可済み。iframe は最小権限の sandbox で隔離する。 %>
+        <div><%= link_to @task.preview_url, @task.preview_url, target: "_blank", rel: "noopener noreferrer" %></div>
+        <%# allow-same-origin は外部サイトを正常表示するため。自ホスト/内部アドレスはモデルで拒否済みのため
+            脱獄経路は塞がれている。allow-top-navigation/popups/forms/modals は付けない。 %>
+        <iframe src="<%= @task.preview_url %>"
+                sandbox="allow-scripts allow-same-origin"
+                referrerpolicy="no-referrer"
+                allow=""
+                loading="lazy"
+                title="プレビュー"
+                style="width:100%; height:360px; border:1px solid #e2e8f0; border-radius:6px; margin-top:8px;"></iframe>
+        <div class="text-muted" style="font-size:12px; margin-top:4px;">
+          ※ サイトによっては埋め込みが許可されておらず、表示されない場合があります（上のリンクから開けます）。
+        </div>
+      <% else %>
+        <span class="text-muted">-</span>
+      <% end %>
+    </div>
+
     <div class="text-sub" style="font-weight:600;">添付画像</div>
     <div>
       <% remove_ids = Array(@remove_image_ids).map(&:to_s) %>
@@ -62,6 +84,7 @@
           method: :post,
           params: { task: { title: @task.title, status: @task.status,
                             start_date: @task.start_date, end_date: @task.end_date,
+                            preview_url: @task.preview_url,
                             image_signed_ids: Array(@image_signed_ids),
                             remove_image_ids: Array(@remove_image_ids) }, back: 1 },
           form: { data: { turbo: false } },
@@ -73,6 +96,7 @@
       <%= form.hidden_field :status %>
       <%= form.hidden_field :start_date %>
       <%= form.hidden_field :end_date %>
+      <%= form.hidden_field :preview_url %>
       <% Array(@image_signed_ids).each do |sid| %>
         <%= hidden_field_tag "task[image_signed_ids][]", sid %>
       <% end %>
