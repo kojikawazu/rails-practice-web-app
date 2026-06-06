@@ -69,7 +69,9 @@
 
 - [x] 確認画面（入力→確認→確定）をフルスタック版に追加（PR #8）
 - [x] テスト補強：認可(404)・確認画面E2E・初期表示・境界値・turbo_confirm(JS)（PR #9）
-- [ ] CI（GitHub Actions, テストのみ）導入：両アプリの Minitest + RSpec、JS system spec を別ジョブで自動実行
+- [x] CI（GitHub Actions, テストのみ）導入：両アプリの Minitest + RSpec、JS system spec を別ジョブで自動実行（PR #10）
+- [x] プロジェクト/タスクの複製機能を追加（既存の確認→作成フローへ合流・本体のみ複製）（PR #11）
+- [x] 確認画面フローを Turbo Drive 下で動作させる修正＋`:js` system spec で回帰ガード（PR #12）
 
 ## 進捗
 

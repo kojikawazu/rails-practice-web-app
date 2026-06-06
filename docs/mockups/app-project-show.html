@@ -35,6 +35,7 @@
         </div>
         <div class="flex gap-sm">
           <button class="btn btn-outline" onclick="location.href='app-project-edit.html'">編集</button>
+          <button class="btn btn-outline" onclick="location.href='app-project-new.html'">複製</button>
           <button class="btn btn-danger" onclick="if(confirm('このプロジェクトを削除しますか？関連するタスクもすべて削除されます。')) alert('削除しました（モック）');">削除</button>
         </div>
       </div>
@@ -76,31 +77,36 @@
                 <td><strong>デザインカンプ作成</strong></td>
                 <td><span class="badge badge-green">完了</span></td>
                 <td class="text-sub">2026-04-05</td>
-                <td><button class="btn btn-sm" onclick="event.stopPropagation(); location.href='app-task-edit.html'">編集</button></td>
+                <td><button class="btn btn-sm" onclick="event.stopPropagation(); location.href='app-task-edit.html'">編集</button>
+                    <button class="btn btn-sm" onclick="event.stopPropagation(); location.href='app-task-new.html'">複製</button></td>
               </tr>
               <tr style="cursor:pointer" onclick="location.href='app-task-show.html'">
                 <td><strong>HTML/CSSコーディング</strong></td>
                 <td><span class="badge badge-yellow">進行中</span></td>
                 <td class="text-sub">2026-04-10</td>
-                <td><button class="btn btn-sm" onclick="event.stopPropagation(); location.href='app-task-edit.html'">編集</button></td>
+                <td><button class="btn btn-sm" onclick="event.stopPropagation(); location.href='app-task-edit.html'">編集</button>
+                    <button class="btn btn-sm" onclick="event.stopPropagation(); location.href='app-task-new.html'">複製</button></td>
               </tr>
               <tr style="cursor:pointer" onclick="location.href='app-task-show.html'">
                 <td><strong>バックエンド実装</strong></td>
                 <td><span class="badge badge-yellow">進行中</span></td>
                 <td class="text-sub">2026-04-15</td>
-                <td><button class="btn btn-sm" onclick="event.stopPropagation(); location.href='app-task-edit.html'">編集</button></td>
+                <td><button class="btn btn-sm" onclick="event.stopPropagation(); location.href='app-task-edit.html'">編集</button>
+                    <button class="btn btn-sm" onclick="event.stopPropagation(); location.href='app-task-new.html'">複製</button></td>
               </tr>
               <tr style="cursor:pointer" onclick="location.href='app-task-show.html'">
                 <td><strong>テスト実施</strong></td>
                 <td><span class="badge badge-grey">未着手</span></td>
                 <td class="text-sub">2026-04-20</td>
-                <td><button class="btn btn-sm" onclick="event.stopPropagation(); location.href='app-task-edit.html'">編集</button></td>
+                <td><button class="btn btn-sm" onclick="event.stopPropagation(); location.href='app-task-edit.html'">編集</button>
+                    <button class="btn btn-sm" onclick="event.stopPropagation(); location.href='app-task-new.html'">複製</button></td>
               </tr>
               <tr style="cursor:pointer" onclick="location.href='app-task-show.html'">
                 <td><strong>本番公開</strong></td>
                 <td><span class="badge badge-grey">未着手</span></td>
                 <td class="text-sub">2026-04-25</td>
-                <td><button class="btn btn-sm" onclick="event.stopPropagation(); location.href='app-task-edit.html'">編集</button></td>
+                <td><button class="btn btn-sm" onclick="event.stopPropagation(); location.href='app-task-edit.html'">編集</button>
+                    <button class="btn btn-sm" onclick="event.stopPropagation(); location.href='app-task-new.html'">複製</button></td>
               </tr>
             </tbody>
           </table>
