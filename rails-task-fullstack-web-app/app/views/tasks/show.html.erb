@@ -4,6 +4,7 @@
   <h1><%= @task.title %></h1>
   <div class="flex gap-sm">
     <%= link_to "編集", edit_project_task_path(@project, @task), class: "btn" %>
+    <%= link_to "複製", duplicate_project_task_path(@project, @task), class: "btn" %>
     <%= button_to "削除", project_task_path(@project, @task), method: :delete, class: "btn btn-danger",
         data: { turbo_confirm: "このタスクを削除しますか？" } %>
   </div>

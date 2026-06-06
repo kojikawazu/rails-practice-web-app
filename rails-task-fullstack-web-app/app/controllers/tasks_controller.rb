@@ -22,6 +22,15 @@ class TasksController < ApplicationController
   def edit
   end
 
+  # 複製。複製元の値を初期入力した新規作成フォームを表示する（DB は変更しない）。
+  # 以降は通常の confirm → create フローに合流する（@project は set_project で取得済み）。
+  def duplicate
+    source = @project.tasks.find(params[:id])
+    @task = @project.tasks.build(title: "#{source.title}のコピー", status: source.status, due_date: source.due_date)
+    flash.now[:notice] = "「#{source.title}」を複製しました。内容を確認して作成してください。"
+    render :new
+  end
+
   # 確認画面の表示。DB には保存せず valid? で検証のみ行う。
   # id 有無で新規(build)／編集(find)を切り替える（@project は set_project で取得済み）。
   def confirm

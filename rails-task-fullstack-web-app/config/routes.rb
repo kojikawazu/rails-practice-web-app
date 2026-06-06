@@ -8,10 +8,10 @@ Rails.application.routes.draw do
 
   resources :projects do
     collection { post :confirm }
-    member     { post :confirm }
+    member     { post :confirm; get :duplicate }
     resources :tasks do
       collection { post :confirm }
-      member     { post :confirm }
+      member     { post :confirm; get :duplicate }
     end
   end
 

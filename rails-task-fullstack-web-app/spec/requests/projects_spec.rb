@@ -89,6 +89,27 @@ RSpec.describe "Projects", type: :request do
     end
   end
 
+  describe "GET /projects/:id/duplicate" do
+    let!(:project) { create(:project, user: user, title: "元プロジェクト", description: "元の説明") }
+
+    it "renders the new form prefilled from the source without creating a record" do
+      log_in
+      expect {
+        get duplicate_project_path(project)
+      }.not_to change(Project, :count)
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include("元プロジェクトのコピー")
+      expect(response.body).to include("元の説明")
+      expect(response.body).to include("確認する")
+    end
+
+    it "submits to the create flow (collection confirm), not update" do
+      log_in
+      get duplicate_project_path(project)
+      expect(response.body).to include(confirm_projects_path)
+    end
+  end
+
   describe "PATCH /projects/:id" do
     it "updates and redirects" do
       log_in
@@ -161,6 +182,11 @@ RSpec.describe "Projects", type: :request do
 
     it "returns 404 on confirm (member)" do
       post confirm_project_path(other_project), params: { project: { title: "乗っ取り" } }
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "returns 404 on duplicate" do
+      get duplicate_project_path(other_project)
       expect(response).to have_http_status(:not_found)
     end
   end
