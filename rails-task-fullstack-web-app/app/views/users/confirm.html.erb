@@ -20,15 +20,17 @@
     <div class="flex gap-sm" style="margin-top:24px;">
       <%# 「修正する」: 入力値を confirm へ再送(back=1)し、入力フォームへ戻す（独立フォーム）。 %>
       <%# 学習用途のためパスワードも hidden で保持する（実運用では確認画面で再保持しない設計が望ましい）。 %>
+      <%# Turbo Drive は非リダイレクトの 200 描画を破棄するため、確認画面のフォームはフルページ遷移にする。 %>
       <%= button_to "修正する", signup_confirm_path,
             method: :post,
             params: { user: { name: @user.name, email: @user.email,
                               password: @user.password, password_confirmation: @user.password_confirmation },
                       back: 1 },
+            form: { data: { turbo: false } },
             class: "btn" %>
 
       <%# 「登録する」: signup(POST) = create で保存する。 %>
-      <%= form_with(model: @user, url: signup_path) do |form| %>
+      <%= form_with(model: @user, url: signup_path, data: { turbo: false }) do |form| %>
         <%= form.hidden_field :name %>
         <%= form.hidden_field :email %>
         <%= form.hidden_field :password %>
