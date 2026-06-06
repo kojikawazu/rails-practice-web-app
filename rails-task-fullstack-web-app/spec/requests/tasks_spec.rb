@@ -87,6 +87,26 @@ RSpec.describe "Tasks", type: :request do
     end
   end
 
+  describe "GET /projects/:project_id/tasks/:id/duplicate" do
+    let!(:task) { create(:task, project: project, title: "元タスク", status: :in_progress) }
+
+    it "renders the new form prefilled from the source without creating a record" do
+      log_in
+      expect {
+        get duplicate_project_task_path(project, task)
+      }.not_to change(Task, :count)
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include("元タスクのコピー")
+      expect(response.body).to include("確認する")
+    end
+
+    it "submits to the create flow (collection confirm), not update" do
+      log_in
+      get duplicate_project_task_path(project, task)
+      expect(response.body).to include(confirm_project_tasks_path(project))
+    end
+  end
+
   describe "PATCH /projects/:project_id/tasks/:id" do
     it "updates and redirects to task" do
       log_in
@@ -140,6 +160,11 @@ RSpec.describe "Tasks", type: :request do
       expect {
         post project_tasks_path(other_project), params: { task: { title: "侵入タスク", status: "not_started" } }
       }.not_to change(Task, :count)
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "returns 404 on duplicate" do
+      get duplicate_project_task_path(other_project, other_task)
       expect(response).to have_http_status(:not_found)
     end
   end

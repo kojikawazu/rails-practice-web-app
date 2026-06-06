@@ -4,6 +4,7 @@
   <h1><%= @project.title %></h1>
   <div class="flex gap-sm">
     <%= link_to "編集", edit_project_path(@project), class: "btn" %>
+    <%= link_to "複製", duplicate_project_path(@project), class: "btn" %>
     <%= button_to "削除", project_path(@project), method: :delete, class: "btn btn-danger",
         data: { turbo_confirm: "このプロジェクトを削除しますか？関連するタスクもすべて削除されます。" } %>
   </div>
@@ -47,6 +48,7 @@
         <td class="text-sub"><%= task.due_date&.strftime("%Y-%m-%d") %></td>
         <td>
           <%= link_to "編集", edit_project_task_path(@project, task), class: "btn btn-sm", onclick: "event.stopPropagation()" %>
+          <%= link_to "複製", duplicate_project_task_path(@project, task), class: "btn btn-sm", onclick: "event.stopPropagation()" %>
         </td>
       </tr>
     <% end %>
