@@ -3,11 +3,13 @@
 one:
   title: MyString
   status: 1
-  due_date: 2026-04-07
+  start_date: 2026-04-07
+  end_date: 2026-04-14
   project: one
 
 two:
   title: MyString
   status: 1
-  due_date: 2026-04-07
+  start_date: 2026-04-07
+  end_date: 2026-04-14
   project: two

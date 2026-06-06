@@ -43,9 +43,15 @@
                 <option value="completed">完了</option>
               </select>
             </div>
-            <div class="form-group">
-              <label>期日</label>
-              <input type="date" class="input">
+            <div class="flex gap-sm">
+              <div class="form-group" style="flex:1;">
+                <label>開始日</label>
+                <input type="text" class="input" placeholder="YYYY-MM-DD（flatpickr）">
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label>終了日</label>
+                <input type="text" class="input" placeholder="YYYY-MM-DD（flatpickr）">
+              </div>
             </div>
             <div class="flex gap-sm" style="margin-top:24px;">
               <button type="submit" class="btn btn-primary">作成する</button>

@@ -20,7 +20,7 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
 
   test "should create task" do
     assert_difference("Task.count") do
-      post project_tasks_url(@project), params: { task: { due_date: @task.due_date, status: "not_started", title: "New task" } }
+      post project_tasks_url(@project), params: { task: { start_date: @task.start_date, end_date: @task.end_date, status: "not_started", title: "New task" } }
     end
 
     assert_redirected_to project_url(@project)
@@ -37,7 +37,7 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should update task" do
-    patch project_task_url(@project, @task), params: { task: { due_date: @task.due_date, status: "in_progress", title: @task.title } }
+    patch project_task_url(@project, @task), params: { task: { start_date: @task.start_date, end_date: @task.end_date, status: "in_progress", title: @task.title } }
     assert_redirected_to project_task_url(@project, @task)
   end
 

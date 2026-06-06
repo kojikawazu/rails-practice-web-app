@@ -68,4 +68,30 @@ RSpec.describe "確認画面フロー（JS / Turbo 有効）", type: :system, js
       expect(Project.where(title: "複製元プロジェクトのコピー")).to exist
     end
   end
+
+  describe "タスク（flatpickr 日付入力）" do
+    let(:user) { create(:user) }
+    let!(:project) { create(:project, user: user, title: "対象プロジェクト") }
+
+    before { sign_in_as(user) }
+
+    it "作成: flatpickr の開始日・終了日を入力 → 確認 → 作成で保存される" do
+      visit new_project_task_path(project)
+      fill_in "タイトル", with: "日付付きタスク"
+      # flatpickr は allowInput: true のため text input へ直接入力できる。
+      fill_in "開始日", with: "2026-07-01"
+      fill_in "終了日", with: "2026-07-10"
+
+      click_button "確認する"
+      expect(page).to have_content("入力内容の確認")
+      expect(page).to have_content("2026-07-01")
+      expect(page).to have_content("2026-07-10")
+
+      click_button "作成する"
+      expect(page).to have_content("タスクを作成しました")
+      task = Task.find_by(title: "日付付きタスク")
+      expect(task.start_date).to eq(Date.new(2026, 7, 1))
+      expect(task.end_date).to eq(Date.new(2026, 7, 10))
+    end
+  end
 end

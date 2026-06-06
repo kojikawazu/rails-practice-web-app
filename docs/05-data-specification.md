@@ -26,7 +26,8 @@ Task
 | id (PK)    |──1:N──| id (PK)    |──1:N──| id (PK)    |
 | name       |       | title      |       | title      |
 | email      |       | description|       | status     |
-| password   |       | user_id(FK)|       | due_date   |
+| password   |       | user_id(FK)|       | start_date |
+|   _digest  |       |            |       | end_date   |
 |   _digest  |       | created_at |       | project_id |
 | created_at |       | updated_at |       |       (FK) |
 | updated_at |       +------------+       | created_at |
@@ -65,8 +66,11 @@ Task
 | id | bigint | PK, NOT NULL | 自動採番 |
 | title | string | NOT NULL | タスク名 |
 | status | integer | NOT NULL, DEFAULT 0 | enum（0: not_started, 1: in_progress, 2: completed） |
-| due_date | date | | 期日 |
+| start_date | date | | 開始日（フルスタック版。終了日とともに任意） |
+| end_date | date | | 終了日（任意。入力時は終了日 >= 開始日） |
 | project_id | bigint | NOT NULL, FK | projects.id |
+
+> フルスタック版は期間管理（start_date / end_date）を採用する。API版（Project 2）は単一の `due_date`（期日）のままで、両者は意図的に異なる（API仕様は `07-api-specification.md` 参照）。
 | created_at | datetime | NOT NULL | |
 | updated_at | datetime | NOT NULL | |
 

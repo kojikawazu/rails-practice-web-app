@@ -26,7 +26,8 @@ class TasksController < ApplicationController
   # 以降は通常の confirm → create フローに合流する（@project は set_project で取得済み）。
   def duplicate
     source = @project.tasks.find(params[:id])
-    @task = @project.tasks.build(title: "#{source.title}のコピー", status: source.status, due_date: source.due_date)
+    @task = @project.tasks.build(title: "#{source.title}のコピー", status: source.status,
+                                 start_date: source.start_date, end_date: source.end_date)
     flash.now[:notice] = "「#{source.title}」を複製しました。内容を確認して作成してください。"
     render :new
   end
@@ -81,6 +82,6 @@ class TasksController < ApplicationController
   end
 
   def task_params
-    params.require(:task).permit(:title, :status, :due_date)
+    params.require(:task).permit(:title, :status, :start_date, :end_date)
   end
 end

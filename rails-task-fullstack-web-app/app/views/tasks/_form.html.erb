@@ -23,9 +23,19 @@
     <%= form.select :status, Task.statuses.keys.map { |s| [I18n.t("task_status.#{s}", default: s.humanize), s] }, {}, class: "form-select" %>
   </div>
 
-  <div class="form-group">
-    <%= form.label :due_date, "期日" %>
-    <%= form.date_field :due_date, class: "form-input" %>
+  <%# 開始日・終了日は flatpickr（type=text）で選択する。ラッパーに data-controller を付け、
+      開始/終了の input を start/end ターゲットとして flatpickr_controller に渡す。 %>
+  <div class="flex gap-sm" data-controller="flatpickr">
+    <div class="form-group" style="flex:1;">
+      <%= form.label :start_date, "開始日" %>
+      <%= form.text_field :start_date, class: "form-input", autocomplete: "off",
+            placeholder: "YYYY-MM-DD", data: { flatpickr_target: "start" } %>
+    </div>
+    <div class="form-group" style="flex:1;">
+      <%= form.label :end_date, "終了日" %>
+      <%= form.text_field :end_date, class: "form-input", autocomplete: "off",
+            placeholder: "YYYY-MM-DD", data: { flatpickr_target: "end" } %>
+    </div>
   </div>
 
   <div class="flex gap-sm" style="margin-top:24px;">

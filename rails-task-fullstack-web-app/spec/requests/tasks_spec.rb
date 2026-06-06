@@ -30,7 +30,7 @@ RSpec.describe "Tasks", type: :request do
       log_in
       expect {
         post project_tasks_path(project), params: {
-          task: { title: "新タスク", status: "not_started", due_date: Date.tomorrow }
+          task: { title: "新タスク", status: "not_started", start_date: Date.tomorrow, end_date: Date.tomorrow + 3 }
         }
       }.to change(Task, :count).by(1)
       expect(response).to redirect_to(project_path(project))
@@ -48,7 +48,7 @@ RSpec.describe "Tasks", type: :request do
       log_in
       expect {
         post confirm_project_tasks_path(project), params: {
-          task: { title: "確認用タスク", status: "not_started", due_date: Date.tomorrow }
+          task: { title: "確認用タスク", status: "not_started", start_date: Date.tomorrow, end_date: Date.tomorrow + 3 }
         }
       }.not_to change(Task, :count)
       expect(response).to have_http_status(:success)
