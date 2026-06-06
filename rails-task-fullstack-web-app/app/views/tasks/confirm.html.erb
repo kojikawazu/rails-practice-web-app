@@ -26,15 +26,17 @@
   </div>
 
   <div class="flex gap-sm" style="margin-top:24px;">
+    <%# Turbo Drive は非リダイレクトの 200 描画を破棄するため、確認画面のフォームはフルページ遷移にする。 %>
     <%# 「修正する」: 入力値を confirm へ再送(back=1)し、入力フォームへ戻す（独立フォーム）。 %>
     <%= button_to "修正する",
           (@task.persisted? ? confirm_project_task_path(@project, @task) : confirm_project_tasks_path(@project)),
           method: :post,
           params: { task: { title: @task.title, status: @task.status, due_date: @task.due_date }, back: 1 },
+          form: { data: { turbo: false } },
           class: "btn" %>
 
     <%# 「作成する/更新する」: form_with(model:) の既定送信先 create(POST) / update(PATCH) で保存する。 %>
-    <%= form_with(model: [@project, @task]) do |form| %>
+    <%= form_with(model: [@project, @task], data: { turbo: false }) do |form| %>
       <%= form.hidden_field :title %>
       <%= form.hidden_field :status %>
       <%= form.hidden_field :due_date %>
