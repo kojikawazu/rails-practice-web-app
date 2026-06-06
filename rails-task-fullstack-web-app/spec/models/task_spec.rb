@@ -24,6 +24,30 @@ RSpec.describe Task, type: :model do
     end
   end
 
+  describe '開始日・終了日' do
+    it '両方未入力でも有効（任意項目）' do
+      expect(build(:task, start_date: nil, end_date: nil)).to be_valid
+    end
+
+    it '片方のみ（開始日だけ）でも有効' do
+      expect(build(:task, start_date: Date.current, end_date: nil)).to be_valid
+    end
+
+    it '終了日が開始日と同じ日なら有効（境界値）' do
+      expect(build(:task, start_date: Date.current, end_date: Date.current)).to be_valid
+    end
+
+    it '終了日が開始日より後なら有効' do
+      expect(build(:task, start_date: Date.current, end_date: Date.current + 1)).to be_valid
+    end
+
+    it '終了日が開始日より前だと無効' do
+      task = build(:task, start_date: Date.current, end_date: Date.current - 1)
+      expect(task).not_to be_valid
+      expect(task.errors[:end_date]).to be_present
+    end
+  end
+
   describe 'enum status' do
     it 'defaults to not_started without factory' do
       # factory を使わず Task.new でモデル本来のデフォルトを検証する

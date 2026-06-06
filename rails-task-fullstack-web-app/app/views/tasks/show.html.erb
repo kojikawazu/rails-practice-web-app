@@ -27,8 +27,11 @@
       <% end %>
     </div>
 
-    <div class="text-sub" style="font-weight:600;">期日</div>
-    <div><%= @task.due_date&.strftime("%Y-%m-%d") || "-" %></div>
+    <div class="text-sub" style="font-weight:600;">開始日</div>
+    <div><%= @task.start_date&.strftime("%Y-%m-%d") || "-" %></div>
+
+    <div class="text-sub" style="font-weight:600;">終了日</div>
+    <div><%= @task.end_date&.strftime("%Y-%m-%d") || "-" %></div>
 
     <div class="text-sub" style="font-weight:600;">プロジェクト</div>
     <div><%= link_to @project.title, project_path(@project) %></div>

@@ -144,7 +144,7 @@
         <span class="role-tag role-user">ユーザー</span>
         <div class="screen-name">タスク作成</div>
         <div class="screen-path">/projects/:id/tasks/new</div>
-        <div class="screen-desc">タイトル・ステータス・期日を入力</div>
+        <div class="screen-desc">タイトル・ステータス・開始日・終了日を入力（日付は flatpickr）</div>
       </a>
     </div>
     <div class="screen-card">
@@ -187,7 +187,7 @@
     <ul>
       <li><code>users</code>: id, name, email, password_digest, created_at, updated_at</li>
       <li><code>projects</code>: id, title, description, user_id (FK→users), created_at, updated_at</li>
-      <li><code>tasks</code>: id, title, status (enum: 0=not_started, 1=in_progress, 2=completed), due_date, project_id (FK→projects), created_at, updated_at</li>
+      <li><code>tasks</code>: id, title, status (enum: 0=not_started, 1=in_progress, 2=completed), start_date, end_date, project_id (FK→projects), created_at, updated_at</li>
     </ul>
   </div>
 </body>

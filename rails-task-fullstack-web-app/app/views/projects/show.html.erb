@@ -27,7 +27,7 @@
     <tr>
       <th>タスク名</th>
       <th>ステータス</th>
-      <th>期日</th>
+      <th>期間</th>
       <th></th>
     </tr>
   </thead>
@@ -45,7 +45,7 @@
             <span class="badge badge-grey">未着手</span>
           <% end %>
         </td>
-        <td class="text-sub"><%= task.due_date&.strftime("%Y-%m-%d") %></td>
+        <td class="text-sub"><%= [task.start_date&.strftime("%Y-%m-%d"), task.end_date&.strftime("%Y-%m-%d")].compact.join(" 〜 ").presence || "-" %></td>
         <td>
           <%= link_to "編集", edit_project_task_path(@project, task), class: "btn btn-sm", onclick: "event.stopPropagation()" %>
           <%= link_to "複製", duplicate_project_task_path(@project, task), class: "btn btn-sm", onclick: "event.stopPropagation()" %>

@@ -55,13 +55,13 @@
         <div class="step-num">3</div>
         <div class="step-lbl">フォーム入力・送信</div>
         <div class="step-diag"><div class="av"><div class="av-line"></div><div class="ah-r"></div></div></div>
-        <div class="step-note">POST /projects/:id/tasks（title, status, due_date）</div>
+        <div class="step-note">POST /projects/:id/tasks（title, status, start_date, end_date）</div>
       </div>
       <div class="step-row">
         <div class="step-num">4</div>
         <div class="step-lbl">Strong Parameters</div>
         <div class="step-diag"><div class="av"><div class="av-line"></div><div class="ah-r"></div></div></div>
-        <div class="step-note">params.require(:task).permit(:title, :status, :due_date)</div>
+        <div class="step-note">params.require(:task).permit(:title, :status, :start_date, :end_date)</div>
       </div>
       <div class="step-row">
         <div class="step-num">5</div>

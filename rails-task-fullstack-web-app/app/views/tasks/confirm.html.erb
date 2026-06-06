@@ -21,8 +21,11 @@
       <% end %>
     </div>
 
-    <div class="text-sub" style="font-weight:600;">期日</div>
-    <div><%= @task.due_date&.strftime("%Y-%m-%d") || "-" %></div>
+    <div class="text-sub" style="font-weight:600;">開始日</div>
+    <div><%= @task.start_date&.strftime("%Y-%m-%d") || "-" %></div>
+
+    <div class="text-sub" style="font-weight:600;">終了日</div>
+    <div><%= @task.end_date&.strftime("%Y-%m-%d") || "-" %></div>
   </div>
 
   <div class="flex gap-sm" style="margin-top:24px;">
@@ -31,7 +34,8 @@
     <%= button_to "修正する",
           (@task.persisted? ? confirm_project_task_path(@project, @task) : confirm_project_tasks_path(@project)),
           method: :post,
-          params: { task: { title: @task.title, status: @task.status, due_date: @task.due_date }, back: 1 },
+          params: { task: { title: @task.title, status: @task.status,
+                            start_date: @task.start_date, end_date: @task.end_date }, back: 1 },
           form: { data: { turbo: false } },
           class: "btn" %>
 
@@ -39,7 +43,8 @@
     <%= form_with(model: [@project, @task], data: { turbo: false }) do |form| %>
       <%= form.hidden_field :title %>
       <%= form.hidden_field :status %>
-      <%= form.hidden_field :due_date %>
+      <%= form.hidden_field :start_date %>
+      <%= form.hidden_field :end_date %>
       <%= form.submit(@task.persisted? ? "更新する" : "作成する", class: "btn btn-primary") %>
     <% end %>
   </div>
