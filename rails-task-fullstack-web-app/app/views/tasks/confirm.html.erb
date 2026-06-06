@@ -26,16 +26,44 @@
 
     <div class="text-sub" style="font-weight:600;">終了日</div>
     <div><%= @task.end_date&.strftime("%Y-%m-%d") || "-" %></div>
+
+    <div class="text-sub" style="font-weight:600;">添付画像</div>
+    <div>
+      <% remove_ids = Array(@remove_image_ids).map(&:to_s) %>
+      <% kept = @task.persisted? ? @task.images.reject { |img| remove_ids.include?(img.id.to_s) } : [] %>
+      <% pending = Array(@image_signed_ids).filter_map { |sid| ActiveStorage::Blob.find_signed(sid) } %>
+      <% if kept.any? || pending.any? %>
+        <div class="flex gap-sm" style="flex-wrap:wrap;">
+          <% kept.each do |image| %>
+            <%= image_tag image.variant(resize_to_limit: [80, 80]),
+                  style: "width:80px; height:80px; object-fit:cover; border-radius:6px; border:1px solid #e2e8f0;" %>
+          <% end %>
+          <% pending.each do |blob| %>
+            <span class="badge badge-grey" title="<%= blob.filename %>">新規: <%= blob.filename %></span>
+          <% end %>
+        </div>
+      <% else %>
+        <span class="text-muted">なし</span>
+      <% end %>
+      <% if @task.persisted? && remove_ids.any? %>
+        <div class="text-muted" style="font-size:12px; margin-top:4px;">
+          削除予定: <%= @task.images.select { |img| remove_ids.include?(img.id.to_s) }.map { |img| img.filename }.join("、") %>
+        </div>
+      <% end %>
+    </div>
   </div>
 
   <div class="flex gap-sm" style="margin-top:24px;">
     <%# Turbo Drive は非リダイレクトの 200 描画を破棄するため、確認画面のフォームはフルページ遷移にする。 %>
     <%# 「修正する」: 入力値を confirm へ再送(back=1)し、入力フォームへ戻す（独立フォーム）。 %>
+    <%# 画像の選択（signed_id）・削除予約（remove_image_ids）も hidden で持ち回る。 %>
     <%= button_to "修正する",
           (@task.persisted? ? confirm_project_task_path(@project, @task) : confirm_project_tasks_path(@project)),
           method: :post,
           params: { task: { title: @task.title, status: @task.status,
-                            start_date: @task.start_date, end_date: @task.end_date }, back: 1 },
+                            start_date: @task.start_date, end_date: @task.end_date,
+                            image_signed_ids: Array(@image_signed_ids),
+                            remove_image_ids: Array(@remove_image_ids) }, back: 1 },
           form: { data: { turbo: false } },
           class: "btn" %>
 
@@ -45,6 +73,12 @@
       <%= form.hidden_field :status %>
       <%= form.hidden_field :start_date %>
       <%= form.hidden_field :end_date %>
+      <% Array(@image_signed_ids).each do |sid| %>
+        <%= hidden_field_tag "task[image_signed_ids][]", sid %>
+      <% end %>
+      <% Array(@remove_image_ids).each do |rid| %>
+        <%= hidden_field_tag "task[remove_image_ids][]", rid %>
+      <% end %>
       <%= form.submit(@task.persisted? ? "更新する" : "作成する", class: "btn btn-primary") %>
     <% end %>
   </div>

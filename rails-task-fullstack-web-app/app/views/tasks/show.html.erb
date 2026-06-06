@@ -43,3 +43,30 @@
     <div class="text-muted"><%= @task.updated_at.strftime("%Y-%m-%d") %></div>
   </div>
 </div>
+
+<%# ===== 添付画像 ===== %>
+<div class="card mt-md" style="max-width:600px;">
+  <h2 style="font-size:16px; margin-bottom:12px;">添付画像</h2>
+
+  <% if @task.images.attached? %>
+    <div class="flex gap-sm" style="flex-wrap:wrap;">
+      <% @task.images.each do |image| %>
+        <div style="position:relative; width:120px;">
+          <%= image_tag image.variant(resize_to_limit: [120, 120]),
+                style: "width:120px; height:120px; object-fit:cover; border-radius:6px; border:1px solid #e2e8f0;" %>
+          <%= button_to "×", detach_image_project_task_path(@project, @task, image.id),
+                method: :delete, class: "btn btn-sm btn-danger",
+                style: "position:absolute; top:4px; right:4px; padding:2px 8px;",
+                data: { turbo_confirm: "この画像を削除しますか？" } %>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <p class="text-muted" style="font-size:13px;">まだ画像はありません。</p>
+  <% end %>
+
+  <%# 画像の追加は編集フォームから行う（確認画面フローに合流）。 %>
+  <div style="margin-top:16px;">
+    <%= link_to "画像を追加・編集", edit_project_task_path(@project, @task), class: "btn btn-sm" %>
+  </div>
+</div>

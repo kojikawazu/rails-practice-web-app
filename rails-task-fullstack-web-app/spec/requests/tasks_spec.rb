@@ -176,4 +176,76 @@ RSpec.describe "Tasks", type: :request do
       expect(response).to have_http_status(:not_found)
     end
   end
+
+  describe "画像添付（フォーム→確認→作成フロー）" do
+    it "確認画面で画像をアップロードすると blob 化され、signed_id が hidden で持ち回られる" do
+      log_in
+      expect {
+        post confirm_project_tasks_path(project), params: {
+          task: { title: "画像付きタスク", status: "not_started",
+                  images: [ fixture_file_upload("sample.png", "image/png") ] }
+        }
+      }.to change(ActiveStorage::Blob, :count).by(1)
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include('name="task[image_signed_ids][]"')
+    end
+
+    it "確認→作成で signed_id 経由の画像がタスクに永続化される" do
+      log_in
+      # 確認ステップで生成された signed_id を抽出し、作成リクエストに引き渡す（実フロー再現）。
+      post confirm_project_tasks_path(project), params: {
+        task: { title: "画像付きタスク", status: "not_started",
+                images: [ fixture_file_upload("sample.png", "image/png") ] }
+      }
+      signed_id = response.body[/name="task\[image_signed_ids\]\[\]" value="([^"]+)"/, 1]
+      expect(signed_id).to be_present
+
+      expect {
+        post project_tasks_path(project), params: {
+          task: { title: "画像付きタスク", status: "not_started", image_signed_ids: [ signed_id ] }
+        }
+      }.to change(Task, :count).by(1)
+      expect(Task.order(:id).last.images.count).to eq(1)
+    end
+
+    it "確認ステップで非画像（text/plain）は blob 化されず 422 でフォームへ戻る" do
+      log_in
+      expect {
+        post confirm_project_tasks_path(project), params: {
+          task: { title: "不正ファイル", status: "not_started",
+                  images: [ fixture_file_upload("not_image.txt", "text/plain") ] }
+        }
+      }.not_to change(ActiveStorage::Blob, :count)
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include("png / jpeg / gif / webp")
+    end
+  end
+
+  describe "PATCH /projects/:project_id/tasks/:id（編集での既存画像削除）" do
+    it "remove_image_ids で指定した既存画像を1枚外せる" do
+      log_in
+      task.images.attach(io: File.open(Rails.root.join("spec/fixtures/files/sample.png")),
+                         filename: "sample.png", content_type: "image/png")
+      attachment_id = task.images.first.id
+      expect {
+        patch project_task_path(project, task), params: {
+          task: { title: task.title, status: task.status, remove_image_ids: [ attachment_id ] }
+        }
+      }.to change { task.reload.images.count }.by(-1)
+      expect(response).to redirect_to(project_task_path(project, task))
+    end
+  end
+
+  describe "DELETE /projects/:project_id/tasks/:id/images/:image_id（詳細画面からの個別削除）" do
+    it "添付済みの画像を1枚削除できる" do
+      log_in
+      task.images.attach(io: File.open(Rails.root.join("spec/fixtures/files/sample.png")),
+                         filename: "sample.png", content_type: "image/png")
+      image_id = task.images.first.id
+      expect {
+        delete detach_image_project_task_path(project, task, image_id)
+      }.to change { task.reload.images.count }.by(-1)
+      expect(response).to redirect_to(project_task_path(project, task))
+    end
+  end
 end

@@ -11,7 +11,13 @@ Rails.application.routes.draw do
     member     { post :confirm; get :duplicate }
     resources :tasks do
       collection { post :confirm }
-      member     { post :confirm; get :duplicate }
+      member do
+        post :confirm
+        get :duplicate
+        # 画像の追加は新規/編集フォーム（confirm→create/update）に集約。
+        # 詳細画面からの個別削除のみ専用ルートを残す。
+        delete "images/:image_id", action: :detach_image, as: :detach_image
+      end
     end
   end
 

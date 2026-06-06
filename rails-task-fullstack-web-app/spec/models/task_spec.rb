@@ -48,6 +48,23 @@ RSpec.describe Task, type: :model do
     end
   end
 
+  describe '添付画像のバリデーション' do
+    it 'PNG 画像は添付でき valid' do
+      task = build(:task)
+      task.images.attach(io: File.open(Rails.root.join('spec/fixtures/files/sample.png')),
+                         filename: 'sample.png', content_type: 'image/png')
+      expect(task).to be_valid
+    end
+
+    it '非画像（text/plain）は invalid' do
+      task = build(:task)
+      task.images.attach(io: StringIO.new('not image'),
+                         filename: 'a.txt', content_type: 'text/plain')
+      expect(task).not_to be_valid
+      expect(task.errors[:images]).to be_present
+    end
+  end
+
   describe 'enum status' do
     it 'defaults to not_started without factory' do
       # factory を使わず Task.new でモデル本来のデフォルトを検証する

@@ -38,6 +38,42 @@
     </div>
   </div>
 
+  <%# ===== 添付画像 ===== %>
+  <div class="form-group" style="margin-top:8px;">
+    <%= form.label :images, "添付画像" %>
+
+    <%# 編集時: 既存の添付画像。チェックで削除予約し、確認→更新で外す。 %>
+    <% if task.persisted? && task.images.attached? %>
+      <div class="flex gap-sm" style="flex-wrap:wrap; margin-bottom:12px;">
+        <% task.images.each do |image| %>
+          <label style="position:relative; width:120px; display:block; cursor:pointer;">
+            <%= image_tag image.variant(resize_to_limit: [120, 120]),
+                  style: "width:120px; height:120px; object-fit:cover; border-radius:6px; border:1px solid #e2e8f0;" %>
+            <span style="position:absolute; top:4px; right:4px; background:rgba(255,255,255,0.9); border-radius:4px; padding:2px 6px; font-size:12px;">
+              <%= check_box_tag "task[remove_image_ids][]", image.id,
+                    Array(@remove_image_ids).map(&:to_s).include?(image.id.to_s) %> 削除
+            </span>
+          </label>
+        <% end %>
+      </div>
+    <% end %>
+
+    <%# 確認画面から戻ってきた、アップロード済みファイル（signed_id）を hidden で保持する。 %>
+    <% Array(@image_signed_ids).each do |sid| %>
+      <%= hidden_field_tag "task[image_signed_ids][]", sid %>
+    <% end %>
+    <% pending = Array(@image_signed_ids).filter_map { |sid| ActiveStorage::Blob.find_signed(sid) } %>
+    <% if pending.any? %>
+      <div class="text-muted" style="font-size:13px; margin-bottom:8px;">
+        選択中: <%= pending.map(&:filename).join("、") %>
+      </div>
+    <% end %>
+
+    <%= form.file_field :images, multiple: true,
+          accept: "image/png,image/jpeg,image/gif,image/webp", class: "form-input" %>
+    <div style="font-size:12px; color:#94a3b8; margin-top:4px;">png / jpeg / gif / webp・1枚5MBまで・複数選択可</div>
+  </div>
+
   <div class="flex gap-sm" style="margin-top:24px;">
     <%= form.submit "確認する", class: "btn btn-primary" %>
     <%= link_to "キャンセル", project_path(@project), class: "btn" %>
