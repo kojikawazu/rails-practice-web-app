@@ -72,6 +72,7 @@ DATABASE_URL=postgresql://rails_task:<パスワード>@localhost:5432/rails_task
 rails-task-web-app/
 ├── CLAUDE.md
 ├── README.md
+├── Makefile                       # 開発用タスクランナー（docker/setup/test/lint/ci）
 ├── docker-compose.yml             # PostgreSQL + MinIO コンテナ定義
 ├── .env                           # DB接続情報・MinIO 認証情報（.gitignore 対象）
 ├── docs/                          # 仕様書
