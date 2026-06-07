@@ -190,6 +190,18 @@ RSpec.describe "Tasks", type: :request do
       expect(response.body).to include('name="task[image_signed_ids][]"')
     end
 
+    it "確認画面で新規アップロード画像がサムネイル（img タグ）で表示される" do
+      log_in
+      post confirm_project_tasks_path(project), params: {
+        task: { title: "画像付きタスク", status: "not_started",
+                images: [ fixture_file_upload("sample.png", "image/png") ] }
+      }
+      expect(response).to have_http_status(:success)
+      # ファイル名バッジだけでなく、variant の representation URL を指す img が描画される。
+      expect(response.body).to include("/rails/active_storage/representations/")
+      expect(response.body).to match(%r{<img[^>]+/rails/active_storage/representations/})
+    end
+
     it "確認→作成で signed_id 経由の画像がタスクに永続化される" do
       log_in
       # 確認ステップで生成された signed_id を抽出し、作成リクエストに引き渡す（実フロー再現）。
