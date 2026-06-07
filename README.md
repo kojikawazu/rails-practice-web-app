@@ -48,6 +48,7 @@ rails-task-web-app/
 ├── .github/workflows/ci.yml       # GitHub Actions（テスト CI）
 ├── CLAUDE.md
 ├── README.md
+├── Makefile                       # 開発用タスクランナー（make help で一覧）
 ├── docker-compose.yml             # PostgreSQL + MinIO コンテナ定義
 ├── .env                           # DB接続情報・MinIO 認証情報（git管理外）
 ├── .env.example                   # 環境変数テンプレート
@@ -68,7 +69,18 @@ GitHub Actions（`.github/workflows/ci.yml`）で、`main` への push と全 PR
 | `Test (matrix)` | 両アプリで Minitest（`bin/rails test`）+ RSpec（`bundle exec rspec`） |
 | `System (:js)` | フルスタック版の JS system spec（`rspec --tag js`、headless Chrome） |
 
-ローカル実行:
+ローカル実行（`make` ショートカット推奨。全 target は `make help` で一覧）:
+
+```bash
+make up            # PostgreSQL + MinIO 起動（.env 自動生成）
+make db-prepare    # テスト用 DB 準備（既定: fullstack。APP= で切替）
+make test          # Minitest + RSpec（既定アプリ）
+make test-all      # 両アプリでテスト
+make test-js       # JS system spec（fullstack のみ、要 Chrome）
+make ci            # ローカル CI 一括（rubocop + security + tests）
+```
+
+`make` を使わない場合の素のコマンド:
 
 ```bash
 docker compose up -d                          # PostgreSQL 起動
