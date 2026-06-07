@@ -64,6 +64,7 @@ GitHub Actions（`.github/workflows/ci.yml`）で、`main` への push と全 PR
 
 | ジョブ | 内容 |
 |---|---|
+| `Detect changes` | 差分パスを判定し、コード変更の有無（`code`）を後続ジョブへ渡す軽量ジョブ |
 | `Test (matrix)` | 両アプリで Minitest（`bin/rails test`）+ RSpec（`bundle exec rspec`） |
 | `System (:js)` | フルスタック版の JS system spec（`rspec --tag js`、headless Chrome） |
 
@@ -77,7 +78,7 @@ bundle exec rspec                             # 通常スイート（JS 除外�
 bundle exec rspec --tag js                    # JS system spec（要 Chrome）
 ```
 
-> 仕様書・ドキュメント（`**.md` / `docs/`）のみの変更では CI はスキップされる（`paths-ignore`）。
+> ドキュメントのみの変更（`docs/**` / `**.md` / `.claude/**` 等、コード外）では、`Detect changes` が `code=false` と判定し、重い `Test` / `System` ジョブを **`if` 条件でスキップ**する。`paths-ignore` と違いワークフロー自体は起動するため、スキップされたジョブは required check 上で成功扱いとなり、ブランチ保護を有効にしてもマージがブロックされない。
 
 ## Docs
 
