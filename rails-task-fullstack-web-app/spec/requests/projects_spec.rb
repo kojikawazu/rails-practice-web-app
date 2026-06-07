@@ -47,16 +47,30 @@ RSpec.describe "Projects", type: :request do
       post projects_path, params: { project: { title: "" } }
       expect(response).to have_http_status(:unprocessable_entity)
     end
+
+    it "作成成功で session の退避データをクリアする" do
+      log_in
+      post confirm_projects_path, params: { project: { title: "クリア確認", description: "x" } }
+      post projects_path, params: { project: { title: "クリア確認", description: "x" } }
+      # session がクリアされたため confirm(GET) は new へ戻る。
+      get confirm_projects_path
+      expect(response).to redirect_to(new_project_path)
+    end
   end
 
-  describe "POST /projects/confirm" do
-    it "renders confirm without creating a project" do
+  # 新規作成の確認画面は (b案2) リダイレクト方式（PRG）。
+  describe "POST /projects/confirm（新規・PRG）" do
+    it "検証OKなら作成せず confirm(GET) へリダイレクトし、追従先で確認画面を描画する" do
       log_in
       expect {
         post confirm_projects_path, params: { project: { title: "確認用", description: "説明" } }
       }.not_to change(Project, :count)
+      expect(response).to redirect_to(confirm_projects_path)
+
+      follow_redirect!
       expect(response).to have_http_status(:success)
       expect(response.body).to include("入力内容の確認")
+      expect(response.body).to include("確認用")
     end
 
     it "renders new with 422 on invalid params" do
@@ -64,12 +78,43 @@ RSpec.describe "Projects", type: :request do
       post confirm_projects_path, params: { project: { title: "" } }
       expect(response).to have_http_status(:unprocessable_entity)
     end
+  end
 
-    it "returns to the form when back is pressed" do
+  describe "GET /projects/confirm（新規確認画面の描画）" do
+    it "session が無ければ new へリダイレクトする（リロード安全網）" do
       log_in
-      post confirm_projects_path, params: { project: { title: "確認用", description: "説明" }, back: 1 }
+      get confirm_projects_path
+      expect(response).to redirect_to(new_project_path)
+    end
+
+    it "session があれば確認画面を描画する" do
+      log_in
+      post confirm_projects_path, params: { project: { title: "セッション確認", description: "説明" } }
+      get confirm_projects_path
       expect(response).to have_http_status(:success)
-      expect(response.body).to include("確認する")
+      expect(response.body).to include("入力内容の確認")
+      expect(response.body).to include("セッション確認")
+    end
+  end
+
+  describe "GET /projects/new（「修正する」での入力値復元）" do
+    it "restore=1 なら session の入力値をフォームに復元する" do
+      log_in
+      post confirm_projects_path, params: { project: { title: "復元タイトル", description: "復元説明" } }
+      get new_project_path(restore: 1)
+      expect(response).to have_http_status(:success)
+      expect(response.body).to include("復元タイトル")
+      expect(response.body).to include("復元説明")
+    end
+
+    it "restore 無しの通常新規は session を破棄し空フォームを返す" do
+      log_in
+      post confirm_projects_path, params: { project: { title: "破棄対象", description: "x" } }
+      get new_project_path
+      expect(response.body).not_to include("破棄対象")
+      # session が破棄されたため confirm(GET) は new へ戻る。
+      get confirm_projects_path
+      expect(response).to redirect_to(new_project_path)
     end
   end
 

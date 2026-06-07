@@ -14,17 +14,21 @@
   </div>
 
   <div class="flex gap-sm" style="margin-top:24px;">
-    <%# Turbo Drive は非リダイレクトの 200 描画を破棄するため、確認画面のフォームはフルページ遷移にする。 %>
-    <%# 「修正する」: 入力値を confirm へ再送(back=1)し、入力フォームへ戻す（独立フォーム）。 %>
-    <%= button_to "修正する",
-          (@project.persisted? ? confirm_project_path(@project) : confirm_projects_path),
-          method: :post,
-          params: { project: { title: @project.title, description: @project.description }, back: 1 },
-          form: { data: { turbo: false } },
-          class: "btn" %>
+    <% if @project.persisted? %>
+      <%# 編集（従来方式）: 入力値を confirm へ再送(back=1)し、入力フォームへ戻す。Turbo は無効。 %>
+      <%= button_to "修正する", confirm_project_path(@project),
+            method: :post,
+            params: { project: { title: @project.title, description: @project.description }, back: 1 },
+            form: { data: { turbo: false } },
+            class: "btn" %>
+    <% else %>
+      <%# 新規（(b案2)）: 入力値は session が保持するため、GET でフォームへ戻る（restore=1）。 %>
+      <%= link_to "修正する", new_project_path(restore: 1), class: "btn" %>
+    <% end %>
 
-    <%# 「作成する/更新する」: form_with(model:) の既定送信先 create(POST) / update(PATCH) で保存する。 %>
-    <%= form_with(model: @project, data: { turbo: false }) do |form| %>
+    <%# 「作成する/更新する」: form_with(model:) の既定送信先 create(POST) / update(PATCH) で保存する。
+        新規は Turbo 有効（成功時の redirect を Turbo が追従）、編集は従来通り turbo:false。 %>
+    <%= form_with(model: @project, data: @project.persisted? ? { turbo: false } : {}) do |form| %>
       <%= form.hidden_field :title %>
       <%= form.hidden_field :description %>
       <%= form.submit(@project.persisted? ? "更新する" : "作成する", class: "btn btn-primary") %>

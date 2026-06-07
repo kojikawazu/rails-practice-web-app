@@ -71,7 +71,8 @@ RSpec.describe "確認画面フロー", type: :system do
       fill_in "タイトル", with: "保持タイトル"
       fill_in "説明", with: "保持説明"
       click_button "確認する"
-      click_button "修正する"
+      # 新規は (b案2) のため「修正する」はリンク（session が値を保持）。
+      click_on "修正する"
 
       expect(page).to have_field("タイトル", with: "保持タイトル")
       expect(page).to have_field("説明", with: "保持説明")
