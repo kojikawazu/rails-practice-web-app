@@ -48,8 +48,8 @@ rails-task-web-app/
 ├── .github/workflows/ci.yml       # GitHub Actions（テスト CI）
 ├── CLAUDE.md
 ├── README.md
-├── docker-compose.yml             # PostgreSQL コンテナ定義
-├── .env                           # DB接続情報（git管理外）
+├── docker-compose.yml             # PostgreSQL + MinIO コンテナ定義
+├── .env                           # DB接続情報・MinIO 認証情報（git管理外）
 ├── .env.example                   # 環境変数テンプレート
 ├── docs/                          # 仕様書・モック画面
 │   ├── mockups/                   # HTMLモック画面
@@ -81,4 +81,36 @@ bundle exec rspec --tag js                    # JS system spec（要 Chrome）
 
 ## Docs
 
-- `docs/mockups/index.html` をブラウザで開くと画面モック一覧を確認できます
+仕様書は `docs/` 配下に番号付きで整理しています。
+
+### よくある探し物（クイックリンク）
+
+| 知りたいこと | 参照先 |
+|---|---|
+| **コンテナ構成・アーキテクチャ**（Docker で何が動く？ Rails はコンテナ？） | [docs/09-architecture-specification.md](docs/09-architecture-specification.md) |
+| **インフラ・ポート番号**（PostgreSQL 5434 / MinIO 9000・9001 など） | [docs/04-non-functional-specification.md](docs/04-non-functional-specification.md) |
+| **DB（ER 図・テーブルスキーマ・Active Storage）** | [docs/05-data-specification.md](docs/05-data-specification.md) |
+| **セキュリティ**（認証・認可・preview_url の iframe 防御） | [docs/06-security-specification.md](docs/06-security-specification.md) |
+| **API エンドポイント一覧** | [docs/07-api-specification.md](docs/07-api-specification.md) |
+| **起動コマンド・2 構成の差分を読み比べる** | [docs/12-code-reading-guide.md](docs/12-code-reading-guide.md) |
+| **進捗・タスク** | [docs/11-tasks.md](docs/11-tasks.md) |
+| **画面モック一覧** | `docs/mockups/index.html`（ブラウザで開く） |
+
+### ドキュメント一覧
+
+| # | ファイル | 内容 |
+|---|---|---|
+| 01 | [business-requirements](docs/01-business-requirements.md) | 要求仕様（背景・目標・スコープ） |
+| 02 | [requirements-specification](docs/02-requirements-specification.md) | 要件仕様（機能要件一覧・受け入れ基準・優先度） |
+| 03 | [functional-specification](docs/03-functional-specification.md) | 機能仕様（各機能詳細・画面遷移・確認画面・バリデーション） |
+| 04 | [non-functional-specification](docs/04-non-functional-specification.md) | 非機能仕様（インフラ構成・ポート） |
+| 05 | [data-specification](docs/05-data-specification.md) | データ仕様（ER 図・テーブルスキーマ・Active Storage） |
+| 06 | [security-specification](docs/06-security-specification.md) | セキュリティ仕様（認証・認可・iframe 多層防御） |
+| 07 | [api-specification](docs/07-api-specification.md) | API 仕様（エンドポイント・リクエスト/レスポンス） |
+| 08 | [test-specification](docs/08-test-specification.md) | テスト仕様（戦略・テストケース） |
+| 09 | [architecture-specification](docs/09-architecture-specification.md) | アーキテクチャ仕様（システム構成・**Docker/コンテナ構成**・技術スタック） |
+| 10 | [miscellaneous-specification](docs/10-miscellaneous-specification.md) | その他（用語集・参考資料） |
+| 11 | [tasks](docs/11-tasks.md) | タスク・進捗 |
+| 12 | [code-reading-guide](docs/12-code-reading-guide.md) | コードリーディングガイド（起動コマンド・2 構成の差分） |
+| — | [design/design-policy](docs/design/design-policy.md) | 開発設計実装方針（ベースライン） |
+| — | [test-design/coverage-strengthening-test-design](docs/test-design/coverage-strengthening-test-design.md) | テスト設計（カバレッジ補強） |

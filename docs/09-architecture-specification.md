@@ -27,6 +27,7 @@ APIクライアント → Rails（Router → Controller → Model → JSON） �
 | 言語 | Ruby |
 | フレームワーク | Ruby on Rails |
 | データベース | PostgreSQL 16（Docker コンテナ） |
+| オブジェクトストレージ | MinIO（S3 互換。フルスタック版の Active Storage バックエンド） |
 | コンテナ | Docker / Docker Compose |
 | テスト | RSpec, FactoryBot, Shoulda Matchers |
 | 認証 | has_secure_password（bcrypt） |
@@ -35,16 +36,23 @@ APIクライアント → Rails（Router → Controller → Model → JSON） �
 ## インフラストラクチャ
 
 - **PostgreSQL**: docker-compose で起動（Rails とは別プロセス）
+- **MinIO**: docker-compose で起動（S3 互換オブジェクトストレージ。フルスタック版の Active Storage バックエンド）
 - **Rails**: ローカル実行（Docker 外）
 - 本番デプロイは対象外
+
+> **アプリ（Rails）はコンテナ化していない**: `docker compose up` で起動するのは PostgreSQL・MinIO などの**ミドルウェアのみ**。Rails 本体はローカル（`rbenv exec rails server`）で実行する（理由は `04-non-functional-specification.md` 参照）。各アプリ直下の `Dockerfile` / `config/deploy.yml` は `rails new` が生成した**本番デプロイ用（Kamal）テンプレートで、本プロジェクトでは未使用**。
 
 ### Docker 構成
 
 ```
 docker-compose.yml
-  └── db (postgres:16)
-        ├── Port: 5434:5432
-        └── Volume: pgdata → /var/lib/postgresql/data
+  ├── db (postgres:16)
+  │     ├── Port: 5434:5432
+  │     └── Volume: pgdata → /var/lib/postgresql/data
+  ├── minio (minio/minio)            # S3 互換ストレージ（フルスタック版の画像保存先）
+  │     ├── Port: 9000（S3 API） / 9001（管理コンソール）
+  │     └── Volume: miniodata → /data
+  └── createbuckets (minio/mc)       # 起動時にバケットを作成する使い捨てコンテナ
 ```
 
 ### 環境変数（.env）
@@ -64,8 +72,8 @@ DATABASE_URL=postgresql://rails_task:<パスワード>@localhost:5432/rails_task
 rails-task-web-app/
 ├── CLAUDE.md
 ├── README.md
-├── docker-compose.yml             # PostgreSQL コンテナ定義
-├── .env                           # DB接続情報（.gitignore 対象）
+├── docker-compose.yml             # PostgreSQL + MinIO コンテナ定義
+├── .env                           # DB接続情報・MinIO 認証情報（.gitignore 対象）
 ├── docs/                          # 仕様書
 ├── rails-task-fullstack-web-app/  # Project 1: フルスタック
 └── rails-task-api-web-app/        # Project 2: APIモード
