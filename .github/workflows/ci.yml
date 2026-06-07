@@ -3,17 +3,45 @@ name: CI
 on:
   push:
     branches: [main]
-    paths-ignore: ["**.md", "docs/**"]
   pull_request:
-    paths-ignore: ["**.md", "docs/**"]
 
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
+  # コード変更の有無を1か所で判定する軽量ジョブ。
+  # doc のみ（docs/** や **.md）の変更では code=false となり、
+  # 下流の重いジョブは if 条件でスキップされる。
+  # skip されたジョブは required check 上では成功扱いになるため、
+  # ブランチ保護を有効にしてもマージがブロックされない。
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          # 「コードとは何か」を positive パターンで列挙する（取りこぼさない安全側）。
+          # ここに該当しない変更（docs/**, **.md, README, .claude/** 等）は code=false。
+          filters: |
+            code:
+              - 'rails-task-fullstack-web-app/**'
+              - 'rails-task-api-web-app/**'
+              - '.github/workflows/**'
+
   test:
     name: Test (${{ matrix.app }})
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -59,6 +87,8 @@ jobs:
 
   system-js:
     name: System (:js, headless Chrome)
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     services:
       postgres:
