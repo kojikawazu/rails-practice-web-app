@@ -11,7 +11,13 @@ class ProjectsController < ApplicationController
   end
 
   def new
-    @project = current_user.projects.build
+    # 「修正する」(restore=1) 経由は session の入力値を復元、通常の新規は session を破棄して空フォーム。
+    if params[:restore].present?
+      @project = current_user.projects.build(pending_project_params)
+    else
+      reset_pending_project
+      @project = current_user.projects.build
+    end
   end
 
   def edit
@@ -26,19 +32,22 @@ class ProjectsController < ApplicationController
     render :new
   end
 
-  # 確認画面の表示。DB には保存せず valid? で検証のみ行う。
-  # id 有無で新規(build)／編集(find)を切り替える。
+  # 確認画面。DB には保存せず検証のみ行う。
+  # - 新規: (b案2) リダイレクト方式。confirm_new に委譲。
+  # - 編集: 従来の POST 描画方式（変更なし）。
   def confirm
-    @project = params[:id] ? current_user.projects.find(params[:id]) : current_user.projects.build
+    return confirm_new unless params[:id]
+
+    @project = current_user.projects.find(params[:id])
     @project.assign_attributes(project_params)
 
     # 確認画面の「修正する」押下時は入力フォームへ戻す（入力値は保持）。
-    return render(@project.persisted? ? :edit : :new) if params[:back].present?
+    return render(:edit) if params[:back].present?
 
     if @project.valid?
       render :confirm
     else
-      render(@project.persisted? ? :edit : :new, status: :unprocessable_entity)
+      render :edit, status: :unprocessable_entity
     end
   end
 
@@ -46,6 +55,7 @@ class ProjectsController < ApplicationController
     @project = current_user.projects.build(project_params)
 
     if @project.save
+      reset_pending_project
       redirect_to @project, notice: "プロジェクトを作成しました。"
     else
       render :new, status: :unprocessable_entity
@@ -66,6 +76,35 @@ class ProjectsController < ApplicationController
   end
 
   private
+
+  # 新規プロジェクトの確認画面（(b案2) リダイレクト方式 / PRG）。
+  # POST: 検証 → 入力値を session に退避 → confirm(GET) へ 303 リダイレクト（Turbo Drive 対応）。
+  # GET : session から復元して確認画面を描画。session が無ければ new へ戻す（リロード安全網）。
+  def confirm_new
+    if request.get?
+      return redirect_to(new_project_path, alert: "確認画面の情報がありません。入力し直してください。") if pending_project_params.blank?
+
+      @project = current_user.projects.build(pending_project_params)
+      return render :confirm
+    end
+
+    @project = current_user.projects.build(project_params)
+    if @project.valid?
+      session[:pending_project] = project_params.to_h
+      redirect_to confirm_projects_path, status: :see_other
+    else
+      render :new, status: :unprocessable_entity
+    end
+  end
+
+  # session に退避した新規プロジェクトの入力値（許可カラムのみ）。
+  def pending_project_params
+    (session[:pending_project] || {}).slice("title", "description")
+  end
+
+  def reset_pending_project
+    session.delete(:pending_project)
+  end
 
   def set_project
     @project = current_user.projects.find(params[:id])

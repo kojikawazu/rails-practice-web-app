@@ -7,7 +7,9 @@ Rails.application.routes.draw do
   delete "logout", to: "sessions#destroy"
 
   resources :projects do
-    collection { post :confirm }
+    # 新規作成の確認画面は (b案2) リダイレクト方式。POST(検証→session 退避→303) と
+    # GET(session から確認画面を描画／無ければ new へ) の両方を受ける。
+    collection { match :confirm, via: %i[get post] }
     member     { post :confirm; get :duplicate }
     resources :tasks do
       # 確認画面は POST 専用だが、リロード/戻る操作で GET される場合があるため GET も受け、

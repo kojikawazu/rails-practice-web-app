@@ -8,10 +8,12 @@
   </div>
 <% end %>
 
-<%# 確認画面は POST に対し別ページを 200 で描画するため、Turbo Drive を無効化してフルページ遷移にする。 %>
+<%# Turbo Drive の扱い:
+    新規 = (b案2) リダイレクト方式（confirm が 303 を返すため Turbo 有効・白画面なし）、
+    編集 = 従来のフルページ遷移（confirm が 200 で確認画面を返すため turbo:false）。 %>
 <%= form_with(model: project, method: :post,
       url: project.persisted? ? confirm_project_path(project) : confirm_projects_path,
-      data: { turbo: false },
+      data: project.persisted? ? { turbo: false } : {},
       class: "card", style: "max-width:600px;") do |form| %>
   <div class="form-group">
     <%= form.label :title, "タイトル" %>
