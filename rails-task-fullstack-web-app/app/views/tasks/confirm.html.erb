@@ -61,7 +61,18 @@
                   style: "width:80px; height:80px; object-fit:cover; border-radius:6px; border:1px solid #e2e8f0;" %>
           <% end %>
           <% pending.each do |blob| %>
-            <span class="badge badge-grey" title="<%= blob.filename %>">新規: <%= blob.filename %></span>
+            <%# 新規アップロードは確認ステップで blob 化済み。kept と同様にサムネイル表示する。 %>
+            <%# 「新規」はキャプションで示し、未保存（確定で attach される）であることを明示する。 %>
+            <figure style="margin:0; display:flex; flex-direction:column; align-items:center; gap:4px;">
+              <% if blob.representable? %>
+                <%= image_tag blob.variant(resize_to_limit: [80, 80]),
+                      alt: blob.filename, title: blob.filename,
+                      style: "width:80px; height:80px; object-fit:cover; border-radius:6px; border:1px solid #e2e8f0;" %>
+              <% else %>
+                <span class="badge badge-grey" title="<%= blob.filename %>"><%= blob.filename %></span>
+              <% end %>
+              <figcaption class="badge badge-grey" style="font-size:11px;">新規</figcaption>
+            </figure>
           <% end %>
         </div>
       <% else %>
