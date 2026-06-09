@@ -1,5 +1,17 @@
 # タスク（Tasks）
 
+## 目次
+
+- [マイルストーン](#マイルストーン)
+- [タスク一覧](#タスク一覧)
+  - [Day 1：環境構築 + scaffold一本通す](#day-1環境構築--scaffold一本通す)
+  - [Day 2：手書きCRUD](#day-2手書きcrud)
+  - [Day 3：User認証](#day-3user認証)
+  - [Day 4：RSpec](#day-4rspec)
+  - [Day 5：APIモード（Project 2）](#day-5apiモードproject-2)
+  - [追加対応（機能・テスト・CI）](#追加対応機能テストci)
+- [進捗](#進捗)
+
 ## マイルストーン
 
 | # | マイルストーン | 内容 | 対象 |

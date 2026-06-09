@@ -1,5 +1,13 @@
 # テスト仕様書（Test Specification）
 
+## 目次
+
+- [テスト戦略](#テスト戦略)
+- [テスト環境](#テスト環境)
+- [テストケース](#テストケース)
+- [カバレッジ目標](#カバレッジ目標)
+- [テストツール](#テストツール)
+
 ## テスト戦略
 
 学習目的のため、以下の3レベルで構成する:
@@ -21,29 +29,17 @@
 
 ## テストケース
 
-### Model spec
-
-| モデル | テスト内容 |
-|--------|-----------|
-| User | 有効なデータで作成できる / name必須 / email必須・一意・形式 / password最小文字数 |
-| Project | 有効なデータで作成できる / title必須 / user関連付け / 削除時にtasksも削除 |
-| Task | 有効なデータで作成できる / title必須 / status必須・値の制限 / project関連付け |
-
-### Request spec
-
-| 対象 | テスト内容 |
-|------|-----------|
-| Projects | index/show/create/update/destroy の正常系 / 複製(duplicate)の正常系・create フロー合流 / 他ユーザーリソースの404 / 未ログイン時のリダイレクト |
-| Tasks | index/show/create/update/destroy の正常系 / 複製(duplicate)の正常系・create フロー合流 / 他ユーザーリソースの404 / 存在しないprojectでの404 |
-| Sessions | ログイン成功/失敗 / ログアウト |
-
-### System spec
-
-| 対象 | テスト内容 |
-|------|-----------|
-| 確認画面フロー（rack_test） | 登録・プロジェクト/タスク作成の 入力→確認→確定 / 「修正する」で入力値保持 / 不正入力でフォーム留まり |
-| 確認画面フロー（`:js` / Turbo 有効） | 実ブラウザで 登録・作成・複製 の 入力→確認画面表示→確定 が完了すること（Turbo Drive 退行の回帰ガード） |
-| 削除確認（`:js`） | `turbo_confirm` ダイアログの承認/キャンセル挙動 |
+| テスト種別 | 対象 | テスト内容 |
+|-----------|------|-----------|
+| Model spec | User | 有効なデータで作成できる / name必須 / email必須・一意・形式 / password最小文字数 |
+| Model spec | Project | 有効なデータで作成できる / title必須 / user関連付け / 削除時にtasksも削除 |
+| Model spec | Task | 有効なデータで作成できる / title必須 / status必須・値の制限 / project関連付け |
+| Request spec | Projects | index/show/create/update/destroy の正常系 / 複製(duplicate)の正常系・create フロー合流 / 他ユーザーリソースの404 / 未ログイン時のリダイレクト |
+| Request spec | Tasks | index/show/create/update/destroy の正常系 / 複製(duplicate)の正常系・create フロー合流 / 他ユーザーリソースの404 / 存在しないprojectでの404 |
+| Request spec | Sessions | ログイン成功/失敗 / ログアウト |
+| System spec | 確認画面フロー（rack_test） | 登録・プロジェクト/タスク作成の 入力→確認→確定 / 「修正する」で入力値保持 / 不正入力でフォーム留まり |
+| System spec | 確認画面フロー（`:js` / Turbo 有効） | 実ブラウザで 登録・作成・複製 の 入力→確認画面表示→確定 が完了すること（Turbo Drive 退行の回帰ガード） |
+| System spec | 削除確認（`:js`） | `turbo_confirm` ダイアログの承認/キャンセル挙動 |
 
 ## カバレッジ目標
 
