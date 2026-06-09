@@ -1,6 +1,6 @@
 # Rails Task Web App
 
-[![CI](https://github.com/kojikawazu/rails-task-web-app/actions/workflows/ci.yml/badge.svg)](https://github.com/kojikawazu/rails-task-web-app/actions/workflows/ci.yml)
+[![CI](https://github.com/kojikawazu/rails-practice-web-app/actions/workflows/ci.yml/badge.svg)](https://github.com/kojikawazu/rails-practice-web-app/actions/workflows/ci.yml)
 
 ## Overview
 
@@ -11,40 +11,81 @@ Railsトレーニング用プロジェクト。同じドメイン（タスク管
 | Project 1: フルスタック | `rails-task-fullstack-web-app/` | ERB/View込みのフルスタック |
 | Project 2: APIモード | `rails-task-api-web-app/` | JSON APIのみ |
 
+両プロジェクトとも実装・テスト済みで、ローカルで起動できる（[Quick Start](#quick-start) 参照）。
+
+## Features
+
+タスク管理ドメインを題材に、両プロジェクト共通で以下を実装している。
+
+- ユーザー登録・ログイン / ログアウト（フルスタック版 = セッション、APIモード = JWT）
+- プロジェクトの CRUD（一覧・詳細・作成・編集・削除）
+- タスクの CRUD + ステータス管理（未着手 / 進行中 / 完了）
+- 認可スコープ（他ユーザーのリソースへアクセスすると 404）
+
+フルスタック版のみ:
+
+- **確認画面フロー**（入力 → 確認 → 確定。「修正する」で入力値を保持）
+- **タスク画像添付**（Active Storage + MinIO）
+- プロジェクト / タスクの複製
+- 外部 URL プレビューの iframe 多層防御
+
+機能の詳細は [docs/03-functional-specification.md](docs/03-functional-specification.md) を参照。
+
 ## Tech Stack
 
 | カテゴリ | 技術 |
 |---|---|
-| 言語 | Ruby |
-| フレームワーク | Ruby on Rails |
+| 言語 | Ruby 3.3.11 |
+| フレームワーク | Ruby on Rails 8.1.3 |
 | データベース | PostgreSQL 16（Docker） |
-| テスト | RSpec, FactoryBot, Shoulda Matchers |
+| 画像ストレージ | Active Storage + MinIO（S3 互換 / Docker） |
+| フロント（フルスタック版） | Turbo / Stimulus（Importmap）+ ERB |
+| 認証 | セッション（フルスタック版）/ JWT（APIモード） |
+| テスト | RSpec, FactoryBot, Shoulda Matchers, Capybara（system spec） |
+| CI | GitHub Actions |
 
-## Setup
+## Quick Start
 
-> **注意**: 現在は設計フェーズです。以下のセットアップ手順は Day 1（環境構築）で実際のファイル（`docker-compose.yml`, `.env.example` 等）を作成した後に実行可能になります。
+clone 後、以下で両アプリを起動できる（`make` ショートカット利用。全 target は `make help`）。
 
 ### 前提条件
 
-- Ruby (rbenv 推奨)
-- Rails
+- Ruby 3.3.11（rbenv 推奨）/ Bundler
 - Docker / Docker Compose
 - Git
+- ImageMagick または libvips（画像サムネイル生成用）
 
-### セットアップ手順（Day 1 で実施予定）
+### 起動手順
 
-1. `.env.example` をコピーして `.env` を作成（PostgreSQL と MinIO の接続情報）
-2. `docker compose up -d` で PostgreSQL と MinIO を起動（MinIO はバケットも自動作成）
-3. `rails new` でプロジェクト作成（`-d postgresql`）
-4. `rails db:create && rails db:migrate`
-5. `rails server` → `http://localhost:3000` で動作確認
+```bash
+make up                          # PostgreSQL + MinIO 起動（.env 自動生成・MinIO バケット自動作成）
 
-> **画像ストレージ（MinIO）**: フルスタック版のタスク画像添付は Active Storage + MinIO（S3 互換）を使う。`docker compose up -d` で MinIO（API: `http://localhost:9000` / コンソール: `http://localhost:9001`）が起動し、`createbuckets` コンテナがバケットを作成する。認証情報は `.env`（`MINIO_ROOT_USER` / `AWS_ACCESS_KEY_ID` 等）で管理し、ローカルでサムネイル生成するには ImageMagick または libvips が必要。
+# フルスタック版 → http://localhost:3099
+cd rails-task-fullstack-web-app
+bundle install
+bin/rails db:prepare
+bin/rails server -p 3099
+
+# APIモード → http://localhost:3100
+cd rails-task-api-web-app
+bundle install
+bin/rails db:prepare
+bin/rails server -p 3100
+```
+
+| サービス | URL / ポート |
+|---|---|
+| フルスタック版 | http://localhost:3099 |
+| APIモード | http://localhost:3100 |
+| PostgreSQL | 5434 |
+| MinIO（API / コンソール） | http://localhost:9000 / http://localhost:9001 |
+
+> **画像ストレージ（MinIO）**: フルスタック版のタスク画像添付は Active Storage + MinIO（S3 互換）を使う。`make up` で MinIO が起動し、`createbuckets` コンテナがバケットを自動作成する。認証情報は `.env`（`MINIO_ROOT_USER` / `AWS_ACCESS_KEY_ID` 等）で管理する。
 
 ## Directory Structure
 
 ```
-rails-task-web-app/
+rails-practice-web-app/
 ├── .github/workflows/ci.yml       # GitHub Actions（テスト CI）
 ├── CLAUDE.md
 ├── README.md
@@ -52,9 +93,12 @@ rails-task-web-app/
 ├── docker-compose.yml             # PostgreSQL + MinIO コンテナ定義
 ├── .env                           # DB接続情報・MinIO 認証情報（git管理外）
 ├── .env.example                   # 環境変数テンプレート
-├── docs/                          # 仕様書・モック画面
-│   ├── mockups/                   # HTMLモック画面
-│   └── design/                    # 設計方針
+├── docs/                          # 仕様書・設計資料（01〜15 番号付き）
+│   ├── 01〜11-*.md                 # 各種仕様書（要求・要件・機能・非機能・データ ほか）
+│   ├── 12-code-reading-guide/      # コードリーディングガイド（Step 別）
+│   ├── 13-mockups/                 # HTML モック画面
+│   ├── 14-design/                  # 開発設計実装方針（トピック別）
+│   └── 15-test-design/             # テスト設計（分類別）
 ├── rails-task-fullstack-web-app/  # Project 1: フルスタック
 └── rails-task-api-web-app/        # Project 2: APIモード
 ```
@@ -105,9 +149,9 @@ bundle exec rspec --tag js                    # JS system spec（要 Chrome）
 | **DB（ER 図・テーブルスキーマ・Active Storage）** | [docs/05-data-specification.md](docs/05-data-specification.md) |
 | **セキュリティ**（認証・認可・preview_url の iframe 防御） | [docs/06-security-specification.md](docs/06-security-specification.md) |
 | **API エンドポイント一覧** | [docs/07-api-specification.md](docs/07-api-specification.md) |
-| **起動コマンド・2 構成の差分を読み比べる** | [docs/12-code-reading-guide.md](docs/12-code-reading-guide.md) |
+| **起動コマンド・2 構成の差分を読み比べる** | [docs/12-code-reading-guide/](docs/12-code-reading-guide/README.md) |
 | **進捗・タスク** | [docs/11-tasks.md](docs/11-tasks.md) |
-| **画面モック一覧** | `docs/mockups/index.html`（ブラウザで開く） |
+| **画面モック一覧** | `docs/13-mockups/index.html`（ブラウザで開く） |
 
 ### ドキュメント一覧
 
@@ -124,6 +168,6 @@ bundle exec rspec --tag js                    # JS system spec（要 Chrome）
 | 09 | [architecture-specification](docs/09-architecture-specification.md) | アーキテクチャ仕様（システム構成・**Docker/コンテナ構成**・技術スタック） |
 | 10 | [miscellaneous-specification](docs/10-miscellaneous-specification.md) | その他（用語集・参考資料） |
 | 11 | [tasks](docs/11-tasks.md) | タスク・進捗 |
-| 12 | [code-reading-guide](docs/12-code-reading-guide.md) | コードリーディングガイド（起動コマンド・2 構成の差分） |
-| — | [design/design-policy](docs/design/design-policy.md) | 開発設計実装方針（ベースライン） |
-| — | [test-design/coverage-strengthening-test-design](docs/test-design/coverage-strengthening-test-design.md) | テスト設計（カバレッジ補強） |
+| 12 | [code-reading-guide](docs/12-code-reading-guide/README.md) | コードリーディングガイド（起動コマンド・2 構成の差分） |
+| — | [14-design/](docs/14-design/README.md) | 開発設計実装方針（ベースライン・トピック別分割） |
+| — | [15-test-design/coverage-strengthening/](docs/15-test-design/coverage-strengthening/README.md) | テスト設計（カバレッジ補強・分類別分割） |
