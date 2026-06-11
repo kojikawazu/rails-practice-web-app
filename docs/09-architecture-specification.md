@@ -69,14 +69,23 @@ docker-compose.yml
 
 ### 環境変数（.env）
 
+`.env.example` をテンプレートとして用意している（実際の値は `.env` に記載し、`.gitignore` で管理外とする）。
+
 ```
 POSTGRES_USER=rails_task
-POSTGRES_PASSWORD=<任意のパスワード>
+POSTGRES_PASSWORD=<your_password>
 POSTGRES_DB=rails_task_development
-DATABASE_URL=postgresql://rails_task:<パスワード>@localhost:5432/rails_task_development
+
+# MinIO (S3 互換ストレージ / Active Storage バックエンド)
+MINIO_ROOT_USER=minioadmin
+MINIO_ROOT_PASSWORD=<your_minio_password>
+AWS_ACCESS_KEY_ID=minioadmin
+AWS_SECRET_ACCESS_KEY=<your_minio_password>
+S3_BUCKET=rails-task-dev
+MINIO_ENDPOINT=http://localhost:9000
 ```
 
-※ 実際の値は `.env` に記載し、`.gitignore` で管理外とする。`.env.example` をテンプレートとして用意する。
+※ DB 接続は各アプリの `config/database.yml` が `POSTGRES_*` を `ENV.fetch` で参照して組み立てる（`DATABASE_URL` は使用しない）。MinIO 変数はフルスタック版の Active Storage（S3 互換）で使用する。
 
 ## ディレクトリ構成
 

@@ -1,82 +1,83 @@
-# CI/CD・クラウド/ホスティング設計方針
+# CI/CD・ローカルインフラ方針
+
+> 本プロジェクトは**ローカル開発のみ**で本番デプロイは対象外。クラウドへの自動デプロイ（CD）は存在しない。
+
+## 目次
+
+- [CI 方針（GitHub Actions）](#ci-方針github-actions)
+  - [ジョブ構成](#ジョブ構成)
+  - [パスフィルターで docs-only をスキップ](#パスフィルターで-docs-only-をスキップ)
+  - [テストマトリクスと :js ジョブ](#テストマトリクスと-js-ジョブ)
+- [ローカルインフラ（docker-compose）](#ローカルインフラdocker-compose)
+- [Makefile（タスクランナー）](#makefileタスクランナー)
+- [デプロイについて](#デプロイについて)
 
 [← 目次に戻る](README.md)
 
-## CI/CD方針
+## CI 方針（GitHub Actions）
 
-### デプロイ先の選択
+CI は `.github/workflows/ci.yml` の単一ワークフロー。`push`（main）と `pull_request` で起動し、`concurrency` で同一 ref の古い実行をキャンセルする。
 
-プロジェクト要件に応じて、フロントエンド・バックエンドそれぞれのデプロイ先を選択する。
+### ジョブ構成
 
-| 対象 | 選択肢 | 採用基準 |
-|---|---|---|
-| **フロントエンド** | Vercel | Next.jsとの親和性が高い・プレビューデプロイが必要・手軽にMVPを出したい場合 |
-| **フロントエンド** | Cloud Run | GCPに統一したい・Vercelの制約（タイムアウト・リージョン等）を超えたい・SSRの細かい制御が必要な場合 |
-| **バックエンド** | Cloud Run | コンテナベースでスケーラブルなAPI基盤が必要な場合（デフォルト） |
-| **バックエンド** | なし（一体型） | Next.js App Router内で完結する場合（BFFのみ） |
+3 ジョブで構成する。
 
-### フロントエンド CI/CD
+| ジョブ | 役割 |
+|--------|------|
+| **Detect changes** | パスフィルターでコード変更の有無（`code` 出力）を 1 か所で判定する |
+| **Test (${{ matrix.app }})** | 両アプリで Minitest + RSpec を実行（`code == 'true'` のときのみ） |
+| **System (:js, headless Chrome)** | フルスタック版の `:js` System spec を実行（`code == 'true'` のときのみ） |
 
-#### Vercel の場合
+### パスフィルターで docs-only をスキップ
 
-- Vercelのデフォルトのビルド・デプロイを利用する。
-- CI上で **E2Eテスト** を実行する（Playwright等）。
-- プレビューデプロイでPR単位の動作確認を行う。
+- `Detect changes` は `dorny/paths-filter` で「コードとは何か」を**positive パターンで列挙**する（取りこぼさない安全側）。
 
-#### Cloud Run の場合
+```yaml
+filters: |
+  code:
+    - 'rails-task-fullstack-web-app/**'
+    - 'rails-task-api-web-app/**'
+    - '.github/workflows/**'
+```
 
-- GitHub Actions等でCI/CDパイプラインを構築する。
-- **CI（Push / PR時）**
-  - リント・フォーマットチェック
-  - ユニットテスト・E2Eテスト
-  - ビルド確認
-- **CD（mainマージ時）**
-  - コンテナイメージのビルド・プッシュ（Artifact Registry）
-  - Cloud Runへの自動デプロイ
-- Dockerfileで `next build` → `next start` を実行する構成とする。
+- 上記に該当しない変更（`docs/**` / `**.md` / `README` / `.claude/**` 等）は **`code=false`** となり、下流の重いジョブ（Test / System）が `if` 条件でスキップされる。
+- **スキップされたジョブは required check 上では成功扱い**になるため、ブランチ保護を有効にしても docs-only PR のマージはブロックされない。ドキュメント変更を軽量に保つための設計。
 
-### 共通
+### テストマトリクスと :js ジョブ
 
-- ドキュメントのみの変更（`*.md` 等）では**ビルド・デプロイのCI/CDは実行しない**。
-  - パスフィルターで除外する。
-- ただし、以下の**軽量チェックは実行する**。
-  - markdownリント
-  - リンク切れチェック
-  - 必須ファイル（README.md, CLAUDE.md）の存在検証
+- **Test ジョブ**は `matrix.app = [fullstack, api]` で 2 アプリを並列実行（`fail-fast: false`）。各ジョブで `postgres:16` サービスを起動し、`bin/rails db:test:prepare` → `bin/rails test`（Minitest）→ `bundle exec rspec`（RSpec）の順に走らせる。
+  - Rails 標準の Minitest と RSpec が**併存**しており、CI は両方を実行する。
+- **System (:js) ジョブ**はフルスタック版のみ（`working-directory` 固定）。headless Chrome で `bundle exec rspec --tag js` を実行し、Turbo 退行の回帰ガードとする（Selenium が不要な API 版には無い）。
+- Ruby バージョンは各アプリの `.ruby-version`、依存は `bundler-cache: true` でキャッシュする。
 
-### バックエンド CI/CD（Cloud Run）
+## ローカルインフラ（docker-compose）
 
-- GitHub Actions等でCI/CDパイプラインを構築する。
-- **CI（Push / PR時）**
-  - リント・フォーマットチェック
-  - ユニットテスト
-  - ビルド確認
-- **CD（mainマージ時）**
-  - コンテナイメージのビルド・プッシュ（Artifact Registry）
-  - Cloud Runへの自動デプロイ
+ルートの `docker-compose.yml` で**ミドルウェアのみ**を起動する（Rails 本体はローカル実行・コンテナ化しない）。
 
-## クラウド・ホスティング設計方針
+| サービス | イメージ | 役割 |
+|----------|----------|------|
+| `db` | `postgres:16` | DB（ポート `5434:5432`、`pgdata` ボリューム） |
+| `minio` | `minio/minio` | S3 互換ストレージ（`9000` API / `9001` コンソール）。フルスタック版 Active Storage のバックエンド |
+| `createbuckets` | `minio/mc` | 起動時にバケットを作成する使い捨てコンテナ（`minio` の healthy 待ち） |
 
-プロジェクト要件に応じて構成を選択する。
+- 認証情報・接続情報は `.env`（`.env.example` をテンプレートに生成）から読み込み、ハードコードしない。
 
-| 構成パターン | フロントエンド | バックエンド | 採用基準 |
-|---|---|---|---|
-| **Vercel + Cloud Run** | Vercel | Cloud Run（Go等） | フロントの手軽さとバックエンドの柔軟性を両立したい場合 |
-| **Vercel一体型** | Vercel | なし（App Router内で完結） | 小規模MVP・バックエンド分離が不要な場合 |
-| **GCP統一型** | Cloud Run | Cloud Run | GCPに統一したい・Vercelの制約を超えたい場合 |
+## Makefile（タスクランナー）
 
-### Vercel
+ルートの `Makefile` が開発用タスクをまとめる。`APP` 変数でアプリを切り替える（既定 `fullstack`、`make test APP=$(API)` 等）。
 
-- Next.jsのフロントエンドホスティングに使用する。
-- Vercel固有の機能（Edge Functions, Image Optimization等）を活用する場合はベンダーロックインに注意する。
-  - 移行コストを最小化するため、Vercel固有APIへの依存は最小限にする。
+| 分類 | 主なターゲット |
+|------|----------------|
+| Docker | `up` / `down` / `restart` / `ps` / `logs` / `clean` / `env` |
+| セットアップ | `setup` / `setup-all`（`bin/setup --skip-server`） |
+| DB | `db-setup` / `migrate` / `db-prepare` / `db-reset` / `seed` |
+| 実行 | `server` / `console` |
+| テスト | `test`（Minitest + RSpec） / `test-js`（`:js`、fullstack のみ） / `test-all`（両アプリ） |
+| 品質 | `lint` / `lint-fix`（RuboCop） / `security`（bundler-audit + Brakeman） / `ci` / `ci-all` |
 
-### Cloud Run
+> ローカル CI（`make ci`）と GitHub Actions の Test ジョブは同等のチェックを意図する。push 前にローカルで揃えられる。
 
-- バックエンドのホスティングに使用する。フロントエンドをCloud Runでホストする場合も同様。
-- コンテナイメージは Artifact Registry で管理する。
+## デプロイについて
 
-### Artifact Registry
-
-- コンテナイメージは**過去3世代分のみ保持**する。
-  - クリーンアップポリシーまたはCI/CDパイプライン内で古いイメージを削除する。
+- **本番デプロイは行わない。CD パイプラインは存在しない。**
+- 各アプリ直下の `Dockerfile` / `config/deploy.yml`（Kamal）は `rails new` が生成した**本番デプロイ用テンプレートで、本プロジェクトでは未使用**。Vercel / Cloud Run / Artifact Registry 等の外部ホスティングは使わない。

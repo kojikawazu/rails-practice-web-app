@@ -1,5 +1,15 @@
 # コードリーディングガイド
 
+## 目次
+
+- [プロジェクト構成の対比](#プロジェクト構成の対比)
+- [読む順番（推奨）](#読む順番推奨)
+- [重要な差分まとめ](#重要な差分まとめ)
+- [動作確認コマンド](#動作確認コマンド)
+  - [フルスタック版](#フルスタック版)
+  - [APIモード](#apiモード)
+  - [テスト実行](#テスト実行)
+
 このドキュメントは、2つのプロジェクト（フルスタック版 / APIモード）を比較しながらコードを読む際のナビゲーションガイドです。
 
 ## プロジェクト構成の対比
@@ -39,18 +49,19 @@
 
 ### フルスタック版
 ```bash
+make up                       # ルートで PostgreSQL + MinIO 起動
 cd rails-task-fullstack-web-app
-docker compose up -d          # PostgreSQL 起動
-rbenv exec bundle exec rails db:migrate
-rbenv exec bundle exec rails server -p 3099
-# ブラウザで http://localhost:3099 を開く
+bin/rails db:prepare
+bin/rails server -p 3099
+# ブラウザで http://localhost:3099 を開く（「ユーザー登録」から開始）
 ```
 
 ### APIモード
 ```bash
+make up                       # ルートで PostgreSQL 起動（未起動なら）
 cd rails-task-api-web-app
-rbenv exec bundle exec rails db:migrate
-rbenv exec bundle exec rails server -p 3100
+bin/rails db:prepare
+bin/rails server -p 3100
 
 # アカウント作成
 curl -X POST http://localhost:3100/api/v1/signup \
@@ -71,10 +82,11 @@ curl http://localhost:3100/api/v1/projects \
 ```bash
 # フルスタック版
 cd rails-task-fullstack-web-app
-rbenv exec bundle exec rails test   # Minitest 28件
-rbenv exec bundle exec rspec        # RSpec 39件
+bin/rails test               # Minitest
+bundle exec rspec            # RSpec（通常スイート・JS 除外）
+bundle exec rspec --tag js   # JS system spec（要 Chrome）
 
 # APIモード
 cd rails-task-api-web-app
-rbenv exec bundle exec rspec        # RSpec 18件
+bundle exec rspec            # RSpec
 ```

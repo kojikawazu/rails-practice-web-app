@@ -36,6 +36,7 @@
 |------|-------------|-----------|
 | View | ERBテンプレート | なし（JSON） |
 | ミドルウェア | フルセット | API用に軽量化 |
-| CSRF保護 | あり | なし（APIはトークン認証前提） |
-| セッション | Cookie | 必要に応じて設定 |
+| CSRF保護 | あり（Rails デフォルト） | なし（Bearer トークン認証・Cookie 不使用） |
+| セッション | Cookie（`session[:user_id]`） | 使わない（JWT・ステートレス） |
+| 認証方式 | has_secure_password + セッション | has_secure_password + JWT（`Authorization: Bearer`） |
 | 学習目的 | Railsの規約を体感 | API設計パターンを理解 |
