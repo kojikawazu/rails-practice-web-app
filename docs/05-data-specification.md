@@ -96,6 +96,14 @@ Task
 | projects | user_id | INDEX |
 | tasks | project_id | INDEX |
 
+> **制約の実態（DB スキーマ vs モデル）**: 上表の「NOT NULL」「DEFAULT」のうち、DB スキーマ（`schema.rb`）で物理的に `null: false` / default を持つのは以下に限られる。それ以外の必須性・初期値は **モデルのバリデーション/コールバックで担保**している（DB レベルでは NULL 許容）。学習用のため意図的にこの差を残している。
+>
+> - `null: false` を持つカラム: 全テーブルの `created_at` / `updated_at`、`projects.user_id`、`tasks.project_id`、および **フルスタック版のみ** `users.name` / `users.email` / `users.password_digest`。
+> - `users.email` の UNIQUE はインデックス制約として両アプリに存在する。
+> - `projects.title` / `tasks.title` は DB では NULL 許容で、必須性はモデルの `presence` バリデーションで担保する（両アプリ）。
+> - `tasks.status` は DB では `integer`・NULL 許容・**デフォルト無し**で、初期値 `not_started`（0）は **モデルの `after_initialize` コールバック（`set_default_status`）** で設定する（両アプリ）。
+> - **API 版** の `users.name` / `users.email` / `users.password_digest` は DB に `null: false` を持たず、必須性はモデルバリデーションのみで担保する。
+
 ## 画像添付（Active Storage）
 
 フルスタック版のタスク画像添付は **Active Storage** を使用し、blob 本体は **MinIO（S3 互換）** に保存する。
