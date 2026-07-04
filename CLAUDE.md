@@ -38,7 +38,7 @@
 
 | ファイル | スコープ | 内容 |
 |---------|---------|------|
-| `.claude/rules/coding-standards.md` | 全体 | Ruby / Bundler / RuboCop コーディング規約 |
+| `.claude/rules/coding-standards.md` | 全体 | Ruby / Bundler / RuboCop コーディング規約・YARD ドキュメントコメント |
 | `.claude/rules/error-handling.md` | 全体 | バリデーション・例外処理・HTTP ステータスコード方針 |
 | `.claude/rules/security.md` | 全体 | 認証・CORS・インジェクション対策・シークレット管理 |
 | `.claude/rules/testing.md` | 全体 | RSpec / FactoryBot / Shoulda Matchers テスト方針 |
