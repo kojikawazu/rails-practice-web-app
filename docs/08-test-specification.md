@@ -20,17 +20,18 @@
 | Scenario spec（E2E） | 複数エンドポイント縦断の検証（実DB） | signup→CRUD ジャーニー・認可分離・JWT ライフサイクル（**API 版のみ**。`spec/scenarios/`） |
 | System spec（E2E） | 画面操作フローの検証（確認画面・削除確認・複製） | フルスタック版のみ（`spec/system/`） |
 
-> **2 アプリのテスト構成差分**: フルスタック版は **Unit spec（`spec/services/`・AuthService.login のみ）+ Model spec（`spec/models/`）+ Request spec（`spec/requests/`）+ System spec（`spec/system/`）** を持つ。API 版は Model spec を持たない代わりに、**Unit spec（`spec/lib/` `spec/services/`）+ Request spec（`spec/requests/api/v1/`）+ Scenario spec（`spec/scenarios/`）** でテストピラミッドを構成する。API は UI が無いため **E2E == シナリオ == マルチエンドポイントの request spec**（Capybara はフルスタック版専用）。両アプリとも Controller のロジックは `app/services/` に集約する（フルスタック版は HTML 再描画のため Result 値オブジェクトを使わずレコード/ nil を返す。API 版は JSON のため Result を使う）。
+> **2 アプリのテスト構成差分**: フルスタック版は **Unit spec（`spec/services/`・AuthService.login + TaskImageService）+ Model spec（`spec/models/`）+ Request spec（`spec/requests/`）+ System spec（`spec/system/`）** を持つ。API 版は Model spec を持たない代わりに、**Unit spec（`spec/lib/` `spec/services/`）+ Request spec（`spec/requests/api/v1/`）+ Scenario spec（`spec/scenarios/`）** でテストピラミッドを構成する。API は UI が無いため **E2E == シナリオ == マルチエンドポイントの request spec**（Capybara はフルスタック版専用）。両アプリとも Controller のロジックは `app/services/` に集約する（フルスタック版は HTML 再描画のため Result 値オブジェクトを使わずレコード/ nil を返す。API 版は JSON のため Result を使う）。
 > System spec のうち Turbo 必須の挙動（確認画面遷移・`turbo_confirm` ダイアログ）は `:js` タグを付け、headless Chrome（selenium）で実行する（`rspec --tag js`）。それ以外は `rack_test` で駆動する。
 
 ### モック方針
 
-「**モック = UT / 実DB = IT・E2E・シナリオ**」を原則とし、モックは**実ロジックのある所だけ**に限定する（薄い CRUD 委譲をモックすると ActiveRecord のスタブ＝実装追認になるため）。
+「**モック = UT / 実DB = IT・E2E・シナリオ**」を原則とし、モックは**実ロジックのある所だけ**に限定する（薄い CRUD 委譲をモックすると ActiveRecord のスタブ＝実装追認になるため）。UT は substrate の性質で 3 通りに分かれる（純粋＝モック無し／DB 境界＝モック／実 substrate が安価＝モック無し）。
 
 | 対象 | 方針 |
 |------|------|
-| `JsonWebToken`（API・`spec/lib/`） | **モック無し**。純粋・DB非依存のため実物の JWT ライブラリで round-trip / 有効期限 / 改ざん / 不正入力を検証 |
-| `AuthService.login`（両アプリ・`spec/services/`） | I/O 境界の `User.find_by` **だけ**を `allow` でスタブ（verified `instance_double`）。呼び出し順を assert する `expect(...).to receive` は使わない。API 版は Result（token 検証）、フルスタック版は `User`/nil を返す点のみ異なる |
+| `JsonWebToken`（API・`spec/lib/`） | **モック無し（純粋）**。DB非依存のため実物の JWT ライブラリで round-trip / 有効期限 / 改ざん / 不正入力を検証 |
+| `AuthService.login`（両アプリ・`spec/services/`） | **DB 境界をモック**。`User.find_by` **だけ**を `allow` でスタブ（verified `instance_double`）。呼び出し順を assert する `expect(...).to receive` は使わない。API 版は Result（token 検証）、フルスタック版は `User`/nil を返す点のみ異なる |
+| `TaskImageService`（fullstack・`spec/services/`） | **モック無し（実 substrate）**。test 環境の Active Storage は Disk（`tmp/storage`）で実物が安く動くため、実 blob / attachment で stage のオーファン防止・attach・purge を検証。`create_and_upload!`/`attach`/`purge` をモックすると委譲の実装追認になる |
 | `AuthService.signup` | UT を書かない（分岐が save 成否のみ＝モデル検証の二重化になる）。IT + シナリオ/System で担保 |
 | `ProjectService` / `TaskService` の CRUD | **モック UT を書かない**（意図的・両アプリ）。build/save/update/destroy の委譲はモックすると 100% 実装追認。実価値（スコープ→404・検証→422）は IT + シナリオ/System で担保 |
 
@@ -50,6 +51,7 @@
 | Unit spec（API） | JsonWebToken | encode/decode の round-trip / 既定 exp ≒24h / 明示 exp 尊重 / 期限切れ・改ざん・不正入力で nil（例外を投げない） |
 | Unit spec（API） | AuthService.login | 正資格情報で成功・token に user_id / 誤パスワードで 401・token なし / メール不在も 401（誤り時と同一メッセージ＝列挙攻撃対策） |
 | Unit spec（fullstack） | AuthService.login | 正資格情報で該当ユーザーを返す / 誤パスワードで nil / メール不在も nil（誤り時と同一結果＝列挙攻撃対策）。`User.find_by` のみモック |
+| Unit spec（fullstack） | TaskImageService | stage: 全有効→signed_id 返す + blob 生成 / 不正混在→nil・blob 未生成（オーファン防止）/ 空→[] ・ attach→images 増 ・ purge→attachment 削除。実 test-disk・モック無し |
 | Model spec | User | 有効なデータで作成できる / name必須 / email必須・一意・形式 / password最小文字数 |
 | Model spec | Project | 有効なデータで作成できる / title必須 / user関連付け / 削除時にtasksも削除 |
 | Model spec | Task | 有効なデータで作成できる / title必須 / status必須・値の制限 / project関連付け |

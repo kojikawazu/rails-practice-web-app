@@ -22,10 +22,11 @@
 
 - MVC アーキテクチャ（Railsデフォルト）
 - サーバーサイドレンダリング
-- Controller は薄く保ち、CRUD・認証のロジックは **Service 層（`app/services/`）** に集約する（`AuthService` / `ProjectService` / `TaskService`）。
+- Controller は薄く保ち、CRUD・認証・画像処理のロジックは **Service 層（`app/services/`）** に集約する（`AuthService` / `ProjectService` / `TaskService` / `TaskImageService`）。
 - **返り値は Result 値オブジェクトを使わず、レコード / nil を返す**（API 版との意図的な差異）。HTML の Controller は検証失敗時に「`.errors` を持つそのレコード」でフォームを再描画するため、レコードをそのまま返すのが自然。`ApplicationService` 基底クラスも設けない。
 - 認可スコープ（他ユーザーは 404）は `before_action`（`current_user.projects.find`）に残す。API 版と異なり `rescue_from` は設けず、Rails 標準の 404 を用いる。
-- **確認画面フロー（PRG・session 退避）・画像 round-trip（Active Storage の blob/signed_id）・`preview_url` 検証は Controller / Model に残す**（HTTP・Active Storage と密結合のため）。特にタスクの `create`/`update` は画像添付を build と save の間に挟むため、Service は `build`/`list`/`destroy` のみを担い save は持たない。
+- **確認画面フロー（PRG・session 退避）・`preview_url` 検証は Controller / Model に残す**（HTTP・表示の都合と密結合のため）。タスクの `create`/`update` は画像添付を build と save の間に挟むため、`TaskService` は `build`/`list`/`destroy` のみを担い save は持たない。
+- **画像 round-trip の業務ロジック（検証付き blob 化 staging・attach・purge）は `TaskImageService` に集約**する。Controller から Active Storage API 参照（`ActiveStorage::Blob.create_and_upload!` / `images.attach` / `images_attachments...purge`）が消え、Controller は params 抽出と HTTP 判断、`build↔save` 間の `attach` 注入のみを担う。
 
 ### Project 2: Rails APIモード
 
