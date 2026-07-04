@@ -1,6 +1,7 @@
 module Api
   module V1
-    # 認証エンドポイント（ユーザー登録・ログイン）。成功時に JWT を発行する。
+    # 認証エンドポイント（ユーザー登録・ログイン）。ロジックは AuthService に委譲し、
+    # ここでは Strong Parameters とレスポンス整形（token + user_json）に専念する。
     # 認証前でも叩けるよう、基底の authenticate_user! をスキップする。
     class AuthController < ApplicationController
       skip_before_action :authenticate_user!
@@ -9,12 +10,11 @@ module Api
       #
       # @return [void] 成功: `{ token:, user: }`（201）／失敗: `{ errors: [...] }`（422）
       def signup
-        @user = User.new(user_params)
-        if @user.save
-          token = JsonWebToken.encode(user_id: @user.id)
-          render json: { token: token, user: user_json(@user) }, status: :created
+        result = AuthService.signup(user_params)
+        if result.success?
+          render json: { token: result.data[:token], user: user_json(result.data[:user]) }, status: :created
         else
-          render json: { errors: @user.errors.full_messages }, status: :unprocessable_entity
+          render json: { errors: result.errors }, status: result.status
         end
       end
 
@@ -22,12 +22,11 @@ module Api
       #
       # @return [void] 成功: `{ token:, user: }`（200）／失敗: `{ error: ... }`（401）
       def login
-        user = User.find_by(email: params[:email])
-        if user&.authenticate(params[:password])
-          token = JsonWebToken.encode(user_id: user.id)
-          render json: { token: token, user: user_json(user) }
+        result = AuthService.login(email: params[:email], password: params[:password])
+        if result.success?
+          render json: { token: result.data[:token], user: user_json(result.data[:user]) }
         else
-          render json: { error: "メールアドレスまたはパスワードが正しくありません。" }, status: :unauthorized
+          render json: { error: result.errors.first }, status: result.status
         end
       end
 

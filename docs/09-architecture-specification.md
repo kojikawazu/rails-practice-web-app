@@ -26,11 +26,14 @@
 ### Project 2: Rails APIモード
 
 ```
-APIクライアント → Rails（Router → Controller → Model → JSON） → PostgreSQL（Docker）
+APIクライアント → Rails（Router → Controller → Service → Model → JSON） → PostgreSQL（Docker）
 ```
 
 - MVCのうちViewを省略し、JSONレスポンスを返す
 - `rails new --api` で生成
+- Controller は薄く保ち、ビジネスロジックは **Service 層（`app/services/`）** に集約する（`AuthService` / `ProjectService` / `TaskService`）。サービスの成否は `ApplicationService::Result` 値オブジェクト（`success`/`data`/`errors`/`status`）で表し、Controller は `render_result` で JSON に変換する。
+- 他ユーザー/存在しないリソースの 404 は `ApplicationController` の `rescue_from ActiveRecord::RecordNotFound` に一元化する（`e.model` でモデル別メッセージを再現）。
+- テストは `spec/lib`（UT）・`spec/services`（UT）・`spec/requests`（IT）・`spec/scenarios`（E2E/シナリオ）で構成（詳細は `08-test-specification.md`）。Service 層の追加による **gem 変更はなし**。
 
 ## 技術スタック
 
