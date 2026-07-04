@@ -1,3 +1,5 @@
+# 全 Active Job の基底クラス（Rails 標準）。
+# デッドロック時のリトライやレコード消失時の破棄など、ジョブ共通の方針を集約する場所。
 class ApplicationJob < ActiveJob::Base
   # Automatically retry jobs that encountered a deadlock
   # retry_on ActiveRecord::Deadlocked
