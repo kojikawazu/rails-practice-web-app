@@ -105,6 +105,8 @@ Content-Type: application/json
 
 ## エラーハンドリング
 
+> **実装方針**: Controller はロジックを `app/services/`（`AuthService` / `ProjectService` / `TaskService`）に委譲し、レスポンス整形（`render_result`）に専念する。リソース未存在（404）は `ApplicationController` の `rescue_from ActiveRecord::RecordNotFound` で一元処理し、`e.model` から `{ error: "Project not found" }` / `{ error: "Task not found" }` を返す。エラー JSON の形（`errors` 複数形 vs `error` 単数形）は現行契約を維持しており、完全な統一は将来課題とする。
+
 エラーレスポンスは内容に応じて 2 形態を使い分ける。
 
 **バリデーションエラー（422）** — 複数メッセージを配列で返す（`errors`・複数形）:
