@@ -24,13 +24,13 @@ class UsersController < ApplicationController
     end
   end
 
-  # 登録の確定。DB へ保存し、成功時はそのままログイン状態にする。
+  # 登録の確定。保存は AuthService に委譲し、成功時はそのままログイン状態にする。
   #
   # @return [void] 成功: プロジェクト一覧へリダイレクト／失敗: new を 422 で再描画
   def create
-    @user = User.new(user_params)
+    @user = AuthService.signup(user_params)
 
-    if @user.save
+    if @user.persisted?
       session[:user_id] = @user.id
       redirect_to projects_path, notice: "アカウントを作成しました。"
     else

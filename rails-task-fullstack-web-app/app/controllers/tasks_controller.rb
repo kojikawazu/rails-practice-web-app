@@ -12,7 +12,7 @@ class TasksController < ApplicationController
   #
   # @return [void] HTML: プロジェクト詳細へリダイレクト／JSON: index を描画
   def index
-    @tasks = @project.tasks
+    @tasks = TaskService.list(@project)
 
     respond_to do |format|
       format.html { redirect_to project_path(@project) }
@@ -97,7 +97,7 @@ class TasksController < ApplicationController
   #
   # @return [void] 成功: プロジェクト詳細へリダイレクト／失敗: new を 422 で再描画
   def create
-    @task = @project.tasks.build(task_params)
+    @task = TaskService.build(@project, task_params)
     @task.app_host = request.host
     attach_signed_images(@task)
 
@@ -131,7 +131,7 @@ class TasksController < ApplicationController
   #
   # @return [void] プロジェクト詳細へ 303 リダイレクト
   def destroy
-    @task.destroy!
+    TaskService.destroy(@task)
     redirect_to project_path(@project), notice: "タスクを削除しました。", status: :see_other
   end
 
