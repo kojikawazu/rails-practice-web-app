@@ -11,7 +11,7 @@ class ProjectsController < ApplicationController
   #
   # @return [void] current_user のプロジェクトを index ビューへ渡す
   def index
-    @projects = current_user.projects
+    @projects = ProjectService.list(current_user)
   end
 
   # プロジェクト詳細（配下のタスク一覧を含む）を表示する。
@@ -77,9 +77,9 @@ class ProjectsController < ApplicationController
   #
   # @return [void] 成功: 詳細へリダイレクト／失敗: new を 422 で再描画
   def create
-    @project = current_user.projects.build(project_params)
+    @project = ProjectService.create(current_user, project_params)
 
-    if @project.save
+    if @project.persisted?
       reset_pending_project
       redirect_to @project, notice: "プロジェクトを作成しました。"
     else
@@ -91,7 +91,7 @@ class ProjectsController < ApplicationController
   #
   # @return [void] 成功: 詳細へ 303 リダイレクト／失敗: edit を 422 で再描画
   def update
-    if @project.update(project_params)
+    if ProjectService.update(@project, project_params)
       redirect_to @project, notice: "プロジェクトを更新しました。", status: :see_other
     else
       render :edit, status: :unprocessable_entity
@@ -102,7 +102,7 @@ class ProjectsController < ApplicationController
   #
   # @return [void] 一覧へ 303 リダイレクト
   def destroy
-    @project.destroy!
+    ProjectService.destroy(@project)
     redirect_to projects_path, notice: "プロジェクトを削除しました。", status: :see_other
   end
 

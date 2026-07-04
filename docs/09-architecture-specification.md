@@ -17,11 +17,15 @@
 ### Project 1: フルスタックRails
 
 ```
-ブラウザ → Rails（Router → Controller → Model → View/ERB） → PostgreSQL（Docker）
+ブラウザ → Rails（Router → Controller → Service → Model → View/ERB） → PostgreSQL（Docker）
 ```
 
 - MVC アーキテクチャ（Railsデフォルト）
 - サーバーサイドレンダリング
+- Controller は薄く保ち、CRUD・認証のロジックは **Service 層（`app/services/`）** に集約する（`AuthService` / `ProjectService` / `TaskService`）。
+- **返り値は Result 値オブジェクトを使わず、レコード / nil を返す**（API 版との意図的な差異）。HTML の Controller は検証失敗時に「`.errors` を持つそのレコード」でフォームを再描画するため、レコードをそのまま返すのが自然。`ApplicationService` 基底クラスも設けない。
+- 認可スコープ（他ユーザーは 404）は `before_action`（`current_user.projects.find`）に残す。API 版と異なり `rescue_from` は設けず、Rails 標準の 404 を用いる。
+- **確認画面フロー（PRG・session 退避）・画像 round-trip（Active Storage の blob/signed_id）・`preview_url` 検証は Controller / Model に残す**（HTTP・Active Storage と密結合のため）。特にタスクの `create`/`update` は画像添付を build と save の間に挟むため、Service は `build`/`list`/`destroy` のみを担い save は持たない。
 
 ### Project 2: Rails APIモード
 

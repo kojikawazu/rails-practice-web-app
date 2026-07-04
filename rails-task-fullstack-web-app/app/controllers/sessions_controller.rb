@@ -6,13 +6,13 @@ class SessionsController < ApplicationController
   def new
   end
 
-  # ログイン処理。メール・パスワード一致時にセッションを確立する。
+  # ログイン処理。認証は AuthService に委譲し、成功時にセッションを確立する。
   #
   # @return [void] 成功: プロジェクト一覧へリダイレクト／失敗: new を 422 で再描画
   def create
-    user = User.find_by(email: params[:email])
+    user = AuthService.login(email: params[:email], password: params[:password])
 
-    if user&.authenticate(params[:password])
+    if user
       session[:user_id] = user.id
       redirect_to projects_path, notice: "ログインしました。"
     else
