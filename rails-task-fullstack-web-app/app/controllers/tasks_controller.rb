@@ -72,16 +72,16 @@ class TasksController < ApplicationController
     @task.app_host = request.host # 自オリジン埋め込み拒否の判定用
     @remove_image_ids = remove_image_ids
 
-    # 新規アップロードを事前検証。不正なら blob を作らずフォームへ戻す（オーファン防止）。
-    uploaded = uploaded_image_files
-    if uploaded.any? { |f| !valid_image_upload?(f) }
+    # 新規アップロードを事前検証し blob 化。不正が混じれば nil＝blob を作らずフォームへ戻す（オーファン防止）。
+    new_signed_ids = TaskImageService.stage(uploaded_image_files)
+    if new_signed_ids.nil?
       @image_signed_ids = carried_signed_ids # 既存の選択は保持する
       @task.errors.add(:images, "は png / jpeg / gif / webp 形式・1枚5MB以下のみ対応しています")
       return render(@task.persisted? ? :edit : :new, status: :unprocessable_entity)
     end
 
-    # 検証 OK のファイルだけ blob 化し、既存の選択と合算して signed_id を持ち回る。
-    @image_signed_ids = carried_signed_ids + uploaded.map { |f| upload_blob(f).signed_id }
+    # 既存の選択と合算して signed_id を持ち回る。
+    @image_signed_ids = carried_signed_ids + new_signed_ids
 
     # 「修正する」押下時は入力フォームへ戻す（入力値・画像選択を保持）。
     return render(@task.persisted? ? :edit : :new) if params[:back].present?
@@ -99,7 +99,7 @@ class TasksController < ApplicationController
   def create
     @task = TaskService.build(@project, task_params)
     @task.app_host = request.host
-    attach_signed_images(@task)
+    TaskImageService.attach(@task, carried_signed_ids)
 
     if @task.save
       redirect_to project_path(@project), notice: "タスクを作成しました。"
@@ -115,10 +115,10 @@ class TasksController < ApplicationController
   def update
     @task.assign_attributes(task_params)
     @task.app_host = request.host
-    attach_signed_images(@task)
+    TaskImageService.attach(@task, carried_signed_ids)
 
     if @task.save
-      purge_removed_images
+      TaskImageService.purge(@task, remove_image_ids)
       redirect_to project_task_path(@project, @task), notice: "タスクを更新しました。", status: :see_other
     else
       @image_signed_ids = carried_signed_ids
@@ -188,40 +188,5 @@ class TasksController < ApplicationController
   # @return [Array<String>] 空要素を除いた添付 id の配列
   def remove_image_ids
     Array(params.dig(:task, :remove_image_ids)).reject(&:blank?)
-  end
-
-  # 形式・サイズの事前検証（モデルの images_format_and_size と同基準）。
-  #
-  # @param file [ActionDispatch::Http::UploadedFile] 検証対象のアップロードファイル
-  # @return [Boolean] 許可形式かつ上限サイズ以内なら true
-  def valid_image_upload?(file)
-    Task::IMAGE_CONTENT_TYPES.include?(file.content_type) && file.size <= Task::MAX_IMAGE_SIZE
-  end
-
-  # アップロードファイルをサーバー経由で MinIO に保存し、blob を返す。
-  #
-  # @param file [ActionDispatch::Http::UploadedFile] 保存対象のアップロードファイル
-  # @return [ActiveStorage::Blob] 作成された blob（signed_id を round-trip に使う）
-  def upload_blob(file)
-    ActiveStorage::Blob.create_and_upload!(
-      io: file, filename: file.original_filename, content_type: file.content_type
-    )
-  end
-
-  # 確認画面から持ち回った signed_id を添付する（保存は呼び出し側の save に委ねる）。
-  #
-  # @param task [Task] 添付先のタスク
-  # @return [void]
-  def attach_signed_images(task)
-    ids = carried_signed_ids
-    task.images.attach(ids) if ids.any?
-  end
-
-  # 編集で削除指定された既存添付を purge する（save 成功後に実行）。
-  #
-  # @return [void]
-  def purge_removed_images
-    ids = remove_image_ids
-    @task.images_attachments.where(id: ids).find_each(&:purge) if ids.any?
   end
 end

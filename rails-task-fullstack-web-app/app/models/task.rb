@@ -19,7 +19,7 @@ require "ipaddr"
 # @!attribute [rw] app_host
 #   @return [String, nil] 自オリジン埋め込み拒否の判定用ホスト名（永続化しない一時属性）
 class Task < ApplicationRecord
-  # 画像添付の許可形式と上限サイズ（コントローラー側の事前チェックでも参照する）
+  # 画像添付の許可形式と上限サイズ（TaskImageService の事前チェックでも参照する）
   IMAGE_CONTENT_TYPES = %w[image/png image/jpeg image/gif image/webp].freeze
   MAX_IMAGE_SIZE = 5.megabytes
 

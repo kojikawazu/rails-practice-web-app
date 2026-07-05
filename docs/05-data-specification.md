@@ -110,9 +110,10 @@ Task
 
 - Task と画像の関連: `has_many_attached :images`（1タスクに複数枚）
 - 管理テーブル（Active Storage 標準）: `active_storage_blobs` / `active_storage_attachments` / `active_storage_variant_records`
-- 添付制約（モデルバリデーション `images_format_and_size` で担保）:
+- 添付制約（モデルバリデーション `images_format_and_size` で担保。定数 `Task::IMAGE_CONTENT_TYPES` / `MAX_IMAGE_SIZE`）:
   - 形式: `image/png` / `image/jpeg` / `image/gif` / `image/webp`
   - サイズ: 1枚あたり 5MB 以下
+- 確認画面での blob 化 staging・attach・削除 purge は **`TaskImageService`**（`app/services/`）が担い、同じ定数を参照して形式/サイズを事前チェックする（不正混在時は blob を作らずオーファンを防止）。モデルの `images_format_and_size` が最終的な正の検証。
 - サムネイル: `variant(resize_to_limit: ...)` を `mini_magick`（ImageMagick）で動的生成し `active_storage_variant_records` にキャッシュ
 
 > API 版（Project 2）は画像添付を持たない（意図的な差分）。
