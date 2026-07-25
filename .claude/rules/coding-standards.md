@@ -3,6 +3,11 @@ description: コーディング規約
 globs: 
 ---
 
+---
+description: Ruby / Bundler / RuboCop コーディング規約・YARD ドキュメントコメント
+globs: 
+---
+
 # コーディング規約
 
 - **言語**: Ruby（Rails の規約に従う）

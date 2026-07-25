@@ -39,6 +39,12 @@
 | ファイル | スコープ | 内容 |
 |---------|---------|------|
 | `.claude/rules/coding-standards.md` | 全体 | Ruby / Bundler / RuboCop コーディング規約・YARD ドキュメントコメント |
+| `.claude/rules/ruby.md` | `**/*.rb` | Ruby / Rails 固有の作法（薄い Controller + Service・定数の配置・レスポンス整形） |
+| `.claude/rules/duplication.md` | 全体 | 重複と共通化の判断基準（3 回目で共通化・偶然の一致は残す） |
+| `.claude/rules/dead-code.md` | 全体 | デッドコード禁止（コメントアウト・未使用コード・スキップ放置テストを残さない） |
+| `.claude/rules/static-analysis.md` | 全体 | 静的解析の運用（Formatter と Linter の役割分担・CI 必須・抑制コメント） |
+| `.claude/rules/github-issue.md` | 全体 | GitHub issue 運用（ブランチと対で起票し open/close で進捗管理） |
+| `.claude/rules/github-actions.md` | `.github/workflows/**` | GitHub Actions の発火ルール（関係あるジョブだけ動かす・パスフィルタの落とし穴） |
 | `.claude/rules/error-handling.md` | 全体 | バリデーション・例外処理・HTTP ステータスコード方針 |
 | `.claude/rules/security.md` | 全体 | 認証・CORS・インジェクション対策・シークレット管理 |
 | `.claude/rules/testing.md` | 全体 | RSpec / FactoryBot / Shoulda Matchers テスト方針 |

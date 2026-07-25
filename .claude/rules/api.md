@@ -3,6 +3,11 @@ description: Rails API モード設計・コントローラー構成
 globs: "rails-task-api-web-app/app/controllers/**,rails-task-api-web-app/app/models/**,rails-task-api-web-app/app/services/**"
 ---
 
+---
+description: Rails API モード設計・コントローラー構成
+globs: "rails-task-api-web-app/app/**,rails-task-api-web-app/config/**"
+---
+
 # API ルール（Rails API モード）
 
 ## アーキテクチャ
