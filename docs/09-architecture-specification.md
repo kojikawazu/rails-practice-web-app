@@ -16,7 +16,7 @@
 
 ### Project 1: フルスタックRails
 
-```
+```text
 ブラウザ → Rails（Router → Controller → Service → Model → View/ERB） → PostgreSQL（Docker）
 ```
 
@@ -30,7 +30,7 @@
 
 ### Project 2: Rails APIモード
 
-```
+```text
 APIクライアント → Rails（Router → Controller → Service → Model → JSON） → PostgreSQL（Docker）
 ```
 
@@ -64,7 +64,7 @@ APIクライアント → Rails（Router → Controller → Service → Model �
 
 ### Docker 構成
 
-```
+```text
 docker-compose.yml
   ├── db (postgres:16)
   │     ├── Port: 5434:5432
@@ -79,7 +79,7 @@ docker-compose.yml
 
 `.env.example` をテンプレートとして用意している（実際の値は `.env` に記載し、`.gitignore` で管理外とする）。
 
-```
+```text
 POSTGRES_USER=rails_task
 POSTGRES_PASSWORD=<your_password>
 POSTGRES_DB=rails_task_development
@@ -97,7 +97,7 @@ MINIO_ENDPOINT=http://localhost:9000
 
 ## ディレクトリ構成
 
-```
+```text
 rails-task-web-app/
 ├── CLAUDE.md
 ├── README.md

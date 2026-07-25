@@ -78,7 +78,7 @@
 
 ## ディレクトリ構成
 
-```
+```text
 app/
 ├── views/
 │   ├── layouts/            # application.html.erb（共通レイアウト）

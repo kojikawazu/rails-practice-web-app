@@ -1,9 +1,4 @@
 ---
-description: ドキュメント更新・設計書管理ルール（影響マップ + opt-out の完了条件）
-globs: 
----
-
----
 description: ドキュメント更新・設計書管理（影響マップ + opt-out 完了条件）
 globs: 
 ---

@@ -4,7 +4,7 @@
 
 テストはコードの「仕様書」として読める。実装を読む前にテストを読むと意図が分かりやすい。
 
-**フルスタック版（Minitest + RSpec 併用）**
+## フルスタック版（Minitest + RSpec 併用）
 
 | ファイル | 内容 |
 |---|---|
@@ -12,7 +12,7 @@
 | `spec/models/user_spec.rb` | shoulda-matchers でバリデーション検証 |
 | `spec/requests/projects_spec.rb` | RSpec リクエストスペック |
 
-**APIモード（RSpec のみ）**
+## APIモード（RSpec のみ）
 
 | ファイル | 内容 |
 |---|---|
@@ -21,6 +21,7 @@
 | `spec/support/jwt_helper.rb` | `auth_headers(user)` ヘルパー（テスト用トークン生成） |
 
 読むポイント:
+
 - `auth_headers(user)` の実装を見ると JWT の使い方が分かる
 - `as: :json` — リクエストボディを JSON として送信
 - `JSON.parse(response.body)` — レスポンスの JSON を検証

@@ -53,7 +53,7 @@
 
 ### iframe 設定
 
-```
+```text
 sandbox="allow-scripts allow-same-origin"  referrerpolicy="no-referrer"  allow=""
 ```
 

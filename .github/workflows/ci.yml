@@ -14,16 +14,19 @@ permissions:
   pull-requests: read
 
 jobs:
-  # コード変更の有無を1か所で判定する軽量ジョブ。
-  # doc のみ（docs/** や **.md）の変更では code=false となり、
-  # 下流の重いジョブは if 条件でスキップされる。
+  # 変更範囲を1か所で判定する軽量ジョブ。
+  # 変更内容に関係のあるジョブだけを動かすための入口（.claude/rules/github-actions.md）。
+  #   code=true  -> テスト（test / system-js）を実行する
+  #   docs=true  -> markdown lint を実行する
+  # 下流ジョブはワークフローレベルの paths ではなく if 条件でスキップする。
   # skip されたジョブは required check 上では成功扱いになるため、
-  # ブランチ保護を有効にしてもマージがブロックされない。
+  # ブランチ保護を有効にしてもマージが pending で止まらない。
   changes:
     name: Detect changes
     runs-on: ubuntu-latest
     outputs:
       code: ${{ steps.filter.outputs.code }}
+      docs: ${{ steps.filter.outputs.docs }}
     steps:
       - uses: actions/checkout@v4
 
@@ -32,11 +35,36 @@ jobs:
         with:
           # 「コードとは何か」を positive パターンで列挙する（取りこぼさない安全側）。
           # ここに該当しない変更（docs/**, **.md, README, .claude/** 等）は code=false。
+          # docs は markdown ファイルと lint 設定そのものを対象にする。
+          # 両方に該当する変更（アプリ配下の *.md 等）では両方が動く。
           filters: |
             code:
               - 'rails-task-fullstack-web-app/**'
               - 'rails-task-api-web-app/**'
               - '.github/workflows/**'
+            docs:
+              - '**/*.md'
+              - '.markdownlint-cli2.jsonc'
+              - '.github/workflows/**'
+
+  # ドキュメント変更時の軽量チェック。
+  # 「ドキュメント変更でも何も動かさない、にはしない」（.claude/rules/github-actions.md）。
+  markdown-lint:
+    name: Markdown lint
+    needs: changes
+    if: needs.changes.outputs.docs == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # 設定は .markdownlint-cli2.jsonc（ローカルの make lint-md と同一）。
+      - name: markdownlint
+        run: npx --yes markdownlint-cli2 "**/*.md"
 
   test:
     name: Test (${{ matrix.app }})

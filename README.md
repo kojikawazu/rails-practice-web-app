@@ -53,7 +53,7 @@
 - **画像添付の round-trip** — HTML の file input は確認画面の hidden で値を持ち回れないため、確認ステップで一旦 blob 化し `signed_id` を「修正する」「確定」で持ち回る（JS 不要・オーファン防止）。Active Storage + MinIO（S3 互換）。→ [データ仕様](docs/05-data-specification.md#画像添付active-storage)
 - **外部 URL プレビューの iframe 多層防御** — 任意のユーザー入力 URL を確認画面で iframe プレビューする際、**スキーム検証（http/https のみ）＋ sandbox ＋ 内部/プライベート IP 拒否**でサンドボックス脱獄・トップナビ乗っ取り・XSS を抑止。→ [セキュリティ仕様](docs/06-security-specification.md#外部-url-のプレビューiframe-埋め込み)
 - **認可スコープ** — 他ユーザーのリソースへアクセスすると 404（`current_user.projects.find(...)`）。フルスタックはリダイレクト、API は 401 と挙動を作り分け。
-- **ドキュメント変更を見分ける CI** — GitHub Actions のパスフィルタで `docs/**` のみの変更時は重いテストジョブをスキップしつつ、required check は成功扱いにしてマージをブロックしない。
+- **変更内容で発火条件を分ける CI** — GitHub Actions のパスフィルタで、コード変更にはテスト、ドキュメント変更には markdown lint と、関係のあるジョブだけを実行。スキップされたジョブは required check 上で成功扱いとなり、マージをブロックしない。
 
 ## Features
 
@@ -119,20 +119,20 @@ bin/rails server -p 3100
 ```
 
 > **2 構成を同時に動かす場合はターミナルを分けてください**（`rails server` はフォアグラウンドで動き続けます）。
-> **初回はデータが空です**。フルスタック版は http://localhost:3099 を開いて「ユーザー登録」から開始してください。API モードのログイン手順（curl）は [docs/12-code-reading-guide/](docs/12-code-reading-guide/README.md#apiモード) を参照。
+> **初回はデータが空です**。フルスタック版は <http://localhost:3099> を開いて「ユーザー登録」から開始してください。API モードのログイン手順（curl）は [docs/12-code-reading-guide/](docs/12-code-reading-guide/README.md#apiモード) を参照。
 
 | サービス | URL / ポート |
 |---|---|
-| フルスタック版 | http://localhost:3099 |
-| API モード | http://localhost:3100 |
+| フルスタック版 | <http://localhost:3099> |
+| API モード | <http://localhost:3100> |
 | PostgreSQL | 5434 |
-| MinIO（API / コンソール） | http://localhost:9000 / http://localhost:9001 |
+| MinIO（API / コンソール） | <http://localhost:9000> / <http://localhost:9001> |
 
 > **画像ストレージ（MinIO）**: フルスタック版のタスク画像添付は Active Storage + MinIO（S3 互換）を使います。`make up` で MinIO が起動し、`createbuckets` コンテナがバケットを自動作成します。認証情報は `.env`（`MINIO_ROOT_USER` / `AWS_ACCESS_KEY_ID` 等）で管理します。
 
 ## Directory Structure
 
-```
+```text
 rails-practice-web-app/
 ├── .github/workflows/ci.yml       # GitHub Actions（テスト CI）
 ├── CLAUDE.md
@@ -157,11 +157,12 @@ rails-practice-web-app/
 
 GitHub Actions（`.github/workflows/ci.yml`）で、`main` への push と全 PR で**両プロジェクトのテスト**を自動実行します（デプロイは対象外）。
 
-| ジョブ | 内容 |
-|---|---|
-| `Detect changes` | 差分パスを判定し、コード変更の有無（`code`）を後続ジョブへ渡す軽量ジョブ |
-| `Test (matrix)` | 両アプリで Minitest（`bin/rails test`）+ RSpec（`bundle exec rspec`） |
-| `System (:js)` | フルスタック版の JS system spec（`rspec --tag js`、headless Chrome） |
+| ジョブ | 内容 | 実行条件 |
+|---|---|---|
+| `Detect changes` | 差分パスを判定し、変更範囲（`code` / `docs`）を後続ジョブへ渡す軽量ジョブ | 常時 |
+| `Markdown lint` | markdownlint-cli2 でリポジトリ全体の markdown を検証 | ドキュメント変更時 |
+| `Test (matrix)` | 両アプリで Minitest（`bin/rails test`）+ RSpec（`bundle exec rspec`） | コード変更時 |
+| `System (:js)` | フルスタック版の JS system spec（`rspec --tag js`、headless Chrome） | コード変更時 |
 
 ローカル実行（`make` ショートカット推奨。全 target は `make help` で一覧）:
 
@@ -172,6 +173,7 @@ make test          # Minitest + RSpec（既定アプリ）
 make test-all      # 両アプリでテスト
 make test-js       # JS system spec（fullstack のみ、要 Chrome）
 make ci            # ローカル CI 一括（rubocop + security + tests）
+make lint-md       # markdownlint（CI と同一設定。自動修正は make lint-md-fix）
 ```
 
 `make` を使わない場合の素のコマンド:

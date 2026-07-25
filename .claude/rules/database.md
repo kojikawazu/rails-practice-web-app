@@ -3,11 +3,6 @@ description: ActiveRecord 命名規約・マイグレーション・クエリ規
 globs: "rails-task-fullstack-web-app/app/models/**,rails-task-fullstack-web-app/db/**,rails-task-api-web-app/app/models/**,rails-task-api-web-app/db/**"
 ---
 
----
-description: ActiveRecord 命名規約・マイグレーション・クエリ規約
-globs: "rails-task-fullstack-web-app/app/models/**,rails-task-fullstack-web-app/db/**,rails-task-api-web-app/app/models/**,rails-task-api-web-app/db/**"
----
-
 # データベースルール（ActiveRecord）
 
 ## 命名規約

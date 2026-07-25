@@ -88,7 +88,7 @@
 
 ## ディレクトリ構成
 
-```
+```text
 # フルスタック版
 app/
 ├── controllers/        # ProjectsController / TasksController / Sessions / Users

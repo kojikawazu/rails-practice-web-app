@@ -107,7 +107,7 @@ flowchart LR
 
 ### ステータス遷移
 
-```
+```text
 not_started → in_progress → completed
                 ↑                |
                 └────────────────┘ (差し戻し可)

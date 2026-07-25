@@ -1,0 +1,41 @@
+{
+  // markdownlint 設定。CI（.github/workflows/ci.yml の markdown-lint ジョブ）と
+  // ローカル（make lint-md）で同じ設定を使う。
+  //
+  // 方針: 表記ゆれ・構造の崩れは検出するが、見た目の好みは検出しない。
+  // 「警告ゼロを維持し、守れないルールは有効にしない」（.claude/rules/static-analysis.md）
+  "config": {
+    "default": true,
+
+    // MD013 行長制限: 日本語ドキュメント・表が多く、折り返しは可読性を下げるため無効化。
+    "MD013": false,
+
+    // MD033 インライン HTML: <br> や <details> を意図的に使うため許可。
+    "MD033": false,
+
+    // MD060 表のパイプ位置: 見た目のみの規則。本プロジェクトに markdown formatter が
+    // 無く、全 md の表を書き換える必要が生じるため無効化する
+    // （Formatter の領分を Linter で見ない: .claude/rules/static-analysis.md）。
+    "MD060": false,
+
+    // MD003 見出しスタイル: ATX（# 形式）に統一する。
+    // 既定の "consistent" は frontmatter の区切り線を setext 見出しと誤認するため明示する。
+    "MD003": { "style": "atx" },
+
+    // MD024 重複見出し: 各仕様書で「## 概要」等が繰り返されるのは正常。
+    // 同一階層の連続重複のみ検出する。
+    "MD024": { "siblings_only": true },
+
+    // MD041 先頭行は見出し: frontmatter を持つ .claude/rules/*.md があるため、
+    // frontmatter を見出しの前段として許可する。
+    "MD041": { "front_matter_title": "" }
+  },
+
+  // 生成物・依存物は対象外。
+  "ignores": [
+    "**/node_modules/**",
+    "**/vendor/**",
+    "**/tmp/**",
+    "**/log/**"
+  ]
+}
