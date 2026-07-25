@@ -3,6 +3,11 @@ description: Rails フルスタック（MVC + View）設計ルール
 globs: "rails-task-fullstack-web-app/app/**,rails-task-fullstack-web-app/config/**"
 ---
 
+---
+description: Rails フルスタック（MVC + View）設計ルール
+globs: "rails-task-fullstack-web-app/app/**,rails-task-fullstack-web-app/config/**"
+---
+
 # フルスタックルール（Rails MVC）
 
 ## アーキテクチャ

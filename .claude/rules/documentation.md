@@ -3,6 +3,11 @@ description: ドキュメント更新・設計書管理ルール（影響マッ�
 globs: 
 ---
 
+---
+description: ドキュメント更新・設計書管理（影響マップ + opt-out 完了条件）
+globs: 
+---
+
 # ドキュメント
 
 コード変更がドキュメント（CLAUDE.md / README.md / docs/）と乖離しないことを構造的に担保する。
