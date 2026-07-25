@@ -4,7 +4,7 @@
 
 認証はアプリ全体の根幹。ここを押さえると他のコードが読みやすくなる。
 
-**フルスタック版（セッション認証）**
+## フルスタック版（セッション認証）
 
 | ファイル | 役割 |
 |---|---|
@@ -13,10 +13,11 @@
 | `app/controllers/users_controller.rb` | サインアップ処理 |
 
 読むポイント:
+
 - `session[:user_id]` にユーザーIDを保存してログイン状態を維持
 - `before_action :require_login` で未ログイン時にリダイレクト
 
-**APIモード（JWT認証）**
+## APIモード（JWT認証）
 
 | ファイル | 役割 |
 |---|---|
@@ -25,6 +26,7 @@
 | `app/controllers/api/v1/auth_controller.rb` | signup/login → トークン発行 |
 
 読むポイント:
+
 - `JsonWebToken.encode(user_id: user.id)` でトークン生成
 - `request.headers["Authorization"]` からトークンを取り出して検証
 - `skip_before_action :authenticate_user!` で認証不要なエンドポイントを除外

@@ -55,6 +55,7 @@
 ## テスト構成
 
 ### Request spec（認可・初期表示）
+
 - 追加先:
   - `spec/requests/projects_spec.rb` … N-1, S-1〜S-3, A-1
   - `spec/requests/tasks_spec.rb` … N-2, S-4〜S-5
@@ -63,6 +64,7 @@
 - 既存の `log_in` ヘルパー（`post login_path ...`）を再利用。他ユーザーは `create(:user)` / `create(:project, user: other)` で用意。
 
 ### System spec（確認画面 E2E / Capybara + rack_test）
+
 - 新規ファイル: `spec/system/confirm_flows_spec.rb`
 - サポート設定（新規）: `spec/support/capybara.rb`
   - `RSpec.configure { |c| c.before(:each, type: :system) { driven_by :rack_test } }`
@@ -73,6 +75,7 @@
 - 前提条件: 各シナリオは独立。FactoryBot でユーザー/プロジェクトを用意し、画面操作でログイン。
 
 ### ログインヘルパー（system 用）
+
 - system spec は HTTP の `post login_path` ではなく画面操作でログインする必要がある。
 - `spec/support/system_login_helper.rb` に `sign_in(user)`（visit login → fill → click）を定義し、`type: :system` で include。
 

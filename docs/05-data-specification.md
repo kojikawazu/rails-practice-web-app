@@ -17,7 +17,7 @@
 
 ### 3モデル構成
 
-```
+```text
 User
  └── has_many :projects
       └── has_many :tasks
@@ -32,7 +32,7 @@ Task
 
 ## ER図
 
-```
+```text
 +------------+       +------------+       +------------+
 |   users    |       |  projects  |       |   tasks    |
 +------------+       +------------+       +------------+
@@ -120,7 +120,7 @@ Task
 
 ## データフロー
 
-```
+```text
 ブラウザ → Controller → Model（ActiveRecord） → PostgreSQL（Docker）
                           ↓
                     バリデーション

@@ -4,10 +4,12 @@
 
 まずどのURLがどのコントローラーに繋がっているかを確認する。
 
-**フルスタック版**
-```
+## フルスタック版
+
+```text
 rails-task-fullstack-web-app/config/routes.rb
 ```
+
 ```ruby
 resources :projects do
   resources :tasks      # ネスト: /projects/:project_id/tasks
@@ -16,10 +18,12 @@ get "login"  → SessionsController#new
 post "login" → SessionsController#create
 ```
 
-**APIモード**
-```
+## APIモード
+
+```text
 rails-task-api-web-app/config/routes.rb
 ```
+
 ```ruby
 namespace :api do
   namespace :v1 do

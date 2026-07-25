@@ -1,9 +1,4 @@
 ---
-description: コーディング規約
-globs: 
----
-
----
 description: Ruby / Bundler / RuboCop コーディング規約・YARD ドキュメントコメント
 globs: 
 ---

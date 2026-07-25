@@ -48,6 +48,7 @@
 ## 動作確認コマンド
 
 ### フルスタック版
+
 ```bash
 make up                       # ルートで PostgreSQL + MinIO 起動
 cd rails-task-fullstack-web-app
@@ -57,6 +58,7 @@ bin/rails server -p 3099
 ```
 
 ### APIモード
+
 ```bash
 make up                       # ルートで PostgreSQL 起動（未起動なら）
 cd rails-task-api-web-app
@@ -79,6 +81,7 @@ curl http://localhost:3100/api/v1/projects \
 ```
 
 ### テスト実行
+
 ```bash
 # フルスタック版
 cd rails-task-fullstack-web-app

@@ -71,7 +71,7 @@
 
 - **モノレポ（ルート管理）**。2 つの Rails アプリと共通インフラ・ドキュメントを 1 リポジトリで管理する。
 
-```
+```text
 rails-task-web-app/
 ├── docs/                          # 仕様書・設計書
 ├── rails-task-fullstack-web-app/  # Project 1: フルスタック（MVC + ERB + Turbo/Stimulus）

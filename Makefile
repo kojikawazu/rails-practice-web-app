@@ -120,6 +120,14 @@ lint: ## RuboCop 実行（APP 対象）
 lint-fix: ## RuboCop 自動修正（APP 対象）
 	cd $(APP) && bin/rubocop -A
 
+.PHONY: lint-md
+lint-md: ## markdownlint 実行（リポジトリ全体, CI と同一設定）
+	npx --yes markdownlint-cli2 "**/*.md"
+
+.PHONY: lint-md-fix
+lint-md-fix: ## markdownlint 自動修正（リポジトリ全体）
+	npx --yes markdownlint-cli2 --fix "**/*.md"
+
 .PHONY: security
 security: ## Brakeman + bundler-audit（APP 対象）
 	cd $(APP) && bin/bundler-audit && bin/brakeman --quiet --no-pager --exit-on-warn --exit-on-error

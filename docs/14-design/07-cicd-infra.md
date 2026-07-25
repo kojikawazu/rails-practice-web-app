@@ -6,7 +6,8 @@
 
 - [CI 方針（GitHub Actions）](#ci-方針github-actions)
   - [ジョブ構成](#ジョブ構成)
-  - [パスフィルターで docs-only をスキップ](#パスフィルターで-docs-only-をスキップ)
+  - [パスフィルターで発火条件を分ける](#パスフィルターで発火条件を分ける)
+  - [Markdown lint](#markdown-lint)
   - [テストマトリクスと :js ジョブ](#テストマトリクスと-js-ジョブ)
 - [ローカルインフラ（docker-compose）](#ローカルインフラdocker-compose)
 - [Makefile（タスクランナー）](#makefileタスクランナー)
@@ -20,17 +21,18 @@ CI は `.github/workflows/ci.yml` の単一ワークフロー。`push`（main）
 
 ### ジョブ構成
 
-3 ジョブで構成する。
+4 ジョブで構成する。
 
 | ジョブ | 役割 |
 |--------|------|
-| **Detect changes** | パスフィルターでコード変更の有無（`code` 出力）を 1 か所で判定する |
+| **Detect changes** | パスフィルターで変更範囲（`code` / `docs` 出力）を 1 か所で判定する |
+| **Markdown lint** | リポジトリ全体の markdown を lint（`docs == 'true'` のときのみ） |
 | **Test (${{ matrix.app }})** | 両アプリで Minitest + RSpec を実行（`code == 'true'` のときのみ） |
 | **System (:js, headless Chrome)** | フルスタック版の `:js` System spec を実行（`code == 'true'` のときのみ） |
 
-### パスフィルターで docs-only をスキップ
+### パスフィルターで発火条件を分ける
 
-- `Detect changes` は `dorny/paths-filter` で「コードとは何か」を**positive パターンで列挙**する（取りこぼさない安全側）。
+変更内容に関係のあるジョブだけを動かす（`.claude/rules/github-actions.md`）。`Detect changes` は `dorny/paths-filter` で 2 つの出力を返す。
 
 ```yaml
 filters: |
@@ -38,10 +40,27 @@ filters: |
     - 'rails-task-fullstack-web-app/**'
     - 'rails-task-api-web-app/**'
     - '.github/workflows/**'
+  docs:
+    - '**/*.md'
+    - '.markdownlint-cli2.jsonc'
+    - '.github/workflows/**'
 ```
 
-- 上記に該当しない変更（`docs/**` / `**.md` / `README` / `.claude/**` 等）は **`code=false`** となり、下流の重いジョブ（Test / System）が `if` 条件でスキップされる。
-- **スキップされたジョブは required check 上では成功扱い**になるため、ブランチ保護を有効にしても docs-only PR のマージはブロックされない。ドキュメント変更を軽量に保つための設計。
+| 変更内容 | 実行されるジョブ |
+|---|---|
+| アプリコード | Test / System（+ アプリ配下の `*.md` を含むなら Markdown lint） |
+| `docs/**` / `README.md` / `CLAUDE.md` / `.claude/**` | Markdown lint のみ |
+| `.github/workflows/**` | 全ジョブ（ワークフロー自身の検証のため両方に含める） |
+
+- `code` は「コードとは何か」を**positive パターンで列挙**する（取りこぼさない安全側）。
+- **ドキュメント変更でも「何も動かさない」にはしない**。markdown lint は軽量なため常に実行し、doc-only の変更でも壊れた markdown を検出できる状態を保つ。
+- 下流ジョブはワークフローレベルの `paths` ではなく **ジョブレベルの `if` でスキップ**する。**スキップされたジョブは required check 上では成功扱い**になるため、ブランチ保護を有効にしても PR が `pending` のままマージ不能になることがない。
+
+### Markdown lint
+
+- ツールは **markdownlint-cli2**（`npx --yes markdownlint-cli2 "**/*.md"`）。設定はリポジトリルートの `.markdownlint-cli2.jsonc` に置き、**CI とローカル（`make lint-md`）で同一設定**を使う。
+- 見た目のみの規則（`MD013` 行長 / `MD060` 表のパイプ位置 / `MD033` インライン HTML）は無効化している。markdown formatter を導入していないため、Linter で見た目を見ない方針（`.claude/rules/static-analysis.md`）。
+- 対象は 49 ファイル・**違反ゼロ**が基準。自動修正は `make lint-md-fix`。
 
 ### テストマトリクスと :js ジョブ
 
@@ -73,7 +92,7 @@ filters: |
 | DB | `db-setup` / `migrate` / `db-prepare` / `db-reset` / `seed` |
 | 実行 | `server` / `console` |
 | テスト | `test`（Minitest + RSpec） / `test-js`（`:js`、fullstack のみ） / `test-all`（両アプリ） |
-| 品質 | `lint` / `lint-fix`（RuboCop） / `security`（bundler-audit + Brakeman） / `ci` / `ci-all` |
+| 品質 | `lint` / `lint-fix`（RuboCop） / `lint-md` / `lint-md-fix`（markdownlint） / `security`（bundler-audit + Brakeman） / `ci` / `ci-all` |
 
 > ローカル CI（`make ci`）と GitHub Actions の Test ジョブは同等のチェックを意図する。push 前にローカルで揃えられる。
 

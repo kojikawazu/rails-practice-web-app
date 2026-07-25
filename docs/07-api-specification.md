@@ -37,6 +37,7 @@
 ### 例: ログイン（JWT 発行）
 
 **Request:**
+
 ```json
 POST /api/v1/login
 Content-Type: application/json
@@ -48,6 +49,7 @@ Content-Type: application/json
 ```
 
 **Response (200 OK):**
+
 ```json
 {
   "token": "eyJhbGciOiJIUzI1NiJ9...",
@@ -61,6 +63,7 @@ Content-Type: application/json
 ### 例: タスク作成
 
 **Request:**
+
 ```json
 POST /api/v1/projects/1/tasks
 Content-Type: application/json
@@ -75,6 +78,7 @@ Content-Type: application/json
 ```
 
 **Response (201 Created):**
+
 ```json
 {
   "id": 1,

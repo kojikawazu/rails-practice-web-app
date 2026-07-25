@@ -2,24 +2,28 @@
 
 [← README](README.md)
 
-**フルスタック版**
-```
+## フルスタック版
+
+```text
 app/controllers/projects_controller.rb
 app/controllers/tasks_controller.rb
 ```
 
 読むポイント:
+
 - `before_action :require_login` — 認証ガード
 - `current_user.projects.find(params[:id])` — スコープ付き検索（他ユーザーのデータにアクセスできない）
 - `respond_to do |format|` — HTML/JSON の両レスポンス対応
 
-**APIモード**
-```
+## APIモード
+
+```text
 app/controllers/api/v1/projects_controller.rb
 app/controllers/api/v1/tasks_controller.rb
 ```
 
 読むポイント:
+
 - `render json: @project` — シンプルなJSON返却
 - `head :no_content` — DELETE時に204を返す（ボディなし）
 - `rescue ActiveRecord::RecordNotFound` → 404 JSON を返す
