@@ -26,7 +26,12 @@ globs:
 | 機能追加・変更、画面・View | `docs/03-functional-specification.md` |
 | テスト（RSpec / request spec / system spec / FactoryBot） | `docs/08-test-specification.md` |
 | 構成・ディレクトリ・Gem 追加/変更・依存関係 | `docs/09-architecture-specification.md` |
-| 開発ルール・規約・ワークフロー変更 | `CLAUDE.md` / `.claude/rules/` |
+| 規約本文の変更（`.claude/rules/`） | 原則不要（正本のルールファイルのみ） |
+| 規約ファイルの追加・削除・改名・適用範囲変更 | `CLAUDE.md` / `AGENTS.md` 群 / README.md（AI エージェント向けルール表） |
 | セットアップ・起動/実行手順・機能概要・技術スタック・開発フェーズ | `README.md` |
 
 該当する変更がない場合はスキップする。
+
+## AI エージェント向け入口の同期
+
+`.claude/rules/` はルール本文の唯一の正本とする。規約ファイルの構成・名称・適用対象を変更した場合は、Claude Code 向けの `CLAUDE.md`、Codex 向けの該当 `AGENTS.md`、README の対応表を同一 PR で同期する。本文だけの変更では、各入口の更新は不要。

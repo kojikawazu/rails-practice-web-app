@@ -35,13 +35,17 @@ jobs:
         with:
           # 「コードとは何か」を positive パターンで列挙する（取りこぼさない安全側）。
           # ここに該当しない変更（docs/**, **.md, README, .claude/** 等）は code=false。
+          # アプリ配下・workflow 配下の AGENTS.md はルール文書なので、明示的に除外する。
           # docs は markdown ファイルと lint 設定そのものを対象にする。
           # 両方に該当する変更（アプリ配下の *.md 等）では両方が動く。
           filters: |
             code:
               - 'rails-task-fullstack-web-app/**'
+              - '!rails-task-fullstack-web-app/**/AGENTS.md'
               - 'rails-task-api-web-app/**'
+              - '!rails-task-api-web-app/**/AGENTS.md'
               - '.github/workflows/**'
+              - '!.github/workflows/**/AGENTS.md'
             docs:
               - '**/*.md'
               - '.markdownlint-cli2.jsonc'

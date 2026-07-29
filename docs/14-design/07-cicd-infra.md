@@ -38,8 +38,11 @@ CI は `.github/workflows/ci.yml` の単一ワークフロー。`push`（main）
 filters: |
   code:
     - 'rails-task-fullstack-web-app/**'
+    - '!rails-task-fullstack-web-app/**/AGENTS.md'
     - 'rails-task-api-web-app/**'
+    - '!rails-task-api-web-app/**/AGENTS.md'
     - '.github/workflows/**'
+    - '!.github/workflows/**/AGENTS.md'
   docs:
     - '**/*.md'
     - '.markdownlint-cli2.jsonc'
@@ -49,10 +52,11 @@ filters: |
 | 変更内容 | 実行されるジョブ |
 |---|---|
 | アプリコード | Test / System（+ アプリ配下の `*.md` を含むなら Markdown lint） |
-| `docs/**` / `README.md` / `CLAUDE.md` / `.claude/**` | Markdown lint のみ |
+| `docs/**` / `README.md` / `CLAUDE.md` / `.claude/**` / `AGENTS.md` | Markdown lint のみ |
 | `.github/workflows/**` | 全ジョブ（ワークフロー自身の検証のため両方に含める） |
 
 - `code` は「コードとは何か」を**positive パターンで列挙**する（取りこぼさない安全側）。
+- アプリ・workflow 配下の `AGENTS.md` はルール文書であるため、`code` から明示的に除外する。
 - **ドキュメント変更でも「何も動かさない」にはしない**。markdown lint は軽量なため常に実行し、doc-only の変更でも壊れた markdown を検出できる状態を保つ。
 - 下流ジョブはワークフローレベルの `paths` ではなく **ジョブレベルの `if` でスキップ**する。**スキップされたジョブは required check 上では成功扱い**になるため、ブランチ保護を有効にしても PR が `pending` のままマージ不能になることがない。
 

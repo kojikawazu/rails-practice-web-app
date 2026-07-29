@@ -79,15 +79,18 @@ rails-task-web-app/
 ├── docker-compose.yml             # PostgreSQL + MinIO（ミドルウェアのみ）
 ├── Makefile                       # 開発用タスクランナー
 ├── README.md                      # プロジェクト概要（必須）
-├── CLAUDE.md                      # AI開発ガイド・ルール正本（必須）
-├── .claude/rules/                 # 分割ルール（コーディング/テスト/DB 等）
+├── CLAUDE.md                      # Claude Code 向けAI開発ガイド
+├── AGENTS.md                      # Codex 向けAI開発ガイド
+├── .claude/rules/                 # ルール本文の正本（コーディング/テスト/DB 等）
 └── .gitignore                     # Git除外設定（必須）
 ```
 
 ### 必須ファイル
 
 - **README.md** — プロジェクト概要・セットアップ手順
-- **CLAUDE.md** — AI開発時のコンテキスト・ルール（詳細は `.claude/rules/`）
+- **CLAUDE.md** — Claude Code 向けの AI 開発時コンテキスト・ルール入口
+- **AGENTS.md** — Codex 向けの AI 開発時コンテキスト・ルール入口（対象別の追加指示を含む）
+- **.claude/rules/** — AI エージェント共通のルール本文の唯一の正本
 - **.gitignore** — 以下を必ず除外する
   - `.env` / `.env.*` — 環境変数・シークレット（各アプリは `.env.example` をテンプレートとして持つ）
   - `/log` / `/tmp` / `/storage` — Rails の生成物・Active Storage ローカルファイル
