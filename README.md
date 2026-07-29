@@ -186,7 +186,7 @@ bundle exec rspec                             # 通常スイート（JS 除外�
 bundle exec rspec --tag js                    # JS system spec（要 Chrome）
 ```
 
-> ドキュメントのみの変更（`docs/**` / `**.md` / `.claude/**` 等、コード外）では、`Detect changes` が `code=false` と判定し、重い `Test` / `System` ジョブを **`if` 条件でスキップ**します。`paths-ignore` と違いワークフロー自体は起動するため、スキップされたジョブは required check 上で成功扱いとなり、ブランチ保護を有効にしてもマージがブロックされません。
+> ドキュメントのみの変更（`docs/**` / `**.md` / `.claude/**` / `AGENTS.md` 等、コード外）では、`Detect changes` が `code=false` と判定し、重い `Test` / `System` ジョブを **`if` 条件でスキップ**します。`paths-ignore` と違いワークフロー自体は起動するため、スキップされたジョブは required check 上で成功扱いとなり、ブランチ保護を有効にしてもマージがブロックされません。
 
 ## Docs
 
@@ -202,6 +202,19 @@ bundle exec rspec --tag js                    # JS system spec（要 Chrome）
 | **起動コマンド・2 構成の差分を読み比べる** | [docs/12-code-reading-guide/](docs/12-code-reading-guide/README.md) |
 | **進捗・タスク** | [docs/11-tasks.md](docs/11-tasks.md) |
 | **画面モック一覧** | `docs/13-mockups/index.html`（ブラウザで開く） |
+
+## AI エージェント向けルール
+
+開発ルールの正本は [`.claude/rules/`](.claude/rules/) です。Claude Code は [`CLAUDE.md`](CLAUDE.md) から、Codex はリポジトリ階層の [`AGENTS.md`](AGENTS.md) から同じルールを参照します。ルール本文は複製せず、変更対象に最も近い `AGENTS.md` が指定する追加ルールも適用します。
+
+| 対象 | Codex 向け指示ファイル | 追加で参照するルール |
+|---|---|---|
+| リポジトリ全体 | [`AGENTS.md`](AGENTS.md) | 共通ルール（Ruby変更時はRuby） |
+| `.github/workflows/**` | [`.github/workflows/AGENTS.md`](.github/workflows/AGENTS.md) | GitHub Actions |
+| `rails-task-fullstack-web-app/**` | [`rails-task-fullstack-web-app/AGENTS.md`](rails-task-fullstack-web-app/AGENTS.md) | Rails MVC |
+| `rails-task-fullstack-web-app/app/models/**`, `rails-task-fullstack-web-app/db/**` | 対象ディレクトリの `AGENTS.md` | ActiveRecord / DB |
+| `rails-task-api-web-app/**` | [`rails-task-api-web-app/AGENTS.md`](rails-task-api-web-app/AGENTS.md) | Rails API |
+| `rails-task-api-web-app/app/models/**`, `rails-task-api-web-app/db/**` | 対象ディレクトリの `AGENTS.md` | ActiveRecord / DB |
 
 ## License
 

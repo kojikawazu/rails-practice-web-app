@@ -36,6 +36,8 @@
 
 詳細ルールは `.claude/rules/` に分割管理しています。
 
+Codex 向けの入口はリポジトリ階層の `AGENTS.md` です。ルール本文は `.claude/rules/` にのみ置き、変更対象に最も近い `AGENTS.md` が指定する追加ルールも適用します。
+
 | ファイル | スコープ | 内容 |
 |---------|---------|------|
 | `.claude/rules/coding-standards.md` | 全体 | Ruby / Bundler / RuboCop コーディング規約・YARD ドキュメントコメント |

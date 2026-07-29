@@ -99,7 +99,9 @@ MINIO_ENDPOINT=http://localhost:9000
 
 ```text
 rails-task-web-app/
+├── AGENTS.md                     # Codex 向けの共通ルール入口
 ├── CLAUDE.md
+├── .claude/rules/                # AI エージェント向け開発ルールの正本
 ├── README.md
 ├── Makefile                       # 開発用タスクランナー（docker/setup/test/lint/ci）
 ├── docker-compose.yml             # PostgreSQL + MinIO コンテナ定義
@@ -108,6 +110,8 @@ rails-task-web-app/
 ├── rails-task-fullstack-web-app/  # Project 1: フルスタック
 └── rails-task-api-web-app/        # Project 2: APIモード
 ```
+
+各アプリと `.github/workflows/` には、対象別の追加ルールを参照する `AGENTS.md` を配置する。ルール本文は `.claude/rules/` にのみ置き、`AGENTS.md` は本文を複製しない。
 
 ## デプロイ
 
