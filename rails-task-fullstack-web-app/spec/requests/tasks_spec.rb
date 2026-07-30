@@ -9,24 +9,24 @@ RSpec.describe "Tasks", type: :request do
     post login_path, params: { email: user.email, password: 'password123' }
   end
 
-  describe "GET /projects/:project_id/tasks/new" do
-    it "returns http success" do
+  describe "GET /projects/:project_id/tasks/new（新規作成フォーム）" do
+    it "新規作成フォームを表示する" do
       log_in
       get new_project_task_path(project)
       expect(response).to have_http_status(:success)
     end
   end
 
-  describe "GET /projects/:project_id/tasks/:id" do
-    it "returns http success" do
+  describe "GET /projects/:project_id/tasks/:id（タスク詳細）" do
+    it "タスク詳細を表示する" do
       log_in
       get project_task_path(project, task)
       expect(response).to have_http_status(:success)
     end
   end
 
-  describe "POST /projects/:project_id/tasks" do
-    it "creates a task and redirects to project" do
+  describe "POST /projects/:project_id/tasks（作成の確定）" do
+    it "タスクを作成し、PRG に従ってプロジェクト詳細へリダイレクトする" do
       log_in
       expect {
         post project_tasks_path(project), params: {
@@ -36,15 +36,15 @@ RSpec.describe "Tasks", type: :request do
       expect(response).to redirect_to(project_path(project))
     end
 
-    it "renders new on invalid params" do
+    it "タイトルが空なら作成せず、new を 422 で再描画する" do
       log_in
       post project_tasks_path(project), params: { task: { title: "" } }
       expect(response).to have_http_status(:unprocessable_entity)
     end
   end
 
-  describe "POST /projects/:project_id/tasks/confirm" do
-    it "renders confirm without creating a task" do
+  describe "POST /projects/:project_id/tasks/confirm（新規の確認画面）" do
+    it "DB には保存せず、valid? の検証だけを行って確認画面を描画する" do
       log_in
       expect {
         post confirm_project_tasks_path(project), params: {
@@ -55,13 +55,13 @@ RSpec.describe "Tasks", type: :request do
       expect(response.body).to include("入力内容の確認")
     end
 
-    it "renders new with 422 on invalid params" do
+    it "検証に失敗したら確認画面へ進ませず、new を 422 で再描画する" do
       log_in
       post confirm_project_tasks_path(project), params: { task: { title: "" } }
       expect(response).to have_http_status(:unprocessable_entity)
     end
 
-    it "returns to the form when back is pressed" do
+    it "「修正する」押下時は入力値を保持したままフォームへ戻す" do
       log_in
       post confirm_project_tasks_path(project), params: {
         task: { title: "確認用タスク", status: "not_started" }, back: 1
@@ -71,8 +71,8 @@ RSpec.describe "Tasks", type: :request do
     end
   end
 
-  describe "POST /projects/:project_id/tasks/:id/confirm" do
-    it "renders confirm without updating the task" do
+  describe "POST /projects/:project_id/tasks/:id/confirm（編集の確認画面）" do
+    it "編集の確認画面も DB を更新せず、確認画面だけを描画する" do
       log_in
       post confirm_project_task_path(project, task), params: { task: { title: "編集確認タスク" } }
       expect(response).to have_http_status(:success)
@@ -80,17 +80,17 @@ RSpec.describe "Tasks", type: :request do
       expect(task.reload.title).not_to eq("編集確認タスク")
     end
 
-    it "renders edit with 422 on invalid params" do
+    it "検証に失敗したら edit を 422 で再描画する" do
       log_in
       post confirm_project_task_path(project, task), params: { task: { title: "" } }
       expect(response).to have_http_status(:unprocessable_entity)
     end
   end
 
-  describe "GET /projects/:project_id/tasks/:id/duplicate" do
+  describe "GET /projects/:project_id/tasks/:id/duplicate（複製）" do
     let!(:task) { create(:task, project: project, title: "元タスク", status: :in_progress) }
 
-    it "renders the new form prefilled from the source without creating a record" do
+    it "複製元の値を初期入力した新規フォームを返し、DB にはレコードを作らない" do
       log_in
       expect {
         get duplicate_project_task_path(project, task)
@@ -100,15 +100,15 @@ RSpec.describe "Tasks", type: :request do
       expect(response.body).to include("確認する")
     end
 
-    it "submits to the create flow (collection confirm), not update" do
+    it "複製フォームの送信先は更新ではなく、新規作成フロー（コレクションの confirm）である" do
       log_in
       get duplicate_project_task_path(project, task)
       expect(response.body).to include(confirm_project_tasks_path(project))
     end
   end
 
-  describe "PATCH /projects/:project_id/tasks/:id" do
-    it "updates and redirects to task" do
+  describe "PATCH /projects/:project_id/tasks/:id（更新）" do
+    it "タスクを更新し、タスク詳細へリダイレクトする" do
       log_in
       patch project_task_path(project, task), params: {
         task: { title: "更新タスク", status: "in_progress" }
@@ -118,8 +118,8 @@ RSpec.describe "Tasks", type: :request do
     end
   end
 
-  describe "DELETE /projects/:project_id/tasks/:id" do
-    it "destroys and redirects to project" do
+  describe "DELETE /projects/:project_id/tasks/:id（削除）" do
+    it "タスクを削除し、プロジェクト詳細へリダイレクトする" do
       log_in
       expect {
         delete project_task_path(project, task)
@@ -134,43 +134,43 @@ RSpec.describe "Tasks", type: :request do
 
     before { log_in }
 
-    it "returns 404 on show (project not in scope)" do
+    it "他ユーザーのタスク詳細は、403 ではなく 404 を返して存在自体を秘匿する" do
       get project_task_path(other_project, other_task)
       expect(response).to have_http_status(:not_found)
     end
 
-    it "returns 404 on edit" do
+    it "他ユーザーのタスクの編集フォームも 404 を返す" do
       get edit_project_task_path(other_project, other_task)
       expect(response).to have_http_status(:not_found)
     end
 
-    it "returns 404 on update" do
+    it "他ユーザーのタスクは更新できず、404 を返して値も変わらない" do
       patch project_task_path(other_project, other_task), params: { task: { title: "乗っ取り" } }
       expect(response).to have_http_status(:not_found)
       expect(other_task.reload.title).not_to eq("乗っ取り")
     end
 
-    it "returns 404 on destroy" do
+    it "他ユーザーのタスクは削除できず、404 を返してレコードも残る" do
       delete project_task_path(other_project, other_task)
       expect(response).to have_http_status(:not_found)
       expect(Task.exists?(other_task.id)).to be(true)
     end
 
-    it "returns 404 when creating a task under another user's project" do
+    it "他ユーザーのプロジェクト配下にはタスクを作成できず、404 を返す" do
       expect {
         post project_tasks_path(other_project), params: { task: { title: "侵入タスク", status: "not_started" } }
       }.not_to change(Task, :count)
       expect(response).to have_http_status(:not_found)
     end
 
-    it "returns 404 on duplicate" do
+    it "他ユーザーのタスクは複製できず、404 を返す" do
       get duplicate_project_task_path(other_project, other_task)
       expect(response).to have_http_status(:not_found)
     end
   end
 
   describe "存在しないプロジェクト配下のタスク（異常系）" do
-    it "returns 404 for a nonexistent project_id" do
+    it "存在しない project_id では 404 を返す（不存在と他ユーザーを同じ応答に揃える）" do
       log_in
       get new_project_task_path(project_id: 999_999)
       expect(response).to have_http_status(:not_found)

@@ -67,6 +67,17 @@
 | System spec | 確認画面フロー（`:js` / Turbo 有効） | 実ブラウザで 登録・作成・複製 の 入力→確認画面表示→確定 が完了すること（Turbo Drive 退行の回帰ガード） |
 | System spec | 削除確認（`:js`） | `turbo_confirm` ダイアログの承認/キャンセル挙動 |
 
+## spec の文言（`describe` / `it`）の書き方
+
+学習用リポジトリのため、**`rspec --format documentation` の出力がそのまま仕様書として読める**ことを目標にする。
+
+- **`it` は日本語の仕様文にする**。「何が起きるか」に加え、**非自明なら「なぜそうするか」まで書く**（例: `"他ユーザーのタスク詳細は、403 ではなく 404 を返して存在自体を秘匿する"`）。
+- **`"returns http success"` のような実装なぞりを書かない**。`have_http_status(:success)` を読めば分かることを繰り返さない。
+- **`describe` は HTTP メソッドとパスを残し、日本語の括弧書きを添える**（例: `"POST /projects/:project_id/tasks/confirm（新規の確認画面）"`）。パスはルーティングとの対応を追う手がかりになるため消さない。
+- **意図の説明に `#` コメントを使わない。** 意図は `it` の文言で表現する。`#` コメントを使うのは、**テストの意図ではなくテスト機構の都合**を書くときに限る（`:js` を付けた理由、リトライの根拠、`fixture_file_upload` の前提など）。詳細は `.claude/rules/testing.md` の「system spec の学習上重要な境界」。
+
+> この方針は request spec / scenario spec / system spec に適用する。model spec は Shoulda Matchers の 1 行 matcher（`it { is_expected.to validate_presence_of(:title) }`）が自己説明的なため、無理に文章化しない。
+
 ## カバレッジ目標
 
 - トレーニング目的のため、厳密なカバレッジ目標は設けない

@@ -8,33 +8,33 @@ RSpec.describe "Projects", type: :request do
     post login_path, params: { email: user.email, password: 'password123' }
   end
 
-  describe "GET /projects" do
-    context "when logged in" do
-      it "returns http success" do
+  describe "GET /projects（一覧）" do
+    context "ログイン済みの場合" do
+      it "プロジェクト一覧を表示する" do
         log_in
         get projects_path
         expect(response).to have_http_status(:success)
       end
     end
 
-    context "when not logged in" do
-      it "redirects to login" do
+    context "未ログインの場合" do
+      it "require_login によりログイン画面へリダイレクトする" do
         get projects_path
         expect(response).to redirect_to(login_path)
       end
     end
   end
 
-  describe "GET /projects/:id" do
-    it "returns http success" do
+  describe "GET /projects/:id（詳細）" do
+    it "プロジェクト詳細を表示する" do
       log_in
       get project_path(project)
       expect(response).to have_http_status(:success)
     end
   end
 
-  describe "POST /projects" do
-    it "creates a project and redirects" do
+  describe "POST /projects（作成の確定）" do
+    it "プロジェクトを作成し、PRG に従って詳細へリダイレクトする" do
       log_in
       expect {
         post projects_path, params: { project: { title: "新プロジェクト", description: "説明" } }
@@ -42,7 +42,7 @@ RSpec.describe "Projects", type: :request do
       expect(response).to redirect_to(project_path(Project.last))
     end
 
-    it "renders new on invalid params" do
+    it "タイトルが空なら作成せず、new を 422 で再描画する" do
       log_in
       post projects_path, params: { project: { title: "" } }
       expect(response).to have_http_status(:unprocessable_entity)
@@ -73,7 +73,7 @@ RSpec.describe "Projects", type: :request do
       expect(response.body).to include("確認用")
     end
 
-    it "renders new with 422 on invalid params" do
+    it "検証に失敗したら確認画面へ進ませず、new を 422 で再描画する" do
       log_in
       post confirm_projects_path, params: { project: { title: "" } }
       expect(response).to have_http_status(:unprocessable_entity)
@@ -118,8 +118,8 @@ RSpec.describe "Projects", type: :request do
     end
   end
 
-  describe "POST /projects/:id/confirm" do
-    it "renders confirm without updating the project" do
+  describe "POST /projects/:id/confirm（編集の確認画面）" do
+    it "編集の確認画面は DB を更新せず、確認画面だけを描画する" do
       log_in
       post confirm_project_path(project), params: { project: { title: "編集確認" } }
       expect(response).to have_http_status(:success)
@@ -127,17 +127,17 @@ RSpec.describe "Projects", type: :request do
       expect(project.reload.title).not_to eq("編集確認")
     end
 
-    it "renders edit with 422 on invalid params" do
+    it "検証に失敗したら edit を 422 で再描画する" do
       log_in
       post confirm_project_path(project), params: { project: { title: "" } }
       expect(response).to have_http_status(:unprocessable_entity)
     end
   end
 
-  describe "GET /projects/:id/duplicate" do
+  describe "GET /projects/:id/duplicate（複製）" do
     let!(:project) { create(:project, user: user, title: "元プロジェクト", description: "元の説明") }
 
-    it "renders the new form prefilled from the source without creating a record" do
+    it "複製元の値を初期入力した新規フォームを返し、DB にはレコードを作らない" do
       log_in
       expect {
         get duplicate_project_path(project)
@@ -148,15 +148,15 @@ RSpec.describe "Projects", type: :request do
       expect(response.body).to include("確認する")
     end
 
-    it "submits to the create flow (collection confirm), not update" do
+    it "複製フォームの送信先は更新ではなく、新規作成フロー（コレクションの confirm）である" do
       log_in
       get duplicate_project_path(project)
       expect(response.body).to include(confirm_projects_path)
     end
   end
 
-  describe "PATCH /projects/:id" do
-    it "updates and redirects" do
+  describe "PATCH /projects/:id（更新）" do
+    it "プロジェクトを更新し、詳細へリダイレクトする" do
       log_in
       patch project_path(project), params: { project: { title: "更新後タイトル" } }
       expect(response).to redirect_to(project_path(project))
@@ -164,8 +164,8 @@ RSpec.describe "Projects", type: :request do
     end
   end
 
-  describe "DELETE /projects/:id" do
-    it "destroys and redirects" do
+  describe "DELETE /projects/:id（削除）" do
+    it "プロジェクトを削除し、一覧へリダイレクトする" do
       log_in
       expect {
         delete project_path(project)
@@ -175,7 +175,7 @@ RSpec.describe "Projects", type: :request do
   end
 
   describe "GET /projects (絞り込み表示)" do
-    it "shows only the current user's projects" do
+    it "一覧には current_user のプロジェクトだけを表示し、他ユーザーのものは含めない" do
       mine = create(:project, user: user, title: "自分のプロジェクトXYZ")
       theirs = create(:project, user: create(:user), title: "他人のプロジェクトXYZ")
       log_in
@@ -186,7 +186,7 @@ RSpec.describe "Projects", type: :request do
   end
 
   describe "GET /projects/:id (タスクのステータスバッジ表示)" do
-    it "renders status badges for each task state" do
+    it "enum の 3 状態それぞれに対応する日本語バッジを表示する" do
       create(:task, project: project, status: :not_started)
       create(:task, project: project, status: :in_progress)
       create(:task, project: project, status: :completed)
@@ -203,34 +203,34 @@ RSpec.describe "Projects", type: :request do
 
     before { log_in }
 
-    it "returns 404 on show" do
+    it "他ユーザーのプロジェクト詳細は、403 ではなく 404 を返して存在自体を秘匿する" do
       get project_path(other_project)
       expect(response).to have_http_status(:not_found)
     end
 
-    it "returns 404 on edit" do
+    it "他ユーザーのプロジェクトの編集フォームも 404 を返す" do
       get edit_project_path(other_project)
       expect(response).to have_http_status(:not_found)
     end
 
-    it "returns 404 on update" do
+    it "他ユーザーのプロジェクトは更新できず、404 を返して値も変わらない" do
       patch project_path(other_project), params: { project: { title: "乗っ取り" } }
       expect(response).to have_http_status(:not_found)
       expect(other_project.reload.title).not_to eq("乗っ取り")
     end
 
-    it "returns 404 on destroy" do
+    it "他ユーザーのプロジェクトは削除できず、404 を返してレコードも残る" do
       delete project_path(other_project)
       expect(response).to have_http_status(:not_found)
       expect(Project.exists?(other_project.id)).to be(true)
     end
 
-    it "returns 404 on confirm (member)" do
+    it "確認画面（メンバー）も認可の抜け道にならず、404 を返す" do
       post confirm_project_path(other_project), params: { project: { title: "乗っ取り" } }
       expect(response).to have_http_status(:not_found)
     end
 
-    it "returns 404 on duplicate" do
+    it "他ユーザーのプロジェクトは複製できず、404 を返す" do
       get duplicate_project_path(other_project)
       expect(response).to have_http_status(:not_found)
     end
