@@ -57,7 +57,10 @@
   <div class="form-group" style="margin-top:8px;">
     <%= form.label :images, "添付画像" %>
 
-    <%# 編集時: 既存の添付画像。チェックで削除予約し、確認→更新で外す。 %>
+    <%# 編集時: 既存の添付画像。チェックで削除予約し、確認→更新で外す。
+        task.images が列挙するのは ActiveStorage::Attachment（blob ではない）ため、
+        image.id は attachment の id。削除は「どの blob か」ではなく
+        「このタスクのどの添付か」で指定する。 %>
     <% if task.persisted? && task.images.attached? %>
       <div class="flex gap-sm" style="flex-wrap:wrap; margin-bottom:12px;">
         <% task.images.each do |image| %>
@@ -65,8 +68,8 @@
             <%= image_tag image.variant(resize_to_limit: [120, 120]),
                   style: "width:120px; height:120px; object-fit:cover; border-radius:6px; border:1px solid #e2e8f0;" %>
             <span style="position:absolute; top:4px; right:4px; background:rgba(255,255,255,0.9); border-radius:4px; padding:2px 6px; font-size:12px;">
-              <%= check_box_tag "task[remove_image_ids][]", image.id,
-                    Array(@remove_image_ids).map(&:to_s).include?(image.id.to_s) %> 削除
+              <%= check_box_tag "task[remove_attachment_ids][]", image.id,
+                    Array(@remove_attachment_ids).map(&:to_s).include?(image.id.to_s) %> 削除
             </span>
           </label>
         <% end %>

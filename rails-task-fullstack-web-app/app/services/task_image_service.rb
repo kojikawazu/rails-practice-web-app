@@ -25,6 +25,8 @@ class TaskImageService
   end
 
   # 編集で削除指定された既存添付を purge する（save 成功後に呼ぶ）。
+  # 受け取るのは blob の id ではなく attachment の id（View の task.images が列挙するのも
+  # attachment）。task.images_attachments 起点で引くため、対象タスク以外の添付は外せない。
   #
   # @param task [Task] 対象タスク
   # @param attachment_ids [Array<String>] 削除する ActiveStorage::Attachment の id 群

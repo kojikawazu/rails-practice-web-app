@@ -131,6 +131,7 @@ Task
 
 - Task と画像の関連: `has_many_attached :images`（1タスクに複数枚）
 - 管理テーブル（Active Storage 標準）: `active_storage_blobs` / `active_storage_attachments` / `active_storage_variant_records`
+- **blob と attachment の id は別物**（別テーブルの主キーで、採番も独立して進む）。`task.images` が列挙するのは `ActiveStorage::Attachment` のため `image.id` は attachment の id であり、画面からの削除指定（`remove_attachment_ids` / `detach_image` の `:attachment_id`）もすべて attachment の id で行う。同じ blob は複数レコードから共有できるため、「どのレコードのどの添付を外すか」は attachment でしか指定できない。
 - 添付制約（モデルバリデーション `images_format_and_size` で担保。定数 `Task::IMAGE_CONTENT_TYPES` / `MAX_IMAGE_SIZE`）:
   - 形式: `image/png` / `image/jpeg` / `image/gif` / `image/webp`
   - サイズ: 1枚あたり 5MB 以下

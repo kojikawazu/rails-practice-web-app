@@ -14,6 +14,20 @@ RSpec.describe "Tasks", type: :request do
     Capybara.string(response.body).all("select[name='task[status]'] option").map { |option| option[:value] }
   end
 
+  # blob と attachment の id 系列をずらしてから添付する。
+  # 両者が偶然一致していると、blob の id で引く実装でもテストが通ってしまい取り違えを検出できない。
+  def attach_images_with_skewed_ids(task, filenames)
+    3.times do
+      ActiveStorage::Blob.create_and_upload!(io: File.open(Rails.root.join("spec/fixtures/files/sample.png")),
+                                             filename: "orphan.png", content_type: "image/png")
+    end
+    filenames.each do |filename|
+      task.images.attach(io: File.open(Rails.root.join("spec/fixtures/files/sample.png")),
+                         filename: filename, content_type: "image/png")
+    end
+    task.reload
+  end
+
   describe "GET /projects/:project_id/tasks/new（新規作成フォーム）" do
     it "新規作成フォームを表示する" do
       log_in
@@ -315,30 +329,87 @@ RSpec.describe "Tasks", type: :request do
   end
 
   describe "PATCH /projects/:project_id/tasks/:id（編集での既存画像削除）" do
-    it "remove_image_ids で指定した既存画像を1枚外せる" do
+    it "remove_attachment_ids で指定した既存画像を1枚外せる" do
       log_in
       task.images.attach(io: File.open(Rails.root.join("spec/fixtures/files/sample.png")),
                          filename: "sample.png", content_type: "image/png")
       attachment_id = task.images.first.id
       expect {
         patch project_task_path(project, task), params: {
-          task: { title: task.title, status: task.status, remove_image_ids: [ attachment_id ] }
+          task: { title: task.title, status: task.status, remove_attachment_ids: [ attachment_id ] }
         }
       }.to change { task.reload.images.count }.by(-1)
       expect(response).to redirect_to(project_task_path(project, task))
     end
+
+    it "blob と attachment の id がずれていても、選んだ画像だけが外れる" do
+      log_in
+      attach_images_with_skewed_ids(task, %w[keep.png remove.png])
+      target = task.images.find { |image| image.filename.to_s == "remove.png" }
+
+      expect {
+        patch project_task_path(project, task), params: {
+          task: { title: task.title, status: task.status, remove_attachment_ids: [ target.id ] }
+        }
+      }.to change { task.reload.images.count }.by(-1)
+      expect(task.reload.images.map { |image| image.filename.to_s }).to eq([ "keep.png" ])
+    end
+
+    it "確認画面を round-trip しても、削除予約した画像だけが外れる" do
+      log_in
+      attach_images_with_skewed_ids(task, %w[keep.png remove.png])
+      target = task.images.find { |image| image.filename.to_s == "remove.png" }
+
+      post confirm_project_task_path(project, task), params: {
+        task: { title: task.title, status: task.status, remove_attachment_ids: [ target.id ] }
+      }
+      expect(response.body).to include(%(name="task[remove_attachment_ids][]" value="#{target.id}"))
+
+      expect {
+        patch project_task_path(project, task), params: {
+          task: { title: task.title, status: task.status, remove_attachment_ids: [ target.id ] }
+        }
+      }.to change { task.reload.images.count }.by(-1)
+      expect(task.reload.images.map { |image| image.filename.to_s }).to eq([ "keep.png" ])
+    end
+
+    it "他タスクの添付 id を送っても外せない（認可境界は images_attachments のスコープで担保する）" do
+      log_in
+      other_task = create(:task, project: project)
+      other_task.images.attach(io: File.open(Rails.root.join("spec/fixtures/files/sample.png")),
+                               filename: "other.png", content_type: "image/png")
+      task.images.attach(io: File.open(Rails.root.join("spec/fixtures/files/sample.png")),
+                         filename: "mine.png", content_type: "image/png")
+
+      expect {
+        patch project_task_path(project, task), params: {
+          task: { title: task.title, status: task.status,
+                  remove_attachment_ids: [ other_task.images.first.id ] }
+        }
+      }.not_to change { other_task.reload.images.count }
+      expect(task.reload.images.count).to eq(1)
+    end
   end
 
-  describe "DELETE /projects/:project_id/tasks/:id/images/:image_id（詳細画面からの個別削除）" do
+  describe "DELETE /projects/:project_id/tasks/:id/images/:attachment_id（詳細画面からの個別削除）" do
     it "添付済みの画像を1枚削除できる" do
       log_in
       task.images.attach(io: File.open(Rails.root.join("spec/fixtures/files/sample.png")),
                          filename: "sample.png", content_type: "image/png")
-      image_id = task.images.first.id
+      attachment_id = task.images.first.id
       expect {
-        delete detach_image_project_task_path(project, task, image_id)
+        delete detach_image_project_task_path(project, task, attachment_id)
       }.to change { task.reload.images.count }.by(-1)
       expect(response).to redirect_to(project_task_path(project, task))
+    end
+
+    it "blob と attachment の id がずれていても、指定した画像だけが削除される" do
+      log_in
+      attach_images_with_skewed_ids(task, %w[keep.png remove.png])
+      target = task.images.find { |image| image.filename.to_s == "remove.png" }
+
+      delete detach_image_project_task_path(project, task, target.id)
+      expect(task.reload.images.map { |image| image.filename.to_s }).to eq([ "keep.png" ])
     end
   end
 
