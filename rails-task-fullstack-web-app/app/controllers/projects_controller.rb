@@ -109,12 +109,16 @@ class ProjectsController < ApplicationController
   private
 
   # 新規プロジェクトの確認画面（(b案2) リダイレクト方式 / PRG）。
-  # POST: 検証 → 入力値を session に退避 → confirm(GET) へ 303 リダイレクト（Turbo Drive 対応）。
-  # GET : session から復元して確認画面を描画。session が無ければ new へ戻す（リロード安全網）。
+  # POST     : 検証 → 入力値を session に退避 → confirm(GET) へ 303 リダイレクト（Turbo Drive 対応）。
+  # GET/HEAD : session から復元して確認画面を描画。session が無ければ new へ戻す（リロード安全網）。
   #
-  # @return [void] GET: confirm 描画 or new へリダイレクト／POST: confirm(GET) へ 303 or new（422）
+  # 判定は「読み取りかどうか」ではなく **書き込み（POST）かどうか**で行う。
+  # Rails は HEAD を GET ルートへ配送するが `request.get?` は HEAD で false になるため、
+  # GET を条件にすると HEAD が POST 分岐へ落ち、Strong Parameters 不足で 400 になる。
+  #
+  # @return [void] GET/HEAD: confirm 描画 or new へリダイレクト／POST: confirm(GET) へ 303 or new（422）
   def confirm_new
-    if request.get?
+    unless request.post?
       return redirect_to(new_project_path, alert: "確認画面の情報がありません。入力し直してください。") if pending_project_params.blank?
 
       @project = current_user.projects.build(pending_project_params)

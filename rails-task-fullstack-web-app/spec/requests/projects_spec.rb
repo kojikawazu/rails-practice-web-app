@@ -95,6 +95,21 @@ RSpec.describe "Projects", type: :request do
       expect(response.body).to include("入力内容の確認")
       expect(response.body).to include("セッション確認")
     end
+
+    # Rails は HEAD を GET ルートへ配送する。request.get? は HEAD で false になるため、
+    # GET で分岐すると HEAD だけが POST（書き込み）の処理へ落ち、パラメータ不足で 400 になる。
+    it "session が無い HEAD confirm は、GET と同じく new へリダイレクトする" do
+      log_in
+      head confirm_projects_path
+      expect(response).to redirect_to(new_project_path)
+    end
+
+    it "session がある HEAD confirm は、GET と同じく確認画面を 200 で返す" do
+      log_in
+      post confirm_projects_path, params: { project: { title: "HEAD 確認", description: "説明" } }
+      head confirm_projects_path
+      expect(response).to have_http_status(:success)
+    end
   end
 
   describe "GET /projects/new（「修正する」での入力値復元）" do

@@ -61,11 +61,15 @@ class TasksController < ApplicationController
   # サーバー経由で blob を作り、signed_id を round-trip させる（JS不要）。
   #
   # @return [void] 検証成功: confirm ／「修正する」: new/edit ／検証失敗・不正画像: new/edit（422）
-  #   ／GET アクセス時: 入力フォームへリダイレクト
+  #   ／GET・HEAD アクセス時: 入力フォームへリダイレクト
   def confirm
-    # 確認画面は POST 専用。リロード/戻る等で GET された場合は入力フォームへ戻す
+    # 確認画面は POST 専用。リロード/戻る等で GET / HEAD された場合は入力フォームへ戻す
     # （show ルートへ誤って落ちて 404 になるのを防ぐ。入力値は保持できないため作り直し）。
-    if request.get?
+    #
+    # 判定は「書き込み（POST）かどうか」で行う。Rails は HEAD を GET ルートへ配送するが
+    # `request.get?` は HEAD で false になるため、GET を条件にすると HEAD が POST 分岐へ落ち、
+    # Strong Parameters 不足や画像 staging に進んでしまう。
+    unless request.post?
       target = params[:id] ? edit_project_task_path(@project, params[:id]) : new_project_task_path(@project)
       return redirect_to(target, alert: "確認画面は再読み込みできません。入力し直してください。")
     end
