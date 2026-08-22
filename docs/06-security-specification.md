@@ -14,8 +14,12 @@
 ## 認証
 
 - `has_secure_password`（bcrypt）によるパスワードハッシュ化
-- セッションベース認証（`session[:user_id]`）
+- セッションベース認証（`session[:user_id]`）— フルスタック版（Project 1）
 - ログイン/ログアウト機能
+- **API 版（Project 2）は JWT**（`Authorization: Bearer <token>`）。Cookie を持たないための選択で、資格情報の搬送方式も契約どおりに限定する:
+  - **Bearer スキームの資格情報だけを受理**する（scheme の大文字小文字は区別しない。RFC 7235: auth-scheme is case-insensitive）。
+  - スキーム無しの生トークン・別スキーム（`Basic <token>` 等）・要素が多いヘッダーは、載っている JWT が有効でも **401** にする。認証境界を文書化した契約より広げると、プロキシ・クライアント・監査ログの前提が崩れるため。
+  - 契約とレスポンス形式の詳細は `07-api-specification.md` を参照する。
 
 ## 認可
 

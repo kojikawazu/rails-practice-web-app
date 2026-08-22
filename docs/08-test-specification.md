@@ -59,6 +59,7 @@
 | Request spec（fullstack） | Tasks | index/show/create/update/destroy の正常系 / 複製(duplicate)の正常系・create フロー合流・ステータスを引き継がないこと / 他ユーザーリソースの404 / 存在しないprojectでの404 / ステータス遷移（許可は更新、禁止は 422 で値も変えない）/ フォームの選択肢が現在状態に応じて絞られること |
 | Request spec（fullstack） | Sessions | ログイン成功/失敗 / ログアウト（セッション） |
 | Request spec（API） | Auth | signup / login の成功・失敗（JWT 発行）|
+| Request spec（API） | 認証境界（Authorization ヘッダーの契約） | Bearer は 200（scheme は大小無視）/ ヘッダー無し・生トークン・別スキーム・要素過多・空トークン・改ざんは 401 / 401 の統一形式（`error` 単数形） |
 | Request spec（API） | Projects / Tasks | CRUD 正常系 / 他ユーザーリソースの404 / **未認証時は 401**（リダイレクトではない）/ `Authorization: Bearer` 検証 / ステータス遷移違反は 422 + `errors`（作成時の completed 指定を含む） |
 | Scenario spec（API） | ユーザージャーニー | signup→project 作成→task 作成→一覧→status 更新（not_started→in_progress→completed と遷移規則どおりに進む）→詳細反映（signup の token だけで全書き込みが認可される） |
 | Scenario spec（API） | 認可分離 | 他ユーザーの project/task は 404 / project 一覧は自分のものだけ（実DBでスコープ保証を固定） |

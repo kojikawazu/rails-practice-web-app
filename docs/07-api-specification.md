@@ -96,6 +96,17 @@ Content-Type: application/json
 - 認証方式は **JWT（Bearer トークン）**。`rails new --api` はセッション/Cookie ミドルウェアが無効なため、Cookie に依存しないトークン認証を採用する。
 - `signup` / `login` 成功時に JWT を発行する（`JsonWebToken` モジュールで encode/decode）。
 - 認証必須エンドポイントは `Authorization: Bearer <token>` ヘッダーを `ApplicationController#authenticate_user!`（`before_action`）で検証する。トークンが無効・ユーザー未存在の場合は `401 Unauthorized`。
+- **受理するヘッダーは Bearer スキームのみ**（`Authorization: Bearer <token>`）。スキーム名の大文字小文字は区別しない（RFC 7235: auth-scheme is case-insensitive）が、下記は載っている JWT が有効でも `401` を返す。
+
+  | ヘッダー | 結果 | 理由 |
+  |---|---|---|
+  | `Bearer <token>` / `bearer <token>` | 200 | 契約どおりの搬送方式 |
+  | （ヘッダー無し） | 401 | 資格情報が無い |
+  | `<token>`（スキーム無しの生トークン） | 401 | 認証方式が合意されていない |
+  | `Basic <token>` | 401 | Bearer 以外のスキーム |
+  | `Anything ignored <token>` / `Bearer <token> extra` | 401 | `credentials = auth-scheme 1*SP token68` の形に合わない |
+  | `Bearer`（トークン無し） | 401 | 資格情報が空 |
+
 - `AuthController` のみ `skip_before_action :authenticate_user!` で認証を除外する。
 - Bearer トークン認証（Cookie 不使用）のため CSRF トークンは不要。
 
