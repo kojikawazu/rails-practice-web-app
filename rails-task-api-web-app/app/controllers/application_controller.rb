@@ -17,14 +17,29 @@ class ApplicationController < ActionController::API
   #
   # @return [void] 認証失敗時は `{ error: "Unauthorized" }` を 401 で render
   def authenticate_user!
-    token = request.headers["Authorization"]&.split(" ")&.last
-    decoded = JsonWebToken.decode(token)
+    decoded = JsonWebToken.decode(bearer_token)
 
     if decoded
       @current_user = User.find_by(id: decoded[:user_id])
     end
 
     render json: { error: "Unauthorized" }, status: :unauthorized unless @current_user
+  end
+
+  # Authorization ヘッダーから Bearer スキームの資格情報だけを取り出す。
+  #
+  # 認証境界は文書化した契約（07-api-specification.md）どおりに閉じる。scheme を見ずに
+  # 末尾の要素を token として扱うと `Basic <jwt>` や `Anything ignored <jwt>` まで
+  # 同じ資格情報として通り、プロキシ・クライアント・監査ログが前提にする搬送方式が崩れる。
+  # scheme の大文字小文字は区別しない（RFC 7235: auth-scheme is case-insensitive）。
+  #
+  # @return [String, nil] Bearer の token。契約に合わない形式なら nil（＝401 になる）
+  def bearer_token
+    scheme, credentials, *extra = request.headers["Authorization"].to_s.split(" ")
+    return nil unless extra.empty?
+    return nil unless scheme&.casecmp?("Bearer")
+
+    credentials.presence
   end
 
   # 認証済みユーザーを返す（authenticate_user! で確定済み）。
