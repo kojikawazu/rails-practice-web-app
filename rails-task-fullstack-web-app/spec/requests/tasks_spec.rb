@@ -354,6 +354,20 @@ RSpec.describe "Tasks", type: :request do
       get confirm_project_task_path(project, task)
       expect(response).to redirect_to(edit_project_task_path(project, task))
     end
+
+    # Rails は HEAD を GET ルートへ配送する。request.get? は HEAD で false になるため、
+    # GET で分岐すると HEAD だけが POST（書き込み）の処理へ落ちる。
+    it "新規(コレクション)の HEAD confirm は GET と同じく新規フォームへリダイレクトする" do
+      log_in
+      head confirm_project_tasks_path(project)
+      expect(response).to redirect_to(new_project_task_path(project))
+    end
+
+    it "編集(メンバー)の HEAD confirm は GET と同じく編集フォームへリダイレクトする" do
+      log_in
+      head confirm_project_task_path(project, task)
+      expect(response).to redirect_to(edit_project_task_path(project, task))
+    end
   end
 
   describe "プレビュー URL（フォーム→確認→作成）" do
