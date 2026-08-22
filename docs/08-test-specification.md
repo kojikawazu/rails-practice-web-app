@@ -56,7 +56,7 @@
 | Model spec | Project | 有効なデータで作成できる / title必須 / user関連付け / 削除時にtasksも削除 / `.with_task_counts` が件数を tasks_count として載せる（タスク0件のプロジェクトも落とさない） |
 | Model spec | Task | 有効なデータで作成できる / title必須 / status必須・値の制限 / project関連付け / ステータス遷移の許可・禁止（作成時は not_started のみ、飛ばし・逆行の拒否、変更なしの更新は許可） |
 | Request spec（fullstack） | Projects | index/show/create/update/destroy の正常系 / 複製(duplicate)の正常系・create フロー合流 / 他ユーザーリソースの404 / 未ログイン時のリダイレクト / 確認画面の HEAD が GET と同じ結果になる / 一覧のタスク件数表示（0件・複数件・プロジェクト0件）/ 件数集計がプロジェクト件数に比例しない（N+1 回帰ガード） |
-| Request spec（fullstack） | Tasks | index/show/create/update/destroy の正常系 / 複製(duplicate)の正常系・create フロー合流・ステータスを引き継がないこと / 他ユーザーリソースの404 / 存在しないprojectでの404 / 確認画面の GET・HEAD がフォームへリダイレクト / ステータス遷移（許可は更新、禁止は 422 で値も変えない）/ フォームの選択肢が現在状態に応じて絞られること |
+| Request spec（fullstack） | Tasks | index/show/create/update/destroy の正常系 / 複製(duplicate)の正常系・create フロー合流・ステータスを引き継がないこと / 他ユーザーリソースの404 / 存在しないprojectでの404 / 確認画面の GET・HEAD がフォームへリダイレクト / 画像削除（blob と attachment の id をずらした状態で、選んだ 1 枚だけが外れる・他タスクの添付は外せない）/ ステータス遷移（許可は更新、禁止は 422 で値も変えない）/ フォームの選択肢が現在状態に応じて絞られること |
 | Request spec（fullstack） | Sessions | ログイン成功/失敗 / ログアウト（セッション） |
 | Request spec（API） | Auth | signup / login の成功・失敗（JWT 発行）|
 | Request spec（API） | 認証境界（Authorization ヘッダーの契約） | Bearer は 200（scheme は大小無視）/ ヘッダー無し・生トークン・別スキーム・要素過多・空トークン・改ざんは 401 / 401 の統一形式（`error` 単数形） |

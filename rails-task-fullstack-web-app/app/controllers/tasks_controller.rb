@@ -77,7 +77,7 @@ class TasksController < ApplicationController
     @task = params[:id] ? @project.tasks.find(params[:id]) : @project.tasks.build
     @task.assign_attributes(task_params)
     @task.app_host = request.host # 自オリジン埋め込み拒否の判定用
-    @remove_image_ids = remove_image_ids
+    @remove_attachment_ids = remove_attachment_ids
 
     # 新規アップロードを事前検証し blob 化。不正が混じれば nil＝blob を作らずフォームへ戻す（オーファン防止）。
     new_signed_ids = TaskImageService.stage(uploaded_image_files)
@@ -125,11 +125,11 @@ class TasksController < ApplicationController
     TaskImageService.attach(@task, carried_signed_ids)
 
     if @task.save
-      TaskImageService.purge(@task, remove_image_ids)
+      TaskImageService.purge(@task, remove_attachment_ids)
       redirect_to project_task_path(@project, @task), notice: "タスクを更新しました。", status: :see_other
     else
       @image_signed_ids = carried_signed_ids
-      @remove_image_ids = remove_image_ids
+      @remove_attachment_ids = remove_attachment_ids
       render :edit, status: :unprocessable_entity
     end
   end
@@ -143,10 +143,12 @@ class TasksController < ApplicationController
   end
 
   # 添付済み画像を1枚削除する（詳細画面からの個別削除）。
+  # :attachment_id は attachment の id。@task.images 起点で引くことで、
+  # 他タスク・他ユーザーの添付は取得できない（見つからなければ 404）。
   #
   # @return [void] 詳細へ 303 リダイレクト
   def detach_image
-    @task.images.find(params[:image_id]).purge
+    @task.images.find(params[:attachment_id]).purge
     redirect_to project_task_path(@project, @task), notice: "画像を削除しました。", status: :see_other
   end
 
@@ -191,9 +193,11 @@ class TasksController < ApplicationController
   end
 
   # 編集フォームでチェックされた、削除対象の既存添付（ActiveStorage::Attachment）の id 群。
+  # blob の id ではなく attachment の id を受け取る（同じ blob を複数レコードで共有できるため、
+  # 「どのタスクのどの添付を外すか」は attachment でしか指定できない）。
   #
   # @return [Array<String>] 空要素を除いた添付 id の配列
-  def remove_image_ids
-    Array(params.dig(:task, :remove_image_ids)).reject(&:blank?)
+  def remove_attachment_ids
+    Array(params.dig(:task, :remove_attachment_ids)).reject(&:blank?)
   end
 end

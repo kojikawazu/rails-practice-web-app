@@ -51,7 +51,7 @@
 
     <div class="text-sub" style="font-weight:600;">添付画像</div>
     <div>
-      <% remove_ids = Array(@remove_image_ids).map(&:to_s) %>
+      <% remove_ids = Array(@remove_attachment_ids).map(&:to_s) %>
       <% kept = @task.persisted? ? @task.images.reject { |img| remove_ids.include?(img.id.to_s) } : [] %>
       <% pending = Array(@image_signed_ids).filter_map { |sid| ActiveStorage::Blob.find_signed(sid) } %>
       <% if kept.any? || pending.any? %>
@@ -89,7 +89,7 @@
   <div class="flex gap-sm" style="margin-top:24px;">
     <%# Turbo Drive は非リダイレクトの 200 描画を破棄するため、確認画面のフォームはフルページ遷移にする。 %>
     <%# 「修正する」: 入力値を confirm へ再送(back=1)し、入力フォームへ戻す（独立フォーム）。 %>
-    <%# 画像の選択（signed_id）・削除予約（remove_image_ids）も hidden で持ち回る。 %>
+    <%# 画像の選択（signed_id）・削除予約（remove_attachment_ids）も hidden で持ち回る。 %>
     <%= button_to "修正する",
           (@task.persisted? ? confirm_project_task_path(@project, @task) : confirm_project_tasks_path(@project)),
           method: :post,
@@ -97,7 +97,7 @@
                             start_date: @task.start_date, end_date: @task.end_date,
                             preview_url: @task.preview_url,
                             image_signed_ids: Array(@image_signed_ids),
-                            remove_image_ids: Array(@remove_image_ids) }, back: 1 },
+                            remove_attachment_ids: Array(@remove_attachment_ids) }, back: 1 },
           form: { data: { turbo: false } },
           class: "btn" %>
 
@@ -111,8 +111,8 @@
       <% Array(@image_signed_ids).each do |sid| %>
         <%= hidden_field_tag "task[image_signed_ids][]", sid %>
       <% end %>
-      <% Array(@remove_image_ids).each do |rid| %>
-        <%= hidden_field_tag "task[remove_image_ids][]", rid %>
+      <% Array(@remove_attachment_ids).each do |rid| %>
+        <%= hidden_field_tag "task[remove_attachment_ids][]", rid %>
       <% end %>
       <%= form.submit(@task.persisted? ? "更新する" : "作成する", class: "btn btn-primary") %>
     <% end %>

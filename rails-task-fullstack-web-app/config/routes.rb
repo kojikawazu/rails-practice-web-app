@@ -20,7 +20,8 @@ Rails.application.routes.draw do
         get :duplicate
         # 画像の追加は新規/編集フォーム（confirm→create/update）に集約。
         # 詳細画面からの個別削除のみ専用ルートを残す。
-        delete "images/:image_id", action: :detach_image, as: :detach_image
+        # :attachment_id は ActiveStorage::Attachment の id（blob の id ではない）。
+        delete "images/:attachment_id", action: :detach_image, as: :detach_image
       end
     end
   end
