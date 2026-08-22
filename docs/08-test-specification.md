@@ -54,13 +54,13 @@
 | Unit spec（fullstack） | TaskImageService | stage: 全有効→signed_id 返す + blob 生成 / 不正混在→nil・blob 未生成（オーファン防止）/ 空→[] ・ attach→images 増 ・ purge→attachment 削除。実 test-disk・モック無し |
 | Model spec | User | 有効なデータで作成できる / name必須 / email必須・一意・形式 / password最小文字数 |
 | Model spec | Project | 有効なデータで作成できる / title必須 / user関連付け / 削除時にtasksも削除 / `.with_task_counts` が件数を tasks_count として載せる（タスク0件のプロジェクトも落とさない） |
-| Model spec | Task | 有効なデータで作成できる / title必須 / status必須・値の制限 / project関連付け |
+| Model spec | Task | 有効なデータで作成できる / title必須 / status必須・値の制限 / project関連付け / ステータス遷移の許可・禁止（作成時は not_started のみ、飛ばし・逆行の拒否、変更なしの更新は許可） |
 | Request spec（fullstack） | Projects | index/show/create/update/destroy の正常系 / 複製(duplicate)の正常系・create フロー合流 / 他ユーザーリソースの404 / 未ログイン時のリダイレクト / 一覧のタスク件数表示（0件・複数件・プロジェクト0件）/ 件数集計がプロジェクト件数に比例しない（N+1 回帰ガード） |
-| Request spec（fullstack） | Tasks | index/show/create/update/destroy の正常系 / 複製(duplicate)の正常系・create フロー合流 / 他ユーザーリソースの404 / 存在しないprojectでの404 |
+| Request spec（fullstack） | Tasks | index/show/create/update/destroy の正常系 / 複製(duplicate)の正常系・create フロー合流・ステータスを引き継がないこと / 他ユーザーリソースの404 / 存在しないprojectでの404 / ステータス遷移（許可は更新、禁止は 422 で値も変えない）/ フォームの選択肢が現在状態に応じて絞られること |
 | Request spec（fullstack） | Sessions | ログイン成功/失敗 / ログアウト（セッション） |
 | Request spec（API） | Auth | signup / login の成功・失敗（JWT 発行）|
-| Request spec（API） | Projects / Tasks | CRUD 正常系 / 他ユーザーリソースの404 / **未認証時は 401**（リダイレクトではない）/ `Authorization: Bearer` 検証 |
-| Scenario spec（API） | ユーザージャーニー | signup→project 作成→task 作成→一覧→status 更新→詳細反映（signup の token だけで全書き込みが認可される） |
+| Request spec（API） | Projects / Tasks | CRUD 正常系 / 他ユーザーリソースの404 / **未認証時は 401**（リダイレクトではない）/ `Authorization: Bearer` 検証 / ステータス遷移違反は 422 + `errors`（作成時の completed 指定を含む） |
+| Scenario spec（API） | ユーザージャーニー | signup→project 作成→task 作成→一覧→status 更新（not_started→in_progress→completed と遷移規則どおりに進む）→詳細反映（signup の token だけで全書き込みが認可される） |
 | Scenario spec（API） | 認可分離 | 他ユーザーの project/task は 404 / project 一覧は自分のものだけ（実DBでスコープ保証を固定） |
 | Scenario spec（API） | 認証ライフサイクル | signup token が保護EPで即利用可 / login 成功・誤パスワード 401 / 期限切れ・改ざんトークンは保護EPで 401 |
 | System spec | 確認画面フロー（rack_test） | 登録・プロジェクト/タスク作成の 入力→確認→確定 / 「修正する」で入力値保持 / 不正入力でフォーム留まり |
@@ -95,5 +95,7 @@
 | rspec-retry | `:js` System spec のフレーク対策（リトライ） |
 
 > N+1 の回帰ガードは gem ではなく `spec/support/query_counter.rb`（`ActiveSupport::Notifications` の `sql.active_record` を購読して SQL 本数を数えるヘルパー）で行う。クエリキャッシュにヒットした SQL も数に含め、キャッシュ任せで N+1 を見逃さないようにする。
+>
+> ステータス遷移を業務制約にしたため、`create(:task, status: :completed)` は作成時の検証で弾かれる。途中状態のタスクは FactoryBot の trait（`create(:task, :in_progress)` / `create(:task, :completed)`）で作り、trait 側が許可された遷移を実際に踏む（両アプリ）。
 >
 > テスト間の DB クリーンアップは RSpec の `use_transactional_fixtures`（トランザクションロールバック）を使用する（`database_cleaner` gem は導入していない）。

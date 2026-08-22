@@ -32,11 +32,11 @@
 ### タスク管理
 
 - プロジェクトに紐づくタスクのCRUD
-- ステータス: `not_started`（未着手）/ `in_progress`（進行中）/ `completed`（完了）
+- ステータス: `not_started`（未着手）/ `in_progress`（進行中）/ `completed`（完了）。値の変更は[ステータス遷移](#ステータス遷移)の規則に従う（任意の状態へ直接変更はできない）
 - 開始日・終了日（start_date / end_date）の設定が可能（任意・入力時は終了日 >= 開始日）。日付選択は flatpickr を使用し、終了日の選択可能範囲を開始日に連動させる
 - 画像添付: タスクに画像を複数枚添付できる（png / jpeg / gif / webp・1枚5MBまで）。Active Storage + MinIO（S3 互換）で保存し、詳細画面でサムネイル表示・個別削除が可能。アップロードは**新規/編集フォームから行い、確認画面フローに合流する**（フルスタック版のみ）
 - プレビュー URL: タスクに参考リンク（`preview_url`）を任意で1件設定できる。**http / https のみ許可**（モデルで検証）。確認画面では sandbox 化した iframe で内容をプレビュー表示し、詳細画面では `rel="noopener noreferrer"` の安全リンクのみ表示する（フルスタック版のみ。セキュリティ方針は `06-security-specification.md` 参照）
-- 複製: 既存タスクの内容（タイトル・ステータス・開始日・終了日）を引き継いだ新規作成フォームを開く
+- 複製: 既存タスクの内容（タイトル・開始日・終了日）を引き継いだ新規作成フォームを開く。**ステータスは引き継がない**（新規作成は未着手固定のため）
 
 > 複製は「複製元の値を初期入力した新規作成フォーム」を表示する操作で、保存処理は通常の作成（確認画面）フローに合流する。複製時はタイトルに「〜のコピー」を付与する。対象はフルスタック版のみ。
 
@@ -102,13 +102,28 @@ flowchart LR
 | Project | title | presence, length(max: 100) |
 | Project | user_id | presence |
 | Task | title | presence, length(max: 200) |
-| Task | status | presence, inclusion(not_started, in_progress, completed) |
+| Task | status | presence, inclusion(not_started, in_progress, completed), 遷移規則（[ステータス遷移](#ステータス遷移)） |
 | Task | project_id | presence |
 
 ### ステータス遷移
+
+**この遷移図は業務制約であり、実装で強制する**（説明用の典型例ではない）。
 
 ```text
 not_started → in_progress → completed
                 ↑                |
                 └────────────────┘ (差し戻し可)
 ```
+
+| 現在の状態 | 変更できる状態 |
+|---|---|
+| （新規作成） | `not_started` のみ |
+| `not_started` | `in_progress` |
+| `in_progress` | `completed` |
+| `completed` | `in_progress`（差し戻し） |
+
+- ステータスを変更しない更新（タイトルだけの変更など）は、どの状態でも行える。
+- 禁止される例: `not_started → completed`（途中を飛ばす）/ `in_progress → not_started` / `completed → not_started`（一気に起点へ戻す）/ 新規作成時に `in_progress`・`completed` を指定する。
+- **担保はモデル**（`Task::ALLOWED_STATUS_TRANSITIONS` と作成/更新のバリデーション）。フォーム・API・コンソールのどの入口から来ても同じ規則で拒否する（両アプリ共通）。
+- **UI（フルスタック版）**: 新規作成フォームはステータスを選ばせず「未着手」固定を表示し、編集フォームは現在の状態と許可された遷移先だけを選択肢に出す。UI で塞ぐのは誤操作を減らすためで、規則の担保はモデル側にある（多層防御）。
+- **違反時**: フルスタック版はフォームを 422 で再描画しエラーを表示、API 版は `422` と `{ "errors": [...] }` を返す（`07-api-specification.md`）。

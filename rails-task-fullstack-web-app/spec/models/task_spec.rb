@@ -146,15 +146,65 @@ RSpec.describe Task, type: :model do
       task = Task.new
       expect(task.not_started?).to be true
     end
+  end
 
-    it 'can be set to in_progress' do
-      task = build(:task, status: :in_progress)
-      expect(task.in_progress?).to be true
+  describe 'ステータス遷移（docs/03 のステータス遷移図＝業務制約）' do
+    context '新規作成' do
+      it '未着手（not_started）なら作成できる' do
+        expect(build(:task, status: :not_started)).to be_valid
+      end
+
+      it '進行中を指定した作成は、遷移の起点を飛ばすため無効' do
+        task = build(:task, status: :in_progress)
+        expect(task).not_to be_valid
+        expect(task.errors[:status]).to be_present
+      end
+
+      it '完了を指定した作成は、遷移の起点を飛ばすため無効' do
+        task = build(:task, status: :completed)
+        expect(task).not_to be_valid
+        expect(task.errors[:status]).to be_present
+      end
     end
 
-    it 'can be set to completed' do
-      task = build(:task, status: :completed)
-      expect(task.completed?).to be true
+    context '更新' do
+      it '未着手 → 進行中 は許可する' do
+        task = create(:task)
+        expect(task.update(status: :in_progress)).to be true
+      end
+
+      it '進行中 → 完了 は許可する' do
+        task = create(:task, :in_progress)
+        expect(task.update(status: :completed)).to be true
+      end
+
+      it '完了 → 進行中 は差し戻しとして許可する' do
+        task = create(:task, :completed)
+        expect(task.update(status: :in_progress)).to be true
+      end
+
+      it '未着手 → 完了 は途中を飛ばすため拒否し、DB の値も変えない' do
+        task = create(:task)
+        expect(task.update(status: :completed)).to be false
+        expect(task.reload.status).to eq('not_started')
+      end
+
+      it '進行中 → 未着手 は拒否する（差し戻しは完了からのみ）' do
+        task = create(:task, :in_progress)
+        expect(task.update(status: :not_started)).to be false
+        expect(task.reload.status).to eq('in_progress')
+      end
+
+      it '完了 → 未着手 は拒否する（一気に起点まで戻さない）' do
+        task = create(:task, :completed)
+        expect(task.update(status: :not_started)).to be false
+        expect(task.reload.status).to eq('completed')
+      end
+
+      it 'ステータスを変えない更新は、どの状態でも許可する' do
+        task = create(:task, :completed)
+        expect(task.update(title: 'タイトルだけ変更')).to be true
+      end
     end
   end
 end

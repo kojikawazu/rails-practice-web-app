@@ -42,10 +42,13 @@ class TasksController < ApplicationController
   # 複製。複製元の値を初期入力した新規作成フォームを表示する（DB は変更しない）。
   # 以降は通常の confirm → create フローに合流する（@project は set_project で取得済み）。
   #
+  # ステータスは複製しない。新規作成は not_started 固定（Task の遷移規則）のため、
+  # 進行中・完了のタスクを複製した瞬間に規則違反のレコードを作ろうとしてしまう。
+  #
   # @return [void] 複製元の値を入れた @task で new ビューを描画
   def duplicate
     source = @project.tasks.find(params[:id])
-    @task = @project.tasks.build(title: "#{source.title}のコピー", status: source.status,
+    @task = @project.tasks.build(title: "#{source.title}のコピー",
                                  start_date: source.start_date, end_date: source.end_date)
     flash.now[:notice] = "「#{source.title}」を複製しました。内容を確認して作成してください。"
     render :new

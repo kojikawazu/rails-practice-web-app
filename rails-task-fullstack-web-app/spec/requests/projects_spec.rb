@@ -188,8 +188,8 @@ RSpec.describe "Projects", type: :request do
   describe "GET /projects/:id (タスクのステータスバッジ表示)" do
     it "enum の 3 状態それぞれに対応する日本語バッジを表示する" do
       create(:task, project: project, status: :not_started)
-      create(:task, project: project, status: :in_progress)
-      create(:task, project: project, status: :completed)
+      create(:task, :in_progress, project: project)
+      create(:task, :completed, project: project)
       log_in
       get project_path(project)
       expect(response.body).to include("未着手")

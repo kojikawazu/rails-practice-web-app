@@ -20,7 +20,15 @@
 
   <div class="form-group">
     <%= form.label :status, "ステータス" %>
-    <%= form.select :status, Task.statuses.keys.map { |s| [I18n.t("task_status.#{s}", default: s.humanize), s] }, {}, class: "form-select" %>
+    <% if task.persisted? %>
+      <%# 遷移規則（Task::ALLOWED_STATUS_TRANSITIONS）で選べる状態だけを出す。
+          UI で塞ぐのは誤操作を減らすためで、規則の担保はモデルの遷移バリデーション。 %>
+      <%= form.select :status, selectable_status_options(task), {}, class: "form-select" %>
+    <% else %>
+      <%# 新規作成は not_started 固定（モデルの status_must_start_from_initial と対）。
+          入力として受け取らず、サーバー側の既定値で作る。 %>
+      <p class="text-sub" style="margin:0;">未着手（新規作成時は固定）</p>
+    <% end %>
   </div>
 
   <%# 開始日・終了日は flatpickr（type=text）で選択する。ラッパーに data-controller を付け、

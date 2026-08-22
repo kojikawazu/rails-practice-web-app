@@ -30,7 +30,11 @@ RSpec.describe "User task journey", type: :request do
     expect(response).to have_http_status(:ok)
     expect(json.map { |t| t["id"] }).to include(task_id)
 
-    # status を更新
+    # status を更新（遷移規則により not_started から completed へは飛べないため、進行中を経由する）
+    patch api_v1_project_task_path(project_id, task_id),
+          params: { task: { status: "in_progress" } }, headers: bearer(token), as: :json
+    expect(response).to have_http_status(:ok)
+
     patch api_v1_project_task_path(project_id, task_id),
           params: { task: { status: "completed" } }, headers: bearer(token), as: :json
     expect(response).to have_http_status(:ok)

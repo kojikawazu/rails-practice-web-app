@@ -121,6 +121,14 @@ Content-Type: application/json
 }
 ```
 
+> **ステータス遷移違反も 422 で返す**。`status` は任意の値へ変更できず、`not_started → in_progress → completed` と `completed → in_progress`（差し戻し）のみ許可する。作成時は `not_started` のみ指定できる（省略時の既定値も `not_started`）。違反時のレスポンス例:
+>
+> ```json
+> { "errors": ["Status は not_started から completed へは変更できません（許可: in_progress）"] }
+> ```
+>
+> 規則の詳細は `03-functional-specification.md` の「ステータス遷移」を参照する。
+
 **認証エラー（401）・リソース未存在（404）** — 単一メッセージを返す（`error`・単数形）:
 
 ```json
