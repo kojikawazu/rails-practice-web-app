@@ -79,7 +79,7 @@ Task
 |--------|------|------|------|
 | id | bigint | PK, NOT NULL | 自動採番 |
 | title | string | NOT NULL | タスク名 |
-| status | integer | NOT NULL, DEFAULT 0 | enum（0: not_started, 1: in_progress, 2: completed） |
+| status | integer | NOT NULL, DEFAULT 0 | enum（0: not_started, 1: in_progress, 2: completed）。値の遷移はモデルで制約（`03-functional-specification.md` の「ステータス遷移」） |
 | start_date | date | | 開始日（フルスタック版。終了日とともに任意） |
 | end_date | date | | 終了日（任意。入力時は終了日 >= 開始日） |
 | preview_url | string | | 参考リンク（任意。http/https のみ。確認画面で sandbox iframe プレビュー） |

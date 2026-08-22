@@ -9,6 +9,11 @@ RSpec.describe "Tasks", type: :request do
     post login_path, params: { email: user.email, password: 'password123' }
   end
 
+  # ステータス選択の option を出現順で読む（順序も検証対象のため text ではなく value を見る）。
+  def status_options_in_form
+    Capybara.string(response.body).all("select[name='task[status]'] option").map { |option| option[:value] }
+  end
+
   describe "GET /projects/:project_id/tasks/new（新規作成フォーム）" do
     it "新規作成フォームを表示する" do
       log_in
@@ -88,7 +93,7 @@ RSpec.describe "Tasks", type: :request do
   end
 
   describe "GET /projects/:project_id/tasks/:id/duplicate（複製）" do
-    let!(:task) { create(:task, project: project, title: "元タスク", status: :in_progress) }
+    let!(:task) { create(:task, :in_progress, project: project, title: "元タスク") }
 
     it "複製元の値を初期入力した新規フォームを返し、DB にはレコードを作らない" do
       log_in
@@ -105,6 +110,13 @@ RSpec.describe "Tasks", type: :request do
       get duplicate_project_task_path(project, task)
       expect(response.body).to include(confirm_project_tasks_path(project))
     end
+
+    it "進行中のタスクを複製しても、新規作成は未着手固定のためステータスは引き継がない" do
+      log_in
+      get duplicate_project_task_path(project, task)
+      expect(response.body).to include("未着手（新規作成時は固定）")
+      expect(Capybara.string(response.body).all("select[name='task[status]']")).to be_empty
+    end
   end
 
   describe "PATCH /projects/:project_id/tasks/:id（更新）" do
@@ -115,6 +127,75 @@ RSpec.describe "Tasks", type: :request do
       }
       expect(response).to redirect_to(project_task_path(project, task))
       expect(task.reload.title).to eq("更新タスク")
+    end
+  end
+
+  describe "PATCH /projects/:project_id/tasks/:id（ステータス遷移）" do
+    it "未着手 → 進行中 は更新でき、タスク詳細へリダイレクトする" do
+      log_in
+      patch project_task_path(project, task), params: { task: { status: "in_progress" } }
+      expect(response).to redirect_to(project_task_path(project, task))
+      expect(task.reload.status).to eq("in_progress")
+    end
+
+    it "完了 → 進行中 の差し戻しは許可する" do
+      done = create(:task, :completed, project: project)
+      log_in
+      patch project_task_path(project, done), params: { task: { status: "in_progress" } }
+      expect(done.reload.status).to eq("in_progress")
+    end
+
+    it "未着手 → 完了 は UI を経由しない直接送信でも拒否し、edit を 422 で再描画して値も変えない" do
+      log_in
+      patch project_task_path(project, task), params: { task: { status: "completed" } }
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(task.reload.status).to eq("not_started")
+    end
+
+    it "完了 → 未着手 も拒否する（差し戻し先は進行中だけ）" do
+      done = create(:task, :completed, project: project)
+      log_in
+      patch project_task_path(project, done), params: { task: { status: "not_started" } }
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(done.reload.status).to eq("completed")
+    end
+  end
+
+  describe "POST /projects/:project_id/tasks（作成時のステータス）" do
+    it "ステータスを送らない通常の作成は、未着手のタスクになる" do
+      log_in
+      post project_tasks_path(project), params: { task: { title: "既定ステータス確認" } }
+      expect(Task.find_by(title: "既定ステータス確認").status).to eq("not_started")
+    end
+
+    it "完了を指定した作成は拒否し、new を 422 で再描画してレコードも作らない" do
+      log_in
+      expect {
+        post project_tasks_path(project), params: { task: { title: "完了で作成", status: "completed" } }
+      }.not_to change(Task, :count)
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+  end
+
+  describe "ステータスの選択肢（フォーム）" do
+    it "新規フォームはステータスを選ばせず、未着手固定であることを示す" do
+      log_in
+      get new_project_task_path(project)
+      expect(response.body).to include("未着手（新規作成時は固定）")
+      expect(Capybara.string(response.body).all("select[name='task[status]']")).to be_empty
+    end
+
+    it "未着手タスクの編集フォームは、現在の状態と進行中だけを選択肢に出す" do
+      log_in
+      get edit_project_task_path(project, task)
+      expect(status_options_in_form).to eq(%w[not_started in_progress])
+    end
+
+    it "完了タスクの編集フォームは、差し戻し先の進行中だけを遷移先に出す" do
+      done = create(:task, :completed, project: project)
+      log_in
+      get edit_project_task_path(project, done)
+      expect(status_options_in_form).to eq(%w[completed in_progress])
     end
   end
 
