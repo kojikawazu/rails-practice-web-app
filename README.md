@@ -135,6 +135,7 @@ bin/rails server -p 3100
 ```text
 rails-practice-web-app/
 ├── .github/workflows/ci.yml       # GitHub Actions（テスト CI）
+├── .github/scripts/               # CI 補助スクリプト（変更分類の検証）
 ├── CLAUDE.md
 ├── README.md
 ├── LICENSE                        # MIT
@@ -159,7 +160,7 @@ GitHub Actions（`.github/workflows/ci.yml`）で、`main` への push と全 PR
 
 | ジョブ | 内容 | 実行条件 |
 |---|---|---|
-| `Detect changes` | 差分パスを判定し、変更範囲（`code` / `docs`）を後続ジョブへ渡す軽量ジョブ | 常時 |
+| `Detect changes` | 差分パスを判定して変更範囲（`code` / `docs`）を後続ジョブへ渡し、代表パスの分類が期待どおりかも検証する軽量ジョブ | 常時 |
 | `Markdown lint` | markdownlint-cli2 でリポジトリ全体の markdown を検証 | ドキュメント変更時 |
 | `Test (matrix)` | 両アプリで Minitest（`bin/rails test`）+ RSpec（`bundle exec rspec`） | コード変更時 |
 | `System (:js)` | フルスタック版の JS system spec（`rspec --tag js`、headless Chrome） | コード変更時 |
@@ -186,7 +187,9 @@ bundle exec rspec                             # 通常スイート（JS 除外�
 bundle exec rspec --tag js                    # JS system spec（要 Chrome）
 ```
 
-> ドキュメントのみの変更（`docs/**` / `**.md` / `.claude/**` / `AGENTS.md` 等、コード外）では、`Detect changes` が `code=false` と判定し、重い `Test` / `System` ジョブを **`if` 条件でスキップ**します。`paths-ignore` と違いワークフロー自体は起動するため、スキップされたジョブは required check 上で成功扱いとなり、ブランチ保護を有効にしてもマージがブロックされません。
+> ドキュメントのみの変更（`docs/**` / `**.md` / `.claude/**` / `AGENTS.md` 等）では、`Detect changes` が `code=false` と判定し、重い `Test` / `System` ジョブを **`if` 条件でスキップ**します。`paths-ignore` と違いワークフロー自体は起動するため、スキップされたジョブは required check 上で成功扱いとなり、ブランチ保護を有効にしてもマージがブロックされません。
+>
+> 判定は**除外リスト方式**です（ドキュメント・ルール以外はすべてコード扱い）。`Makefile` や `docker-compose.yml`、将来追加するディレクトリなど**未知のパスはテスト側へ倒れる**ため、「列挙し忘れて黙ってテストが走らない」状態になりません。代表パスの期待判定は `.github/scripts/verify-path-filters.mjs` が正本で、`Detect changes` ジョブ内で検証しています。
 
 ## Docs
 

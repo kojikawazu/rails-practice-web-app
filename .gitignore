@@ -11,3 +11,7 @@
 .vscode/
 *.swp
 *.swo
+
+# CI 補助スクリプト（.github/scripts）をローカル実行したときの一時ファイル
+node_modules/
+package-lock.json

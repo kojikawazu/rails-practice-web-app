@@ -21,35 +21,67 @@ jobs:
   # 下流ジョブはワークフローレベルの paths ではなく if 条件でスキップする。
   # skip されたジョブは required check 上では成功扱いになるため、
   # ブランチ保護を有効にしてもマージが pending で止まらない。
+  #
+  # 代表パスの期待判定は .github/scripts/verify-path-filters.mjs が正本で、
+  # このジョブ内で実際に検証する（期待表をコメントで二重に持つと乖離するため）。
   changes:
     name: Detect changes
     runs-on: ubuntu-latest
     outputs:
-      code: ${{ steps.filter.outputs.code }}
-      docs: ${{ steps.filter.outputs.docs }}
+      code: ${{ steps.code.outputs.code }}
+      docs: ${{ steps.docs.outputs.docs }}
     steps:
       - uses: actions/checkout@v4
 
+      # コード判定は「除外リスト」で書く（.claude/rules/github-actions.md）。
+      # 「対象リスト」で書くと、新しいディレクトリが増えたときに黙ってテストが走らなくなる。
+      # ドキュメント・ルール以外は未知のパスも含めてすべてテストへ流し、安全側に倒す。
+      #
+      # predicate-quantifier: every は「すべてのパターンに一致したファイルだけを対象にする」
+      # 指定。既定の some（どれか 1 つに一致）のままだと、否定パターン単体が
+      # 「md 以外のすべて」に一致してしまい除外として機能しない。
       - uses: dorny/paths-filter@v3
-        id: filter
+        id: code
         with:
-          # 「コードとは何か」を positive パターンで列挙する（取りこぼさない安全側）。
-          # ここに該当しない変更（docs/**, **.md, README, .claude/** 等）は code=false。
-          # アプリ配下・workflow 配下の AGENTS.md はルール文書なので、明示的に除外する。
-          # docs は markdown ファイルと lint 設定そのものを対象にする。
-          # 両方に該当する変更（アプリ配下の *.md 等）では両方が動く。
+          predicate-quantifier: every
           filters: |
             code:
-              - 'rails-task-fullstack-web-app/**'
-              - '!rails-task-fullstack-web-app/**/AGENTS.md'
-              - 'rails-task-api-web-app/**'
-              - '!rails-task-api-web-app/**/AGENTS.md'
-              - '.github/workflows/**'
-              - '!.github/workflows/**/AGENTS.md'
+              - '**'
+              - '!**/*.md'
+              - '!docs/**'
+              - '!.claude/**'
+              - '!.markdownlint-cli2.jsonc'
+
+      # ドキュメント側は対象リストでよい（漏れても「lint が走らない」だけで、
+      # 未検証のコードがマージされる方向には倒れない）。
+      # docs/ 配下の画像や .claude/ のルールなど md 以外の変更でも、
+      # 「ドキュメント変更で何も動かさない」を避けるため markdown lint を回す。
+      - uses: dorny/paths-filter@v3
+        id: docs
+        with:
+          filters: |
             docs:
               - '**/*.md'
+              - 'docs/**'
+              - '.claude/**'
               - '.markdownlint-cli2.jsonc'
-              - '.github/workflows/**'
+
+      # 代表パスの分類が期待どおりかを、paths-filter と同じ picomatch で検証する。
+      # フィルタを書き換えて分類が崩れたら、下流のテストより先にここで落とす。
+      - name: Verify filter classification
+        run: |
+          npm install --no-save --silent picomatch js-yaml
+          node .github/scripts/verify-path-filters.mjs
+
+      # 今回の変更がどちらに分類されたかをジョブサマリに残す（レビューで追えるようにする）。
+      - name: Summarize classification
+        run: |
+          {
+            echo "| 判定 | 値 | 起動するジョブ |"
+            echo "|---|---|---|"
+            echo "| code | ${{ steps.code.outputs.code }} | Test / System (:js) |"
+            echo "| docs | ${{ steps.docs.outputs.docs }} | Markdown lint |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   # ドキュメント変更時の軽量チェック。
   # 「ドキュメント変更でも何も動かさない、にはしない」（.claude/rules/github-actions.md）。
