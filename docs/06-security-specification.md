@@ -6,6 +6,7 @@
 - [認可](#認可)
 - [暗号化](#暗号化)
 - [脆弱性対策](#脆弱性対策)
+  - [Content Security Policy（フルスタック版）](#content-security-policyフルスタック版)
 - [外部 URL のプレビュー（iframe 埋め込み）](#外部-url-のプレビューiframe-埋め込み)
   - [想定リスクと対策](#想定リスクと対策)
   - [iframe 設定](#iframe-設定)
@@ -38,6 +39,27 @@
 - Strong Parameters による Mass Assignment 防止
 - ERBテンプレートの自動エスケープによる XSS 防止
 - SQLインジェクションは ActiveRecord のパラメータバインディングで防止
+- **Content Security Policy（CSP）** をフルスタック版で **enforce モード**で有効化（下記）
+
+### Content Security Policy（フルスタック版）
+
+XSS 対策は「入力検証 + 出力エスケープ + CSP」の多層防御とし、CSP は**ブラウザ側の最終防御**を担う。設定は `config/initializers/content_security_policy.rb`。
+
+| ディレクティブ | 値 | 理由 |
+|---|---|---|
+| `default-src` | `'self'` | 既定は自オリジンのみ |
+| `script-src` | `'self'` + リクエストごとの `nonce` | **インライン JS を許可しない**。importmap / Turbo のインライン script には `importmap-rails` が nonce を自動付与する |
+| `style-src` | `'self'` | `<style>` ブロックの注入を禁止する |
+| `style-src-attr` | `'unsafe-inline'`（**暫定**） | View に残るインライン `style` 属性のための段階導入。移行は [#101](https://github.com/kojikawazu/rails-practice-web-app/issues/101) で追跡し、完了時にこの行を削除する |
+| `img-src` | `'self' data:` + （development のみ）MinIO の配信元 | development の Active Storage は MinIO へリダイレクトするため。production は Disk（同一オリジン）で不要 |
+| `frame-src` | `http: https:` | タスクの `preview_url` プレビュー用。`javascript:` / `data:` の frame は拒否する。埋め込みの封じ込めは iframe の `sandbox` とモデルの URL 検証が担う |
+| `frame-ancestors` | `'none'` | 自アプリを他サイトに埋め込ませない（クリックジャッキング対策） |
+| `object-src` | `'none'` | プラグイン埋め込みを禁止 |
+| `base-uri` / `form-action` | `'self'` | `<base>` 書き換えと外部への form 送信を禁止 |
+
+- **nonce はレスポンスごとに使い捨てる**（`SecureRandom.base64(16)`）。推測できる値にすると `script-src` の制限を回避されるため。
+- インライン `onclick` は Stimulus（`row_link_controller.js`）へ移行済み。CSP を有効にしたブラウザではインラインハンドラは実行されない。
+- `:js` の system spec は headless Chrome で実際に CSP が適用されるため、**CSP 違反はテストの失敗として検出できる**（`08-test-specification.md`）。
 
 ## 外部 URL のプレビュー（iframe 埋め込み）
 

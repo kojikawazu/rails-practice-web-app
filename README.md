@@ -52,6 +52,7 @@
 - **確認画面フロー（入力 → 確認 → 確定）** — DB に保存せずメモリ上で `valid?` だけ実行して確認画面を描画。プロジェクト新規作成のみ **PRG（Post/Redirect/Get）+ Turbo Drive** で実装し、リロード安全性と白画面回避を両立。他は `data: { turbo: false }` でフルページ遷移。→ [機能仕様](docs/03-functional-specification.md#確認画面登録作成編集)
 - **画像添付の round-trip** — HTML の file input は確認画面の hidden で値を持ち回れないため、確認ステップで一旦 blob 化し `signed_id` を「修正する」「確定」で持ち回る（JS 不要・オーファン防止）。Active Storage + MinIO（S3 互換）。→ [データ仕様](docs/05-data-specification.md#画像添付active-storage)
 - **外部 URL プレビューの iframe 多層防御** — 任意のユーザー入力 URL を確認画面で iframe プレビューする際、**スキーム検証（http/https のみ）＋ sandbox ＋ 内部/プライベート IP 拒否**でサンドボックス脱獄・トップナビ乗っ取り・XSS を抑止。→ [セキュリティ仕様](docs/06-security-specification.md#外部-url-のプレビューiframe-埋め込み)
+- **CSP（Content Security Policy）を enforce で運用** — `script-src` はインライン JS を許可せず（nonce + Stimulus へ移行）、`frame-ancestors 'none'` / `object-src 'none'` などで実行可能な資源を限定。`:js` system spec は headless Chrome で実際に CSP が適用されるため、違反はテストの失敗として現れる。→ [セキュリティ仕様](docs/06-security-specification.md#content-security-policyフルスタック版)
 - **認可スコープ** — 他ユーザーのリソースへアクセスすると 404（`current_user.projects.find(...)`）。フルスタックはリダイレクト、API は 401 と挙動を作り分け。
 - **変更内容で発火条件を分ける CI** — GitHub Actions のパスフィルタで、コード変更にはテスト、ドキュメント変更には markdown lint と、関係のあるジョブだけを実行。スキップされたジョブは required check 上で成功扱いとなり、マージをブロックしない。
 
