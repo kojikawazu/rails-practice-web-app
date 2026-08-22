@@ -10,6 +10,7 @@
   - [projects テーブル](#projects-テーブル)
   - [tasks テーブル](#tasks-テーブル)
   - [インデックス](#インデックス)
+- [クエリ設計](#クエリ設計)
 - [画像添付（Active Storage）](#画像添付active-storage)
 - [データフロー](#データフロー)
 
@@ -103,6 +104,26 @@ Task
 > - `projects.title` / `tasks.title` は DB では NULL 許容で、必須性はモデルの `presence` バリデーションで担保する（両アプリ）。
 > - `tasks.status` は DB では `integer`・NULL 許容・**デフォルト無し**で、初期値 `not_started`（0）は **モデルの `after_initialize` コールバック（`set_default_status`）** で設定する（両アプリ）。
 > - **API 版** の `users.name` / `users.email` / `users.password_digest` は DB に `null: false` を持たず、必須性はモデルバリデーションのみで担保する。
+
+## クエリ設計
+
+### 一覧のタスク件数（フルスタック版）
+
+プロジェクト一覧はプロジェクトごとにタスク件数を表示する。ビューで `project.tasks.count` を呼ぶと 1 行につき COUNT が 1 本増える（N+1）ため、集計は **モデルのスコープ `Project.with_task_counts`** で SQL 側へ寄せ、一覧取得を 1 クエリに保つ。
+
+| 項目 | 内容 |
+|------|------|
+| スコープ | `Project.with_task_counts`（`left_joins(:tasks).group(:id).select("projects.*, COUNT(tasks.id) AS tasks_count")`） |
+| 呼び出し | `ProjectService.list(user)` が使い、ビューは `project.tasks_count` を表示する |
+| 並び順 | 一覧（表示）の責務として `ProjectService.list` 側で `order(:id)`（作成順）を明示する |
+| 発行クエリ | プロジェクト件数によらず 1 本（`SELECT ... LEFT OUTER JOIN tasks ... GROUP BY projects.id`） |
+
+- `includes` による事前読み込みでは解消しない（`count` は関連が読み込み済みでも SQL COUNT を発行するため）。
+- タスク 0 件のプロジェクトを一覧から落とさないよう、`joins`（INNER JOIN）ではなく `left_joins` を使う。
+- `GROUP BY` は行の返却順を保証しないため、並び順を明示しないと表示順が実行計画次第で変わる（集計スコープではなく一覧を組み立てる側で `order` を指定する）。
+- 集約済みの Relation を返すため、このスコープに対する `count` は件数ではなく Hash を返す（一覧描画専用であり、件数計測には使わない）。
+- counter cache（`projects.tasks_count` カラム）は採用しない。読み取り都合のためにスキーマと書き込み経路・backfill を巻き込まず、変更を読み取り側に閉じるため。
+- 回帰は request spec で固定する（プロジェクト件数を増やしても集計クエリが 1 本のままであること。`08-test-specification.md`）。
 
 ## 画像添付（Active Storage）
 
