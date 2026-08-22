@@ -53,9 +53,9 @@
 | Unit spec（fullstack） | AuthService.login | 正資格情報で該当ユーザーを返す / 誤パスワードで nil / メール不在も nil（誤り時と同一結果＝列挙攻撃対策）。`User.find_by` のみモック |
 | Unit spec（fullstack） | TaskImageService | stage: 全有効→signed_id 返す + blob 生成 / 不正混在→nil・blob 未生成（オーファン防止）/ 空→[] ・ attach→images 増 ・ purge→attachment 削除。実 test-disk・モック無し |
 | Model spec | User | 有効なデータで作成できる / name必須 / email必須・一意・形式 / password最小文字数 |
-| Model spec | Project | 有効なデータで作成できる / title必須 / user関連付け / 削除時にtasksも削除 |
+| Model spec | Project | 有効なデータで作成できる / title必須 / user関連付け / 削除時にtasksも削除 / `.with_task_counts` が件数を tasks_count として載せる（タスク0件のプロジェクトも落とさない） |
 | Model spec | Task | 有効なデータで作成できる / title必須 / status必須・値の制限 / project関連付け |
-| Request spec（fullstack） | Projects | index/show/create/update/destroy の正常系 / 複製(duplicate)の正常系・create フロー合流 / 他ユーザーリソースの404 / 未ログイン時のリダイレクト |
+| Request spec（fullstack） | Projects | index/show/create/update/destroy の正常系 / 複製(duplicate)の正常系・create フロー合流 / 他ユーザーリソースの404 / 未ログイン時のリダイレクト / 一覧のタスク件数表示（0件・複数件・プロジェクト0件）/ 件数集計がプロジェクト件数に比例しない（N+1 回帰ガード） |
 | Request spec（fullstack） | Tasks | index/show/create/update/destroy の正常系 / 複製(duplicate)の正常系・create フロー合流 / 他ユーザーリソースの404 / 存在しないprojectでの404 |
 | Request spec（fullstack） | Sessions | ログイン成功/失敗 / ログアウト（セッション） |
 | Request spec（API） | Auth | signup / login の成功・失敗（JWT 発行）|
@@ -94,4 +94,6 @@
 | Capybara + Selenium | System spec（`:js` は headless Chrome、フルスタック版のみ） |
 | rspec-retry | `:js` System spec のフレーク対策（リトライ） |
 
+> N+1 の回帰ガードは gem ではなく `spec/support/query_counter.rb`（`ActiveSupport::Notifications` の `sql.active_record` を購読して SQL 本数を数えるヘルパー）で行う。クエリキャッシュにヒットした SQL も数に含め、キャッシュ任せで N+1 を見逃さないようにする。
+>
 > テスト間の DB クリーンアップは RSpec の `use_transactional_fixtures`（トランザクションロールバック）を使用する（`database_cleaner` gem は導入していない）。
