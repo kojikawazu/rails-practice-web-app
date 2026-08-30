@@ -33,7 +33,9 @@
   </thead>
   <tbody>
     <% @tasks.each do |task| %>
-      <tr style="cursor:pointer" onclick="location.href='<%= project_task_path(@project, task) %>'">
+      <%# 行クリックで詳細へ。CSP でインライン onclick を許可しないため Stimulus に委ねる。 %>
+      <tr class="row-link" data-controller="row-link" data-action="click->row-link#navigate"
+          data-row-link-url-value="<%= project_task_path(@project, task) %>">
         <td><strong><%= task.title %></strong></td>
         <td>
           <% case task.status %>
@@ -47,8 +49,8 @@
         </td>
         <td class="text-sub"><%= [task.start_date&.strftime("%Y-%m-%d"), task.end_date&.strftime("%Y-%m-%d")].compact.join(" 〜 ").presence || "-" %></td>
         <td>
-          <%= link_to "編集", edit_project_task_path(@project, task), class: "btn btn-sm", onclick: "event.stopPropagation()" %>
-          <%= link_to "複製", duplicate_project_task_path(@project, task), class: "btn btn-sm", onclick: "event.stopPropagation()" %>
+          <%= link_to "編集", edit_project_task_path(@project, task), class: "btn btn-sm" %>
+          <%= link_to "複製", duplicate_project_task_path(@project, task), class: "btn btn-sm" %>
         </td>
       </tr>
     <% end %>

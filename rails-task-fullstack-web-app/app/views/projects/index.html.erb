@@ -15,14 +15,16 @@
   </thead>
   <tbody>
     <% @projects.each do |project| %>
-      <tr style="cursor:pointer" onclick="location.href='<%= project_path(project) %>'">
+      <%# 行クリックで詳細へ。CSP でインライン onclick を許可しないため Stimulus に委ねる。 %>
+      <tr class="row-link" data-controller="row-link" data-action="click->row-link#navigate"
+          data-row-link-url-value="<%= project_path(project) %>">
         <td><strong><%= project.title %></strong></td>
         <td class="text-sub"><%= truncate(project.description, length: 50) %></td>
         <td><span class="badge badge-grey"><%= project.tasks_count %></span></td>
         <td class="text-sub"><%= project.created_at.strftime("%Y-%m-%d") %></td>
         <td>
-          <%= link_to "編集", edit_project_path(project), class: "btn btn-sm", onclick: "event.stopPropagation()" %>
-          <%= link_to "複製", duplicate_project_path(project), class: "btn btn-sm", onclick: "event.stopPropagation()" %>
+          <%= link_to "編集", edit_project_path(project), class: "btn btn-sm" %>
+          <%= link_to "複製", duplicate_project_path(project), class: "btn btn-sm" %>
         </td>
       </tr>
     <% end %>

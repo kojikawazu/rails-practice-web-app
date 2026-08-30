@@ -19,6 +19,9 @@ a:hover { text-decoration: underline; }
 .flash-notice { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
 .flash-alert { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
 
+/* 一覧の行クリック（row_link_controller） */
+.row-link { cursor: pointer; }
+
 /* Buttons */
 .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 600; border: 1px solid #e2e8f0; background: #fff; color: #1e293b; cursor: pointer; }
 .btn:hover { background: #f3f4f6; text-decoration: none; }
