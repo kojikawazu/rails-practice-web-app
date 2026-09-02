@@ -1,5 +1,3 @@
-config/master.key
-
 # Runtime artifacts
 /log/*
 /tmp/*
@@ -14,3 +12,6 @@ config/master.key
 
 # Bootsnap cache
 /tmp/cache/bootsnap/
+
+# Ignore key files for decrypting credentials and more.
+/config/*.key
