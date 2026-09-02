@@ -102,6 +102,27 @@ jobs:
       - name: markdownlint
         run: npx --yes markdownlint-cli2 "**/*.md"
 
+  # 鍵ファイルの再混入を防ぐガード。
+  # master.key は一度 push すると履歴から消せず、鍵のローテーション以外に対処手段が
+  # なくなる（docs/06-security-specification.md「鍵のローテーション」）。
+  # .gitignore は未追跡ファイルにしか効かないため、追跡された時点で落とす検出側も要る。
+  # 変更種別を問わず常に実行する（どの分類の変更でも混入しうるため）。
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Assert no key files are tracked
+        run: |
+          tracked=$(git ls-files -- '*.key' '*.pem')
+          if [ -n "$tracked" ]; then
+            echo "::error::鍵ファイルが Git 管理下にあります。.gitignore への追加では履歴から消えないため、鍵のローテーションが必要になります。"
+            echo "$tracked"
+            exit 1
+          fi
+          echo "OK: 追跡対象に鍵ファイルはありません"
+
   test:
     name: Test (${{ matrix.app }})
     needs: changes

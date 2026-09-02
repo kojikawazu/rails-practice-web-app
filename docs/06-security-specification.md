@@ -11,6 +11,9 @@
   - [想定リスクと対策](#想定リスクと対策)
   - [iframe 設定](#iframe-設定)
 - [シークレット管理](#シークレット管理)
+  - [Rails credentials と master.key](#rails-credentials-と-masterkey)
+  - [secret_key_base の影響範囲](#secret_key_base-の影響範囲)
+  - [鍵のローテーション](#鍵のローテーション)
 
 ## 認証
 
@@ -95,5 +98,40 @@ sandbox="allow-scripts allow-same-origin"  referrerpolicy="no-referrer"  allow="
 - DB接続情報は `.env` で管理（`.gitignore` 対象）
 - `POSTGRES_PASSWORD` 等をコードにハードコードしない
 - `docker-compose.yml` は `.env` から環境変数を読み込む
+
+### Rails credentials と master.key
+
+Rails のシークレットは `config/credentials.yml.enc`（暗号化済み・**コミット対象**）と、その復号鍵である `config/master.key`（**コミット禁止**）の 2 つで構成される。両者が揃って初めて復号できるため、鍵をリポジトリに含めないことが暗号化の前提そのものになる。
+
+- `.gitignore` では `/config/*.key` で除外する。`master.key` 単体指定ではなく glob にするのは、環境別鍵（`production.key` 等）を将来追加したときに除外漏れを起こさないため。
+- `master.key` は各開発者がローカルで保持し、Git 以外の経路で受け渡す。CI・デプロイでは環境変数 `RAILS_MASTER_KEY` として渡す。
+- CI の `Secret scan` ジョブ（`.github/workflows/ci.yml`）で、`*.key` / `*.pem` が追跡対象に入っていないことを変更種別によらず常時検証する。`.gitignore` は未追跡ファイルにしか効かないため、誤って追跡された時点で落とす検出側を併せて持つ。
+
+### secret_key_base の影響範囲
+
+本リポジトリの `credentials.yml.enc` が保持するのは `secret_key_base` のみだが、これはアプリの「信頼の根」であり、漏洩時の影響は広範囲に及ぶ。
+
+| 用途 | 漏洩時の影響 |
+|---|---|
+| JWT の署名鍵（API 版） | 任意ユーザーになりすました token を偽造できる（`app/lib/json_web_token.rb` が `Rails.application.secret_key_base` を流用しているため） |
+| 署名付き / 暗号化 Cookie | セッションの偽造・改ざん |
+| Active Storage の `signed_id` | 添付を許す capability の偽造 |
+| `MessageVerifier` 全般 | 署名検証の全面的な破綻 |
+
+### 鍵のローテーション
+
+`master.key` が Git 履歴へ混入した場合、`.gitignore` への追加や `git rm --cached` による追跡除外は対処にならない。**`.gitignore` は未追跡ファイルにしか効かず、Git の履歴は追記型であるため、過去のブロブは clone した全員の手元に残り続ける**ためである。
+
+したがって本質的な対処は **鍵の無効化（ローテーション）** とする。
+
+```bash
+cd <app>
+mv config/master.key config/credentials.yml.enc <backup-dir>/   # 復旧用に退避
+EDITOR=true bin/rails credentials:edit                          # 新しい鍵と credentials を再生成
+```
+
+- `EDITOR=true` は「何もせず終了ステータス 0 を返す」ため、エディタを開かずテンプレートのまま再暗号化できる。`EDITOR=cat` は復号された平文を標準出力に出してしまうため使わない。
+- ローテーション後は、旧鍵で署名された JWT・Cookie・`signed_id` がすべて検証に失敗する（＝漏洩した鍵が無効化される）。稼働中のサービスでは全ユーザーの再ログインが発生する点に注意する。
+- Git 履歴の書き換え（`git filter-repo` / BFG + force-push）は本質的な対処ではないため実施しない。GitHub は force-push 後も dangling commit を一定期間参照可能で完全消去は保証されず、ローテーション済みであれば履歴に残る鍵は復号能力を持たない無効な文字列にすぎない。
 
 ※ トレーニング目的のため、最低限のRailsデフォルトセキュリティを活用する方針
