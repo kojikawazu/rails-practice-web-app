@@ -136,6 +136,7 @@ Task
   - 形式: `image/png` / `image/jpeg` / `image/gif` / `image/webp`
   - サイズ: 1枚あたり 5MB 以下
 - 確認画面での blob 化 staging・attach・削除 purge は **`TaskImageService`**（`app/services/`）が担い、同じ定数を参照して形式/サイズを事前チェックする（不正混在時は blob を作らずオーファンを防止）。モデルの `images_format_and_size` が最終的な正の検証。
+- 確認画面で持ち回る `signed_id` は利用者限定・期限付きで発行・照合する（詳細は [セキュリティ仕様書](./06-security-specification.md#認可)）。確認フローを放棄して未添付のまま残った blob は、`PurgeUnattachedBlobsJob` が作成から 1 日経過後に purge する（スキーマ変更なし。Active Storage 標準の `unattached` スコープを使う）。
 - サムネイル: `variant(resize_to_limit: ...)` を `mini_magick`（ImageMagick）で動的生成し `active_storage_variant_records` にキャッシュ
 
 > API 版（Project 2）は画像添付を持たない（意図的な差分）。

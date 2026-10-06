@@ -76,14 +76,14 @@
       </div>
     <% end %>
 
-    <%# 確認画面から戻ってきた、アップロード済みファイル（signed_id）を hidden で保持する。 %>
-    <% Array(@image_signed_ids).each do |sid| %>
-      <%= hidden_field_tag "task[image_signed_ids][]", sid %>
+    <%# 確認画面から戻ってきた、アップロード済みファイル（照合済みの staging blob）を signed_id の hidden で保持する。 %>
+    <% staged = Array(@staged_blobs) %>
+    <% staged.each do |blob| %>
+      <%= hidden_field_tag "task[image_signed_ids][]", staged_image_signed_id(blob) %>
     <% end %>
-    <% pending = Array(@image_signed_ids).filter_map { |sid| ActiveStorage::Blob.find_signed(sid) } %>
-    <% if pending.any? %>
+    <% if staged.any? %>
       <div class="text-muted" style="font-size:13px; margin-bottom:8px;">
-        選択中: <%= pending.map(&:filename).join("、") %>
+        選択中: <%= staged.map(&:filename).join("、") %>
       </div>
     <% end %>
 
