@@ -38,6 +38,7 @@ Rails Task Web App の仕様・設計ドキュメント一覧。プロジェク�
 | 09 | [アーキテクチャ仕様書](./09-architecture-specification.md) | システム構成・Docker/コンテナ構成・技術スタック・環境変数 |
 | 10 | [その他仕様書](./10-miscellaneous-specification.md) | 用語集・参考資料 |
 | 11 | [タスク](./11-tasks.md) | マイルストーン・完了済み実績・進捗 |
+| — | [教訓ログ](./lessons-learned.md) | 誤り・失敗・ハマりから得た教訓（追記のみ・新しいものが上。my-lessons-learned へ自動集約） |
 
 ## 12-code-reading-guide/ — コードリーディングガイド
 
