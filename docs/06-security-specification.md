@@ -43,6 +43,7 @@
 - ERBテンプレートの自動エスケープによる XSS 防止
 - SQLインジェクションは ActiveRecord のパラメータバインディングで防止
 - **Content Security Policy（CSP）** をフルスタック版で **enforce モード**で有効化（下記）
+- **依存 gem・コードの脆弱性検査**: CI の `Lint & Security` ジョブ（`.github/workflows/ci.yml`）で、コード変更のある PR ごとに両アプリへ bundler-audit（実行時点の最新アドバイザリで `Gemfile.lock` を照合）と Brakeman（`--ensure-latest` で本体も最新版を要求）を実行し、検出があればマージ前に落とす。main 上の依存は Dependabot のアラートと security update PR で監視する。CI で落とすのは、修正 PR が届いていても気づかず放置して脆弱な依存が溜まるのを防ぐため。
 
 ### Content Security Policy（フルスタック版）
 

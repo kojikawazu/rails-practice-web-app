@@ -16,7 +16,7 @@ permissions:
 jobs:
   # 変更範囲を1か所で判定する軽量ジョブ。
   # 変更内容に関係のあるジョブだけを動かすための入口（.claude/rules/github-actions.md）。
-  #   code=true  -> テスト（test / system-js）を実行する
+  #   code=true  -> 静的解析・セキュリティ検査（lint-security）とテスト（test / system-js）を実行する
   #   docs=true  -> markdown lint を実行する
   # 下流ジョブはワークフローレベルの paths ではなく if 条件でスキップする。
   # skip されたジョブは required check 上では成功扱いになるため、
@@ -79,7 +79,7 @@ jobs:
           {
             echo "| 判定 | 値 | 起動するジョブ |"
             echo "|---|---|---|"
-            echo "| code | ${{ steps.code.outputs.code }} | Test / System (:js) |"
+            echo "| code | ${{ steps.code.outputs.code }} | Lint & Security / Test / System (:js) |"
             echo "| docs | ${{ steps.docs.outputs.docs }} | Markdown lint |"
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -122,6 +122,52 @@ jobs:
             exit 1
           fi
           echo "OK: 追跡対象に鍵ファイルはありません"
+
+  # 静的解析とセキュリティ検査（.claude/rules/static-analysis.md / ruby.md で CI 必須）。
+  # DB を使わないため test とは別ジョブにし、並列に走らせて失敗原因をジョブ名で区別する。
+  # コマンドはローカルの make lint / make security と同じ判定に揃える。
+  #
+  # bundler-audit は実行時点の最新アドバイザリで照合するため、新しい脆弱性が公表されると
+  # 無関係なコード変更の PR でも落ちる。Dependabot の修正 PR を放置したまま脆弱な
+  # Gemfile.lock を使い続けないための意図した挙動（#112 で 74 件溜まった反省）。
+  lint-security:
+    name: Lint & Security (${{ matrix.app }})
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [rails-task-fullstack-web-app, rails-task-api-web-app]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        id: setup
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+          working-directory: ${{ matrix.app }}
+
+      - name: RuboCop
+        working-directory: ${{ matrix.app }}
+        run: bin/rubocop
+
+      # 前段の検査が落ちても後続の検査結果を見られるよう、各検査は独立して実行する。
+      # ただしセットアップ失敗時は検査できないため走らせない（無関係なエラーを重ねない）。
+      - name: bundler-audit
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
+        working-directory: ${{ matrix.app }}
+        run: bin/bundler-audit check --update
+
+      # bin/brakeman は Rails 既定で --ensure-latest を付けるため、Brakeman 本体が最新版で
+      # なければ警告ゼロでも exit 5 で落ちる。新しい検出ルールを取りこぼさないために維持し、
+      # 落ちたら bundle update --conservative brakeman で追従する。
+      - name: Brakeman
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
+        working-directory: ${{ matrix.app }}
+        run: bin/brakeman --quiet --no-pager --exit-on-warn --exit-on-error
 
   test:
     name: Test (${{ matrix.app }})
