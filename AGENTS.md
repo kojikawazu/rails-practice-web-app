@@ -13,6 +13,7 @@
 - `.claude/rules/testing.md`
 - `.claude/rules/documentation.md`
 - `.claude/rules/github-issue.md`
+- `.claude/rules/lessons-learned.md`
 
 Ruby ファイルを変更する場合は、さらに `.claude/rules/ruby.md` を読みます。
 
