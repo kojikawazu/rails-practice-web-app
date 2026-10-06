@@ -13,7 +13,7 @@ import picomatch from "picomatch";
 const WORKFLOW = path.join(process.cwd(), ".github/workflows/ci.yml");
 
 // [パス, code の期待値, docs の期待値]
-// code=true -> テスト（Test / System :js）、docs=true -> Markdown lint が動く。
+// code=true -> 静的解析・セキュリティ検査とテスト（Lint & Security / Test / System :js）、docs=true -> Markdown lint が動く。
 // ドキュメント・ルール以外は未知のパスもテストへ流す（安全側に倒す）ことを固定する。
 const EXPECTATIONS = [
   ["rails-task-fullstack-web-app/app/models/task.rb", true, false],

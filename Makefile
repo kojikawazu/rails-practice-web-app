@@ -130,7 +130,7 @@ lint-md-fix: ## markdownlint 自動修正（リポジトリ全体）
 
 .PHONY: security
 security: ## Brakeman + bundler-audit（APP 対象）
-	cd $(APP) && bin/bundler-audit && bin/brakeman --quiet --no-pager --exit-on-warn --exit-on-error
+	cd $(APP) && bin/bundler-audit check --update && bin/brakeman --quiet --no-pager --exit-on-warn --exit-on-error
 
 .PHONY: ci
 ci: ## ローカル CI 一括実行（APP 対象, bin/ci 相当）

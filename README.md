@@ -157,12 +157,13 @@ rails-practice-web-app/
 
 ## Test / CI
 
-GitHub Actions（`.github/workflows/ci.yml`）で、`main` への push と全 PR で**両プロジェクトのテスト**を自動実行します（デプロイは対象外）。
+GitHub Actions（`.github/workflows/ci.yml`）で、`main` への push と全 PR で**両プロジェクトの静的解析・セキュリティ検査とテスト**を自動実行します（デプロイは対象外）。
 
 | ジョブ | 内容 | 実行条件 |
 |---|---|---|
 | `Detect changes` | 差分パスを判定して変更範囲（`code` / `docs`）を後続ジョブへ渡し、代表パスの分類が期待どおりかも検証する軽量ジョブ | 常時 |
 | `Markdown lint` | markdownlint-cli2 でリポジトリ全体の markdown を検証 | ドキュメント変更時 |
+| `Lint & Security (matrix)` | 両アプリで RuboCop + bundler-audit（`check --update`）+ Brakeman | コード変更時 |
 | `Test (matrix)` | 両アプリで Minitest（`bin/rails test`）+ RSpec（`bundle exec rspec`） | コード変更時 |
 | `System (:js)` | フルスタック版の JS system spec（`rspec --tag js`、headless Chrome） | コード変更時 |
 
