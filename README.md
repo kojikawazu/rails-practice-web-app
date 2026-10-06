@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/kojikawazu/rails-practice-web-app/actions/workflows/ci.yml/badge.svg)](https://github.com/kojikawazu/rails-practice-web-app/actions/workflows/ci.yml)
 ![Ruby](https://img.shields.io/badge/Ruby-3.3.11-CC342D?logo=ruby&logoColor=white)
-![Rails](https://img.shields.io/badge/Rails-8.1.3-CC0000?logo=rubyonrails&logoColor=white)
+![Rails](https://img.shields.io/badge/Rails-8.1.4-CC0000?logo=rubyonrails&logoColor=white)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 > タスク管理ドメインを **フルスタック / API モードの 2 構成**で実装した Rails 学習用プロジェクト。同じドメインを 2 通りで作り、その**差分**から Rails の規約と API 設計を体感することが目的です。
@@ -79,7 +79,7 @@
 | カテゴリ | 技術 |
 |---|---|
 | 言語 | Ruby 3.3.11 |
-| フレームワーク | Ruby on Rails 8.1.3 |
+| フレームワーク | Ruby on Rails 8.1.4 |
 | データベース | PostgreSQL 16（Docker） |
 | 画像ストレージ | Active Storage + MinIO（S3 互換 / Docker） |
 | フロント（フルスタック版） | Turbo / Stimulus（Importmap）+ ERB |
