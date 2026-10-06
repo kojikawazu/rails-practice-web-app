@@ -15,4 +15,14 @@ module TasksHelper
       [ I18n.t("task_status.#{status}", default: status.humanize), status ]
     end
   end
+
+  # 確認フローで hidden に埋める、staging 中 blob の signed_id を返す。
+  # 発行先を current_user に限定した期限付きの値にし、他の利用者や画像 URL の signed_id と区別する。
+  # 描画のたびに発行し直すため、確認画面を往復している間は有効期限が延長される。
+  #
+  # @param blob [ActiveStorage::Blob] TaskImageService.resolve / stage を経た staging 中の blob
+  # @return [String] current_user 向けの staging 用 signed_id
+  def staged_image_signed_id(blob)
+    TaskImageService.signed_id_for(current_user, blob)
+  end
 end

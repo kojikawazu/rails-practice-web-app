@@ -53,7 +53,7 @@
     <div>
       <% remove_ids = Array(@remove_attachment_ids).map(&:to_s) %>
       <% kept = @task.persisted? ? @task.images.reject { |img| remove_ids.include?(img.id.to_s) } : [] %>
-      <% pending = Array(@image_signed_ids).filter_map { |sid| ActiveStorage::Blob.find_signed(sid) } %>
+      <% pending = Array(@staged_blobs) %>
       <% if kept.any? || pending.any? %>
         <div class="flex gap-sm" style="flex-wrap:wrap;">
           <% kept.each do |image| %>
@@ -96,7 +96,7 @@
           params: { task: { title: @task.title, status: @task.status,
                             start_date: @task.start_date, end_date: @task.end_date,
                             preview_url: @task.preview_url,
-                            image_signed_ids: Array(@image_signed_ids),
+                            image_signed_ids: Array(@staged_blobs).map { |blob| staged_image_signed_id(blob) },
                             remove_attachment_ids: Array(@remove_attachment_ids) }, back: 1 },
           form: { data: { turbo: false } },
           class: "btn" %>
@@ -108,8 +108,8 @@
       <%= form.hidden_field :start_date %>
       <%= form.hidden_field :end_date %>
       <%= form.hidden_field :preview_url %>
-      <% Array(@image_signed_ids).each do |sid| %>
-        <%= hidden_field_tag "task[image_signed_ids][]", sid %>
+      <% Array(@staged_blobs).each do |blob| %>
+        <%= hidden_field_tag "task[image_signed_ids][]", staged_image_signed_id(blob) %>
       <% end %>
       <% Array(@remove_attachment_ids).each do |rid| %>
         <%= hidden_field_tag "task[remove_attachment_ids][]", rid %>

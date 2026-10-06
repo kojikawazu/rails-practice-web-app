@@ -26,7 +26,8 @@
 - **返り値は Result 値オブジェクトを使わず、レコード / nil を返す**（API 版との意図的な差異）。HTML の Controller は検証失敗時に「`.errors` を持つそのレコード」でフォームを再描画するため、レコードをそのまま返すのが自然。`ApplicationService` 基底クラスも設けない。
 - 認可スコープ（他ユーザーは 404）は `before_action`（`current_user.projects.find`）に残す。API 版と異なり `rescue_from` は設けず、Rails 標準の 404 を用いる。
 - **確認画面フロー（PRG・session 退避）・`preview_url` 検証は Controller / Model に残す**（HTTP・表示の都合と密結合のため）。タスクの `create`/`update` は画像添付を build と save の間に挟むため、`TaskService` は `build`/`list`/`destroy` のみを担い save は持たない。
-- **画像 round-trip の業務ロジック（検証付き blob 化 staging・attach・purge）は `TaskImageService` に集約**する。Controller から Active Storage API 参照（`ActiveStorage::Blob.create_and_upload!` / `images.attach` / `images_attachments...purge`）が消え、Controller は params 抽出と HTTP 判断、`build↔save` 間の `attach` 注入のみを担う。
+- **画像 round-trip の業務ロジック（検証付き blob 化 staging・attach・purge）は `TaskImageService` に集約**する。Controller から Active Storage API 参照（`ActiveStorage::Blob.create_and_upload!` / `images.attach` / `images_attachments...purge`）が消え、Controller は params 抽出と HTTP 判断、`build↔save` 間の `attach` 注入のみを担う。持ち回る `signed_id` の発行（利用者限定・期限付き）と照合（`resolve`）も `TaskImageService` が担い、照合できないときの 422 応答は Controller に残す。
+- **定期ジョブ**: 本番は Solid Queue の定期実行（`config/recurring.yml`）で、確認フローを放棄した未添付 blob を `PurgeUnattachedBlobsJob`（`app/jobs/`）が日次で清掃する。development / test は Solid Queue を使わないため定期実行されず、ジョブ単体を job spec で検証する。
 
 ### Project 2: Rails APIモード
 

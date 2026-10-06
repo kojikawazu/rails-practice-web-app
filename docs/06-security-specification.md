@@ -30,6 +30,11 @@
 - ログインユーザーは自分のプロジェクト・タスクのみ操作可能
 - 未ログイン時はログイン画面へリダイレクト（`before_action`）
 - 他ユーザーのリソースへのアクセスは Controller 層で制御（`current_user.projects.find(params[:id])`）
+- **画像の `signed_id`（フルスタック版）**: 確認画面で持ち回る `signed_id` は推測不能な ID ではなく「添付を許す capability」として扱う。`TaskImageService` が `purpose: "task_image_staging/<user_id>"`・有効期限 1 時間で発行し、`confirm` / `create` / `update` のすべてで同じ purpose で照合する（`TaskImageService.resolve`）。
+  - 画像 URL に載る既定用途の `signed_id`・他ユーザー向けに発行された `signed_id`・改ざん・期限切れは照合で `nil` になり、他人の blob を自分のタスクへ添付する replay を拒否する。利用者との紐付けは署名に含まれるため、DB やセッションに保存しない。
+  - 既に添付済みの blob は拒否し、別タスクへの使い回しや二重送信を防ぐ。
+  - 照合できないものは attach せず、500 ではなく 422 で入力し直させる（検証できない blob を attach / purge しない）。
+  - 放棄された staging blob は `PurgeUnattachedBlobsJob`（本番は `config/recurring.yml` で日次）が、未添付かつ作成から 1 日を過ぎたものを purge する。
 
 ## 暗号化
 

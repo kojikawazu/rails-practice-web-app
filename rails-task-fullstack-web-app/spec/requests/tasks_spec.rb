@@ -328,6 +328,97 @@ RSpec.describe "Tasks", type: :request do
     end
   end
 
+  # signed_id は推測不能な ID ではなく「添付を許す capability」として扱う。
+  # 受領時に、発行先の利用者・用途・期限・未添付（staging 中）であることを検証できないものは
+  # attach せず 422 で入力し直させる（500 にもしない）。
+  describe "画像の signed_id 検証（staging の利用権）" do
+    let(:other_user) { create(:user) }
+    let(:invalid_image_message) { "有効期限が切れたか、不正な指定です" }
+
+    def staged_blob
+      TaskImageService.stage([ fixture_file_upload("sample.png", "image/png") ]).first
+    end
+
+    # 確認ステップを実際に通し、hidden で持ち回られる signed_id を取り出す（実フロー再現）。
+    def signed_id_via_confirm
+      post confirm_project_tasks_path(project), params: {
+        task: { title: "画像付きタスク", status: "not_started",
+                images: [ fixture_file_upload("sample.png", "image/png") ] }
+      }
+      response.body[/name="task\[image_signed_ids\]\[\]" value="([^"]+)"/, 1]
+    end
+
+    it "他の利用者向けに発行された signed_id では作成できず 422 を返す（replay 防止）" do
+      log_in
+      foreign_id = TaskImageService.signed_id_for(other_user, staged_blob)
+
+      expect {
+        post project_tasks_path(project), params: {
+          task: { title: "横取り", status: "not_started", image_signed_ids: [ foreign_id ] }
+        }
+      }.not_to change(Task, :count)
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include(invalid_image_message)
+    end
+
+    it "他ユーザーの画像 URL に含まれる signed_id では添付できない" do
+      log_in
+      other_task = create(:task, project: create(:project, user: other_user))
+      other_task.images.attach(io: File.open(Rails.root.join("spec/fixtures/files/sample.png")),
+                               filename: "secret.png", content_type: "image/png")
+      url_signed_id = other_task.images.first.blob.signed_id # 既定用途（画像 URL と同じ）
+
+      expect {
+        post project_tasks_path(project), params: {
+          task: { title: "横取り", status: "not_started", image_signed_ids: [ url_signed_id ] }
+        }
+      }.not_to change(ActiveStorage::Attachment, :count)
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    it "改ざんされた signed_id は 500 にせず 422 を返す" do
+      log_in
+      post project_tasks_path(project), params: {
+        task: { title: "改ざん", status: "not_started", image_signed_ids: [ "tampered--signature" ] }
+      }
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include(invalid_image_message)
+    end
+
+    it "同じ signed_id で 2 回作成すると、2 回目は添付済みとして 422 を返す（二重送信・使い回し防止）" do
+      log_in
+      signed_id = signed_id_via_confirm
+      params = { task: { title: "画像付きタスク", status: "not_started", image_signed_ids: [ signed_id ] } }
+
+      post project_tasks_path(project), params: params
+      expect(response).to redirect_to(project_path(project))
+
+      expect { post project_tasks_path(project), params: params }.not_to change(Task, :count)
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    it "更新でも不正な signed_id は添付せず 422 を返す" do
+      log_in
+      expect {
+        patch project_task_path(project, task), params: {
+          task: { title: task.title, status: task.status, image_signed_ids: [ "tampered--signature" ] }
+        }
+      }.not_to change { task.reload.images.count }
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include(invalid_image_message)
+    end
+
+    it "確認画面へ持ち回った signed_id が不正なら 422 でフォームへ戻す" do
+      log_in
+      post confirm_project_tasks_path(project), params: {
+        task: { title: "改ざん", status: "not_started", image_signed_ids: [ "tampered--signature" ] }
+      }
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.body).to include(invalid_image_message)
+      expect(response.body).not_to include('name="task[image_signed_ids][]"')
+    end
+  end
+
   describe "PATCH /projects/:project_id/tasks/:id（編集での既存画像削除）" do
     it "remove_attachment_ids で指定した既存画像を1枚外せる" do
       log_in

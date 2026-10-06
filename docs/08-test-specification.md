@@ -31,7 +31,7 @@
 |------|------|
 | `JsonWebToken`（API・`spec/lib/`） | **モック無し（純粋）**。DB非依存のため実物の JWT ライブラリで round-trip / 有効期限 / 改ざん / 不正入力を検証 |
 | `AuthService.login`（両アプリ・`spec/services/`） | **DB 境界をモック**。`User.find_by` **だけ**を `allow` でスタブ（verified `instance_double`）。呼び出し順を assert する `expect(...).to receive` は使わない。API 版は Result（token 検証）、フルスタック版は `User`/nil を返す点のみ異なる |
-| `TaskImageService`（fullstack・`spec/services/`） | **モック無し（実 substrate）**。test 環境の Active Storage は Disk（`tmp/storage`）で実物が安く動くため、実 blob / attachment で stage のオーファン防止・attach・purge を検証。`create_and_upload!`/`attach`/`purge` をモックすると委譲の実装追認になる |
+| `TaskImageService`（fullstack・`spec/services/`） | **モック無し（実 substrate）**。test 環境の Active Storage は Disk（`tmp/storage`）で実物が安く動くため、実 blob / attachment で stage のオーファン防止・signed_id の照合（用途・利用者・期限・添付済み）・attach・purge を検証。`create_and_upload!`/`attach`/`purge` をモックすると委譲の実装追認になる |
 | `AuthService.signup` | UT を書かない（分岐が save 成否のみ＝モデル検証の二重化になる）。IT + シナリオ/System で担保 |
 | `ProjectService` / `TaskService` の CRUD | **モック UT を書かない**（意図的・両アプリ）。build/save/update/destroy の委譲はモックすると 100% 実装追認。実価値（スコープ→404・検証→422）は IT + シナリオ/System で担保 |
 
@@ -51,12 +51,13 @@
 | Unit spec（API） | JsonWebToken | encode/decode の round-trip / 既定 exp ≒24h / 明示 exp 尊重 / 期限切れ・改ざん・不正入力で nil（例外を投げない） |
 | Unit spec（API） | AuthService.login | 正資格情報で成功・token に user_id / 誤パスワードで 401・token なし / メール不在も 401（誤り時と同一メッセージ＝列挙攻撃対策） |
 | Unit spec（fullstack） | AuthService.login | 正資格情報で該当ユーザーを返す / 誤パスワードで nil / メール不在も nil（誤り時と同一結果＝列挙攻撃対策）。`User.find_by` のみモック |
-| Unit spec（fullstack） | TaskImageService | stage: 全有効→signed_id 返す + blob 生成 / 不正混在→nil・blob 未生成（オーファン防止）/ 空→[] ・ attach→images 増 ・ purge→attachment 削除。実 test-disk・モック無し |
+| Unit spec（fullstack） | TaskImageService | stage: 全有効→blob 返す + blob 生成 / 不正混在→nil・blob 未生成（オーファン防止）/ 空→[] ・ signed_id_for/resolve: 発行した利用者なら blob を返す / 他ユーザー向け・既定用途（画像 URL）・改ざん・期限切れ（`travel_to`）・添付済み・不正混在→nil ・ attach→images 増 ・ purge→attachment 削除。実 test-disk・モック無し |
+| Job spec（fullstack） | PurgeUnattachedBlobsJob | 保持期間を過ぎた未添付 blob だけを削除（添付済み・保持期間内は残す。`perform_enqueued_jobs` で PurgeJob まで実行）/ 保持期間 > staging の有効期限 |
 | Model spec | User | 有効なデータで作成できる / name必須 / email必須・一意・形式 / password最小文字数 |
 | Model spec | Project | 有効なデータで作成できる / title必須 / user関連付け / 削除時にtasksも削除 / `.with_task_counts` が件数を tasks_count として載せる（タスク0件のプロジェクトも落とさない） |
 | Model spec | Task | 有効なデータで作成できる / title必須 / status必須・値の制限 / project関連付け / ステータス遷移の許可・禁止（作成時は not_started のみ、飛ばし・逆行の拒否、変更なしの更新は許可） |
 | Request spec（fullstack） | Projects | index/show/create/update/destroy の正常系 / 複製(duplicate)の正常系・create フロー合流 / 他ユーザーリソースの404 / 未ログイン時のリダイレクト / 確認画面の HEAD が GET と同じ結果になる / 一覧のタスク件数表示（0件・複数件・プロジェクト0件）/ 件数集計がプロジェクト件数に比例しない（N+1 回帰ガード） |
-| Request spec（fullstack） | Tasks | index/show/create/update/destroy の正常系 / 複製(duplicate)の正常系・create フロー合流・ステータスを引き継がないこと / 他ユーザーリソースの404 / 存在しないprojectでの404 / 確認画面の GET・HEAD がフォームへリダイレクト / 画像削除（blob と attachment の id をずらした状態で、選んだ 1 枚だけが外れる・他タスクの添付は外せない）/ ステータス遷移（許可は更新、禁止は 422 で値も変えない）/ フォームの選択肢が現在状態に応じて絞られること |
+| Request spec（fullstack） | Tasks | index/show/create/update/destroy の正常系 / 複製(duplicate)の正常系・create フロー合流・ステータスを引き継がないこと / 他ユーザーリソースの404 / 存在しないprojectでの404 / 確認画面の GET・HEAD がフォームへリダイレクト / 画像削除（blob と attachment の id をずらした状態で、選んだ 1 枚だけが外れる・他タスクの添付は外せない）/ ステータス遷移（許可は更新、禁止は 422 で値も変えない）/ フォームの選択肢が現在状態に応じて絞られること / 画像 signed_id の検証（他ユーザー向け・他ユーザーの画像 URL・改ざん・二重送信で create / update / confirm が 422、添付されない） |
 | Request spec（fullstack） | Sessions | ログイン成功/失敗 / ログアウト（セッション） |
 | Request spec（fullstack） | セキュリティヘッダー | CSP を enforce で返す / script-src に unsafe-inline・unsafe-eval が無い / object-src・base-uri・frame-ancestors の禁止設定 / style は属性のみ暫定許可 / importmap の nonce 付与 |
 | Request spec（API） | Auth | signup / login の成功・失敗（JWT 発行）|

@@ -2,7 +2,9 @@
 # projects 配下のネストルーティングで、常に current_user のプロジェクトのタスクのみを操作する。
 #
 # 画像はファイル input を確認画面の hidden で持ち回れないため、確認ステップで一旦 blob 化し、
-# signed_id を round-trip させる（JS 不要）。
+# signed_id を round-trip させる（JS 不要）。持ち回った signed_id は外部入力なので、受け取る
+# confirm / create / update のすべてで TaskImageService.resolve により current_user 向けの
+# staging 中 blob であることを検証し、検証できないものは attach せず 422 で入力し直させる。
 class TasksController < ApplicationController
   before_action :require_login
   before_action :set_project
@@ -60,7 +62,7 @@ class TasksController < ApplicationController
   # 画像はファイル input を確認画面の hidden で持ち回れないため、ここで一旦
   # サーバー経由で blob を作り、signed_id を round-trip させる（JS不要）。
   #
-  # @return [void] 検証成功: confirm ／「修正する」: new/edit ／検証失敗・不正画像: new/edit（422）
+  # @return [void] 検証成功: confirm ／「修正する」: new/edit ／検証失敗・不正画像・不正 signed_id: new/edit（422）
   #   ／GET・HEAD アクセス時: 入力フォームへリダイレクト
   def confirm
     # 確認画面は POST 専用。リロード/戻る等で GET / HEAD された場合は入力フォームへ戻す
@@ -79,57 +81,64 @@ class TasksController < ApplicationController
     @task.app_host = request.host # 自オリジン埋め込み拒否の判定用
     @remove_attachment_ids = remove_attachment_ids
 
+    # 前回までに選択した画像（持ち回り分）を照合する。検証できなければ選択を破棄して入力し直させる。
+    @staged_blobs = TaskImageService.resolve(current_user, carried_signed_ids)
+    return render_invalid_staged_images(form_template) if @staged_blobs.nil?
+
     # 新規アップロードを事前検証し blob 化。不正が混じれば nil＝blob を作らずフォームへ戻す（オーファン防止）。
-    new_signed_ids = TaskImageService.stage(uploaded_image_files)
-    if new_signed_ids.nil?
-      @image_signed_ids = carried_signed_ids # 既存の選択は保持する
+    new_blobs = TaskImageService.stage(uploaded_image_files)
+    if new_blobs.nil?
       @task.errors.add(:images, "は png / jpeg / gif / webp 形式・1枚5MB以下のみ対応しています")
-      return render(@task.persisted? ? :edit : :new, status: :unprocessable_entity)
+      return render(form_template, status: :unprocessable_entity) # 照合済みの既存選択は保持する
     end
 
-    # 既存の選択と合算して signed_id を持ち回る。
-    @image_signed_ids = carried_signed_ids + new_signed_ids
+    # 既存の選択と合算して持ち回る（signed_id はビューで current_user 向けに発行する）。
+    @staged_blobs += new_blobs
 
     # 「修正する」押下時は入力フォームへ戻す（入力値・画像選択を保持）。
-    return render(@task.persisted? ? :edit : :new) if params[:back].present?
+    return render(form_template) if params[:back].present?
 
     if @task.valid?
       render :confirm
     else
-      render(@task.persisted? ? :edit : :new, status: :unprocessable_entity)
+      render(form_template, status: :unprocessable_entity)
     end
   end
 
   # 新規作成の確定。確認画面から持ち回った画像を添付して保存する。
   #
-  # @return [void] 成功: プロジェクト詳細へリダイレクト／失敗: new を 422 で再描画
+  # @return [void] 成功: プロジェクト詳細へリダイレクト／失敗・不正 signed_id: new を 422 で再描画
   def create
     @task = TaskService.build(@project, task_params)
     @task.app_host = request.host
-    TaskImageService.attach(@task, carried_signed_ids)
+    @staged_blobs = TaskImageService.resolve(current_user, carried_signed_ids)
+    return render_invalid_staged_images(:new) if @staged_blobs.nil?
+
+    TaskImageService.attach(@task, @staged_blobs)
 
     if @task.save
       redirect_to project_path(@project), notice: "タスクを作成しました。"
     else
-      @image_signed_ids = carried_signed_ids
       render :new, status: :unprocessable_entity
     end
   end
 
   # タスクを更新する。新規画像の添付と、削除予約された既存画像の purge を行う。
   #
-  # @return [void] 成功: 詳細へ 303 リダイレクト／失敗: edit を 422 で再描画
+  # @return [void] 成功: 詳細へ 303 リダイレクト／失敗・不正 signed_id: edit を 422 で再描画
   def update
     @task.assign_attributes(task_params)
     @task.app_host = request.host
-    TaskImageService.attach(@task, carried_signed_ids)
+    @remove_attachment_ids = remove_attachment_ids
+    @staged_blobs = TaskImageService.resolve(current_user, carried_signed_ids)
+    return render_invalid_staged_images(:edit) if @staged_blobs.nil?
+
+    TaskImageService.attach(@task, @staged_blobs)
 
     if @task.save
-      TaskImageService.purge(@task, remove_attachment_ids)
+      TaskImageService.purge(@task, @remove_attachment_ids)
       redirect_to project_task_path(@project, @task), notice: "タスクを更新しました。", status: :see_other
     else
-      @image_signed_ids = carried_signed_ids
-      @remove_attachment_ids = remove_attachment_ids
       render :edit, status: :unprocessable_entity
     end
   end
@@ -153,6 +162,25 @@ class TasksController < ApplicationController
   end
 
   private
+
+  # 入力フォームのテンプレート。確認フローは新規（build）と編集（find）で同じ action を使うため、
+  # 戻り先を永続化の有無で切り替える。
+  #
+  # @return [Symbol] :edit（永続化済み）／:new（新規）
+  def form_template
+    @task.persisted? ? :edit : :new
+  end
+
+  # 持ち回った signed_id が照合できなかったときの応答。
+  # 検証できない選択は信用せず破棄し（hidden で再送しない）、画像を選び直させる。
+  #
+  # @param template [Symbol] 再描画する入力フォーム（:new / :edit）
+  # @return [void] template を 422 で再描画
+  def render_invalid_staged_images(template)
+    @staged_blobs = []
+    @task.errors.add(:images, "の有効期限が切れたか、不正な指定です。もう一度選択してください")
+    render template, status: :unprocessable_entity
+  end
 
   # URL の :project_id から current_user のプロジェクトを取得して @project に設定する。
   #
