@@ -29,5 +29,15 @@ module RailsTaskApiWebApp
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
+
+    # レートリミット（ActionController::RateLimiting の rate_limit）の上限値。
+    # 環境ごとに調整できるよう定数にせず環境変数から読む（.claude/rules/ruby.md「定数の配置」）。
+    # 認証系（login / signup）は総当たり攻撃を抑えるため厳しめにする（.claude/rules/security.md）。
+    # 既定: 同一 IP から 180 秒（3 分）あたり 10 回。
+    config.x.rate_limit.auth_limit = ENV.fetch("AUTH_RATE_LIMIT", 10).to_i
+    config.x.rate_limit.auth_period = ENV.fetch("AUTH_RATE_LIMIT_PERIOD", 180).to_i.seconds
+    # API 全体（全エンドポイント共通）は緩めの上限にする。既定: 同一 IP から 60 秒あたり 300 回。
+    config.x.rate_limit.api_limit = ENV.fetch("API_RATE_LIMIT", 300).to_i
+    config.x.rate_limit.api_period = ENV.fetch("API_RATE_LIMIT_PERIOD", 60).to_i.seconds
   end
 end

@@ -92,9 +92,15 @@ AWS_ACCESS_KEY_ID=minioadmin
 AWS_SECRET_ACCESS_KEY=<your_minio_password>
 S3_BUCKET=rails-task-dev
 MINIO_ENDPOINT=http://localhost:9000
+
+# レートリミット（任意。未設定なら括弧内の既定値。docs/06-security-specification.md 参照）
+# AUTH_RATE_LIMIT=10            # ログイン・ユーザー登録の上限回数（両アプリ）
+# AUTH_RATE_LIMIT_PERIOD=180    # 上記の期間（秒）
+# API_RATE_LIMIT=300            # API 全体の上限回数（API 版のみ）
+# API_RATE_LIMIT_PERIOD=60      # 上記の期間（秒）
 ```
 
-※ DB 接続は各アプリの `config/database.yml` が `POSTGRES_*` を `ENV.fetch` で参照して組み立てる（`DATABASE_URL` は使用しない）。MinIO 変数はフルスタック版の Active Storage（S3 互換）で使用する。
+※ DB 接続は各アプリの `config/database.yml` が `POSTGRES_*` を `ENV.fetch` で参照して組み立てる（`DATABASE_URL` は使用しない）。MinIO 変数はフルスタック版の Active Storage（S3 互換）で使用する。レートリミットの変数は `config/application.rb` の `config.x.rate_limit` が読む（test 環境は `config/environments/test.rb` で小さい値に上書きする）。
 
 ## ディレクトリ構成
 
