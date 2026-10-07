@@ -4,11 +4,10 @@
 
 テストはコードの「仕様書」として読める。実装を読む前にテストを読むと意図が分かりやすい。
 
-## フルスタック版（Minitest + RSpec 併用）
+## フルスタック版（RSpec）
 
 | ファイル | 内容 |
 |---|---|
-| `test/controllers/projects_controller_test.rb` | Minitestでのコントローラーテスト |
 | `spec/models/user_spec.rb` | shoulda-matchers でバリデーション検証 |
 | `spec/requests/projects_spec.rb` | RSpec リクエストスペック |
 

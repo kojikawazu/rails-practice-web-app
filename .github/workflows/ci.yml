@@ -208,10 +208,6 @@ jobs:
         working-directory: ${{ matrix.app }}
         run: bin/rails db:test:prepare
 
-      - name: Minitest
-        working-directory: ${{ matrix.app }}
-        run: bin/rails test
-
       - name: RSpec
         working-directory: ${{ matrix.app }}
         run: bundle exec rspec

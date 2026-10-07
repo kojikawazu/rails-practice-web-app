@@ -164,7 +164,7 @@ GitHub Actions（`.github/workflows/ci.yml`）で、`main` への push と全 PR
 | `Detect changes` | 差分パスを判定して変更範囲（`code` / `docs`）を後続ジョブへ渡し、代表パスの分類が期待どおりかも検証する軽量ジョブ | 常時 |
 | `Markdown lint` | markdownlint-cli2 でリポジトリ全体の markdown を検証 | ドキュメント変更時 |
 | `Lint & Security (matrix)` | 両アプリで RuboCop + bundler-audit（`check --update`）+ Brakeman | コード変更時 |
-| `Test (matrix)` | 両アプリで Minitest（`bin/rails test`）+ RSpec（`bundle exec rspec`） | コード変更時 |
+| `Test (matrix)` | 両アプリで RSpec（`bundle exec rspec`） | コード変更時 |
 | `System (:js)` | フルスタック版の JS system spec（`rspec --tag js`、headless Chrome） | コード変更時 |
 
 ローカル実行（`make` ショートカット推奨。全 target は `make help` で一覧）:
@@ -172,7 +172,7 @@ GitHub Actions（`.github/workflows/ci.yml`）で、`main` への push と全 PR
 ```bash
 make up            # PostgreSQL + MinIO 起動（.env 自動生成）
 make db-prepare    # テスト用 DB 準備（既定: fullstack。APP= で切替）
-make test          # Minitest + RSpec（既定アプリ）
+make test          # RSpec（既定アプリ）
 make test-all      # 両アプリでテスト
 make test-js       # JS system spec（fullstack のみ、要 Chrome）
 make ci            # ローカル CI 一括（rubocop + security + tests）
