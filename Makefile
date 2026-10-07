@@ -100,8 +100,8 @@ console: ## Rails コンソール起動（APP 対象）
 
 # ---- テスト --------------------------------------------------------------
 .PHONY: test
-test: ## Minitest + RSpec（APP 対象）
-	cd $(APP) && bin/rails test && bundle exec rspec
+test: ## RSpec（APP 対象）
+	cd $(APP) && bundle exec rspec
 
 .PHONY: test-js
 test-js: ## JS system spec（fullstack のみ, 要 Chrome）

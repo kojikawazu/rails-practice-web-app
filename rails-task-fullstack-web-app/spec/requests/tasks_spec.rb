@@ -28,6 +28,14 @@ RSpec.describe "Tasks", type: :request do
     task.reload
   end
 
+  describe "GET /projects/:project_id/tasks（一覧）" do
+    it "HTML の一覧はプロジェクト詳細へ集約しているため、プロジェクト詳細へリダイレクトする" do
+      log_in
+      get project_tasks_path(project)
+      expect(response).to redirect_to(project_path(project))
+    end
+  end
+
   describe "GET /projects/:project_id/tasks/new（新規作成フォーム）" do
     it "新規作成フォームを表示する" do
       log_in

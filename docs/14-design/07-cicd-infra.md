@@ -27,7 +27,7 @@ CI は `.github/workflows/ci.yml` の単一ワークフロー。`push`（main）
 |--------|------|
 | **Detect changes** | パスフィルターで変更範囲（`code` / `docs` 出力）を 1 か所で判定する |
 | **Markdown lint** | リポジトリ全体の markdown を lint（`docs == 'true'` のときのみ） |
-| **Test (${{ matrix.app }})** | 両アプリで Minitest + RSpec を実行（`code == 'true'` のときのみ） |
+| **Test (${{ matrix.app }})** | 両アプリで RSpec を実行（`code == 'true'` のときのみ） |
 | **System (:js, headless Chrome)** | フルスタック版の `:js` System spec を実行（`code == 'true'` のときのみ） |
 
 ### パスフィルターで発火条件を分ける
@@ -68,8 +68,8 @@ filters: |
 
 ### テストマトリクスと :js ジョブ
 
-- **Test ジョブ**は `matrix.app = [fullstack, api]` で 2 アプリを並列実行（`fail-fast: false`）。各ジョブで `postgres:16` サービスを起動し、`bin/rails db:test:prepare` → `bin/rails test`（Minitest）→ `bundle exec rspec`（RSpec）の順に走らせる。
-  - Rails 標準の Minitest と RSpec が**併存**しており、CI は両方を実行する。
+- **Test ジョブ**は `matrix.app = [fullstack, api]` で 2 アプリを並列実行（`fail-fast: false`）。各ジョブで `postgres:16` サービスを起動し、`bin/rails db:test:prepare` → `bundle exec rspec`（RSpec）の順に走らせる。
+  - テストは RSpec に一本化している（Rails 標準の Minitest は #67 で廃止。`test/` は置かない）。
 - **System (:js) ジョブ**はフルスタック版のみ（`working-directory` 固定）。headless Chrome で `bundle exec rspec --tag js` を実行し、Turbo 退行の回帰ガードとする（Selenium が不要な API 版には無い）。
 - Ruby バージョンは各アプリの `.ruby-version`、依存は `bundler-cache: true` でキャッシュする。
 
@@ -95,7 +95,7 @@ filters: |
 | セットアップ | `setup` / `setup-all`（`bin/setup --skip-server`） |
 | DB | `db-setup` / `migrate` / `db-prepare` / `db-reset` / `seed` |
 | 実行 | `server` / `console` |
-| テスト | `test`（Minitest + RSpec） / `test-js`（`:js`、fullstack のみ） / `test-all`（両アプリ） |
+| テスト | `test`（RSpec） / `test-js`（`:js`、fullstack のみ） / `test-all`（両アプリ） |
 | 品質 | `lint` / `lint-fix`（RuboCop） / `lint-md` / `lint-md-fix`（markdownlint） / `security`（bundler-audit + Brakeman） / `ci` / `ci-all` |
 
 > ローカル CI（`make ci`）と GitHub Actions の Test ジョブは同等のチェックを意図する。push 前にローカルで揃えられる。

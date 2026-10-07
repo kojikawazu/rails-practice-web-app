@@ -85,7 +85,6 @@ curl http://localhost:3100/api/v1/projects \
 ```bash
 # フルスタック版
 cd rails-task-fullstack-web-app
-bin/rails test               # Minitest
 bundle exec rspec            # RSpec（通常スイート・JS 除外）
 bundle exec rspec --tag js   # JS system spec（要 Chrome）
 

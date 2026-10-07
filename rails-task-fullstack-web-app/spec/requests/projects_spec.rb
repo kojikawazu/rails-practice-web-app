@@ -170,6 +170,14 @@ RSpec.describe "Projects", type: :request do
     end
   end
 
+  describe "GET /projects/:id/edit（編集フォーム）" do
+    it "自分のプロジェクトの編集フォームを表示する" do
+      log_in
+      get edit_project_path(project)
+      expect(response).to have_http_status(:success)
+    end
+  end
+
   describe "PATCH /projects/:id（更新）" do
     it "プロジェクトを更新し、詳細へリダイレクトする" do
       log_in
