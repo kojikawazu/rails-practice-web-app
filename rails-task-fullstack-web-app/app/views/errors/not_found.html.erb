@@ -1,0 +1,8 @@
+<% content_for :title, "ページが見つかりません" %>
+<%# 「存在しない」と「権限がない」を区別しない文言にする（他ユーザーのリソースの存在を秘匿する）。 %>
+<div class="flash flash-alert">お探しのページは見つからないか、アクセスする権限がありません。</div>
+<% if logged_in? %>
+  <%= link_to "プロジェクト一覧へ", projects_path, class: "btn" %>
+<% else %>
+  <%= link_to "ログイン画面へ", login_path, class: "btn" %>
+<% end %>

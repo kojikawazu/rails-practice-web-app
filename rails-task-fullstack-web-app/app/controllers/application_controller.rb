@@ -1,4 +1,4 @@
-# フルスタック版の基底コントローラー。セッションベース認証のヘルパーを提供する。
+# フルスタック版の基底コントローラー。セッションベース認証のヘルパーと、例外の一元ハンドリングを提供する。
 # current_user / logged_in? はビューからも参照できるよう helper_method に公開する。
 class ApplicationController < ActionController::Base
   allow_browser versions: :modern
@@ -6,7 +6,25 @@ class ApplicationController < ActionController::Base
 
   helper_method :current_user, :logged_in?
 
+  # 存在しない/他ユーザーのリソースは、各 Controller の current_user 起点の find が RecordNotFound を投げる。
+  # 応答はここに集約し、両者を同じ 404 で返して存在を秘匿する（.claude/rules/ruby.md）。
+  # リダイレクト＋フラッシュにすると 302 になり秘匿が崩れるため、ステータスは 404 のまま
+  # アプリのレイアウトで状況と戻り先を示す（静的な public/404.html には戻り先がない）。
+  rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
+
   private
+
+  # RecordNotFound の応答。HTML はレイアウト付きの画面、JSON は統一エラー形式で 404 を返す。
+  # 利用者の操作で起きる想定内の事象のため、スタックトレースは記録しない（Rails の標準ログのみ）。
+  #
+  # @return [void] HTML: errors/not_found を 404 で描画／JSON: { error: "Not found" } を 404／その他: 本文なしの 404
+  def render_not_found
+    respond_to do |format|
+      format.html { render "errors/not_found", status: :not_found }
+      format.json { render json: { error: "Not found" }, status: :not_found }
+      format.any { head :not_found }
+    end
+  end
 
   # セッションの user_id から現在のユーザーを取得する（1 リクエスト内でメモ化）。
   #

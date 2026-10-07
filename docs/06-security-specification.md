@@ -30,6 +30,7 @@
 - ログインユーザーは自分のプロジェクト・タスクのみ操作可能
 - 未ログイン時はログイン画面へリダイレクト（`before_action`）
 - 他ユーザーのリソースへのアクセスは Controller 層で制御（`current_user.projects.find(params[:id])`）
+- 他ユーザーのリソースと存在しないリソースは、どちらも同じ 404 で返して存在を秘匿する。フルスタック版は `ApplicationController` の `rescue_from ActiveRecord::RecordNotFound` で、両者を区別しない文言（「お探しのページは見つからないか、アクセスする権限がありません。」）の画面を 404 で描画する（リダイレクトにすると 302 になり秘匿が崩れる）
 - **画像の `signed_id`（フルスタック版）**: 確認画面で持ち回る `signed_id` は推測不能な ID ではなく「添付を許す capability」として扱う。`TaskImageService` が `purpose: "task_image_staging/<user_id>"`・有効期限 1 時間で発行し、`confirm` / `create` / `update` のすべてで同じ purpose で照合する（`TaskImageService.resolve`）。
   - 画像 URL に載る既定用途の `signed_id`・他ユーザー向けに発行された `signed_id`・改ざん・期限切れは照合で `nil` になり、他人の blob を自分のタスクへ添付する replay を拒否する。利用者との紐付けは署名に含まれるため、DB やセッションに保存しない。
   - 既に添付済みの blob は拒否し、別タスクへの使い回しや二重送信を防ぐ。
