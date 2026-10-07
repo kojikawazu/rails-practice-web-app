@@ -3,8 +3,22 @@ module Api
     # 認証エンドポイント（ユーザー登録・ログイン）。ロジックは AuthService に委譲し、
     # ここでは Strong Parameters とレスポンス整形（token + user_json）に専念する。
     # 認証前でも叩けるよう、基底の authenticate_user! をスキップする。
+    #
+    # login（パスワードの総当たり）と signup（アカウントの大量作成）には、API 全体より厳しい
+    # レートリミットを掛ける（.claude/rules/security.md）。目的が違うため name でカウンタを分け、
+    # 登録の失敗でログインまで止まらないようにする。単位は IP のみとし、メールアドレス単位にはしない
+    # （他人のアドレスで上限まで失敗させ、その利用者をログインできなくする DoS を避けるため）。
     class AuthController < ApplicationController
       skip_before_action :authenticate_user!
+
+      rate_limit to: Rails.configuration.x.rate_limit.auth_limit,
+                 within: Rails.configuration.x.rate_limit.auth_period,
+                 name: "login", only: :login,
+                 with: -> { render_too_many_requests(retry_after: Rails.configuration.x.rate_limit.auth_period) }
+      rate_limit to: Rails.configuration.x.rate_limit.auth_limit,
+                 within: Rails.configuration.x.rate_limit.auth_period,
+                 name: "signup", only: :signup,
+                 with: -> { render_too_many_requests(retry_after: Rails.configuration.x.rate_limit.auth_period) }
 
       # ユーザー登録。成功時は JWT とユーザー情報を 201 で返す。
       #

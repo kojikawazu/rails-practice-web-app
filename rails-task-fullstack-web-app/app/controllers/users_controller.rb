@@ -1,6 +1,13 @@
 # ユーザー登録（サインアップ）を扱うコントローラー。
 # 登録は「入力 → 確認 → 確定」の 3 ステップで、確認画面では DB に保存せず検証のみ行う。
+#
+# アカウントの大量作成を抑えるため、確認（confirm）と確定（create）の POST にレートリミットを掛ける。
+# 両 action は同じカウンタ（scope は controller_path）を共有する。ログインとは目的が違うためカウンタを分ける。
 class UsersController < ApplicationController
+  rate_limit to: Rails.configuration.x.rate_limit.auth_limit,
+             within: Rails.configuration.x.rate_limit.auth_period,
+             only: %i[confirm create],
+             with: -> { @user = User.new; render_too_many_requests(:new) }
   # 登録フォームを表示する。
   #
   # @return [void] 空の @user で new ビューを描画

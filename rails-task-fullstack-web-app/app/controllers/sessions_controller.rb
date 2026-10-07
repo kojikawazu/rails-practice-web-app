@@ -1,5 +1,13 @@
 # ログイン・ログアウトを扱うコントローラー。認証状態は session[:user_id] で管理する。
+#
+# パスワードの総当たりを抑えるため、ログイン（create）にレートリミットを掛ける（.claude/rules/security.md）。
+# 単位は IP のみとし、メールアドレス単位にはしない（他人のアドレスで上限まで失敗させ、
+# その利用者をログインできなくする DoS を避けるため）。
 class SessionsController < ApplicationController
+  rate_limit to: Rails.configuration.x.rate_limit.auth_limit,
+             within: Rails.configuration.x.rate_limit.auth_period,
+             only: :create,
+             with: -> { render_too_many_requests(:new) }
   # ログインフォームを表示する。
   #
   # @return [void] new ビューを描画

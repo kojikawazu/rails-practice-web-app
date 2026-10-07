@@ -25,6 +25,21 @@
   - スキーム無しの生トークン・別スキーム（`Basic <token>` 等）・要素が多いヘッダーは、載っている JWT が有効でも **401** にする。認証境界を文書化した契約より広げると、プロキシ・クライアント・監査ログの前提が崩れるため。
   - 契約とレスポンス形式の詳細は `07-api-specification.md` を参照する。
 
+### レートリミット
+
+Rails 8 標準の `rate_limit`（`ActionController::RateLimiting`）で、同一 IP からのリクエスト回数を制限する。カウンタはキャッシュストア（本番 `solid_cache_store`・開発 `memory_store`）に保存する。gem（`rack-attack` 等）は追加せず、制限の有無を Controller の宣言で読めるようにしている。
+
+| 対象 | 既定の上限 | 超過時 | 目的 |
+|---|---|---|---|
+| ログイン（fullstack `POST /login`・API `POST /api/v1/login`） | 180 秒あたり 10 回 | 429 | パスワードの総当たり抑止 |
+| ユーザー登録（fullstack `POST /signup/confirm`・`POST /signup`／API `POST /api/v1/signup`） | 180 秒あたり 10 回 | 429 | アカウントの大量作成抑止 |
+| API 全体（全エンドポイント・認証前を含む） | 60 秒あたり 300 回 | 429 | 過剰なリクエスト・トークン総当たりの抑止 |
+
+- 上限値は環境変数（`AUTH_RATE_LIMIT` / `AUTH_RATE_LIMIT_PERIOD` / `API_RATE_LIMIT` / `API_RATE_LIMIT_PERIOD`）で調整できる（`config.x.rate_limit`）。
+- ログインと登録はカウンタを分ける（目的が違い、登録の失敗でログインまで止めないため）。fullstack の登録は確認と確定で 1 つのカウンタを共有する。API 全体のカウンタは `scope: "api"` で全コントローラーに共有し、エンドポイントを切り替えて回避できないようにする。
+- 単位は IP のみで、**メールアドレス単位にはしない**。他人のアドレスで上限まで失敗させて、その利用者をログインできなくする DoS を避けるため（分散した総当たりへの耐性とのトレードオフ）。
+- 超過時は `Retry-After`（秒）を返す。API は `{ "error": "Too many requests" }`、fullstack は入力フォームを 429 で再描画してフラッシュで伝える（リダイレクトにすると 429 の意味が失われるため）。
+
 ## 認可
 
 - ログインユーザーは自分のプロジェクト・タスクのみ操作可能

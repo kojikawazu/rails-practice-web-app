@@ -2,6 +2,10 @@
   <div class="auth-logo">Rails Task App</div>
   <p class="auth-sub">新しいアカウントを作成</p>
 
+  <% if flash[:alert] %>
+    <div class="flash flash-alert"><%= flash[:alert] %></div>
+  <% end %>
+
   <% if @user.errors.any? %>
     <div class="error-messages">
       <ul>

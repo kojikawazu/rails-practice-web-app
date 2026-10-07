@@ -20,7 +20,14 @@ Rails.application.configure do
 
   # Show full error reports.
   config.consider_all_requests_local = true
-  config.cache_store = :null_store
+
+  # rate_limit のカウンタはキャッシュストアに保存されるため、null_store では制限が働かず検証できない。
+  # テストでは memory_store を使い、spec/support/rate_limit.rb で例ごとにクリアして独立性を保つ。
+  # （アプリ本体は Rails.cache を使っていないため、キャッシュの挙動は他のテストに影響しない）
+  config.cache_store = :memory_store
+
+  # 上限超過の検証を少ないリクエストで済ませるため、認証系の上限を小さくする。
+  config.x.rate_limit.auth_limit = 5
 
   # Render exception templates for rescuable exceptions and raise for other exceptions.
   config.action_dispatch.show_exceptions = :rescuable

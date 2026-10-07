@@ -14,6 +14,18 @@ class ApplicationController < ActionController::Base
 
   private
 
+  # 認証系のレートリミット（rate_limit の with:）を超えたときの応答。
+  # 入力フォームを 429 で再描画し、再試行までの秒数を Retry-After で添える。
+  # フォームを描画する（リダイレクトしない）のは、PRG で 302 にすると 429 の意味が失われるため。
+  #
+  # @param template [Symbol] 再描画する入力フォーム（:new 等）
+  # @return [void] template を 429 で描画（フラッシュで状況を伝える）
+  def render_too_many_requests(template)
+    response.headers["Retry-After"] = Rails.configuration.x.rate_limit.auth_period.to_i.to_s
+    flash.now[:alert] = "試行回数が多すぎます。しばらく待ってから再度お試しください。"
+    render template, status: :too_many_requests
+  end
+
   # RecordNotFound の応答。HTML はレイアウト付きの画面、JSON は統一エラー形式で 404 を返す。
   # 利用者の操作で起きる想定内の事象のため、スタックトレースは記録しない（Rails の標準ログのみ）。
   #

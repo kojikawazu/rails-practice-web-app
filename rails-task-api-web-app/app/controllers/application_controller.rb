@@ -1,7 +1,17 @@
 # API モードの基底コントローラー。全エンドポイント共通で JWT 認証を要求し、
-# サービスの Result を JSON に変換する render_result ヘルパーと、404 の一元ハンドリングを提供する。
+# サービスの Result を JSON に変換する render_result ヘルパーと、404 の一元ハンドリング、
+# API 全体のレートリミットを提供する。
 # 認証を除外したいコントローラーは `skip_before_action :authenticate_user!` を宣言する。
 class ApplicationController < ActionController::API
+  # API 全体のレートリミット（同一 IP 単位・緩め）。authenticate_user! より前に置き、
+  # 認証に失敗するリクエスト（トークンの総当たり等）も数える。scope を固定してカウンタを
+  # 全コントローラーで共有し、エンドポイントを切り替えて上限を回避できないようにする
+  # （既定の scope は controller_path で、コントローラーごとに別カウンタになる）。
+  rate_limit to: Rails.configuration.x.rate_limit.api_limit,
+             within: Rails.configuration.x.rate_limit.api_period,
+             scope: "api",
+             with: -> { render_too_many_requests(retry_after: Rails.configuration.x.rate_limit.api_period) }
+
   before_action :authenticate_user!
 
   # 他ユーザーの/存在しないリソースへのアクセスは 404 に一元化する。
@@ -11,6 +21,15 @@ class ApplicationController < ActionController::API
   end
 
   private
+
+  # レートリミット超過時の応答。統一エラー形式の 429 に、再試行までの秒数を Retry-After で添える。
+  #
+  # @param retry_after [ActiveSupport::Duration] カウンタが失効するまでの期間（rate_limit の within）
+  # @return [void] `{ error: "Too many requests" }` を 429 で render
+  def render_too_many_requests(retry_after:)
+    response.headers["Retry-After"] = retry_after.to_i.to_s
+    render json: { error: "Too many requests" }, status: :too_many_requests
+  end
 
   # `Authorization: Bearer <token>` ヘッダーを検証し、@current_user を確定する。
   # トークンが無効・ユーザー未存在の場合は 401 を返して処理を中断する。
