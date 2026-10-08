@@ -33,12 +33,12 @@ RSpec.describe "セキュリティヘッダー（CSP）", type: :request do
     expect(csp).to include("frame-ancestors 'none'")
   end
 
-  # 段階導入: View に残るインライン style 属性のみ許可し、<style> ブロックの注入は禁止したまま。
-  # インライン style を CSS へ移行したら style-src-attr ごと外す。
-  it "インライン style は属性のみ暫定で許可し、<style> ブロックの注入は許さない" do
-    expect(csp).to include("style-src-attr 'unsafe-inline'")
+  # インライン style 属性は CSS クラスへ移行済み（#101）。属性・<style> ブロックのどちらも
+  # 自オリジンの CSS 以外を許さず、CSS インジェクションによる情報漏えいの経路を残さない。
+  it "style は自オリジンの CSS だけを許可し、CSP のどこにも unsafe-inline を含まない" do
     expect(csp).to match(/style-src [^;]*'self'/)
-    expect(csp).not_to match(/style-src [^;]*'unsafe-inline'/)
+    expect(csp).not_to include("style-src-attr")
+    expect(csp).not_to include("'unsafe-inline'")
   end
 
   it "preview_url のプレビューのため frame-src は http/https に限る（javascript: や data: は許可しない）" do
@@ -49,5 +49,18 @@ RSpec.describe "セキュリティヘッダー（CSP）", type: :request do
 
   it "importmap のインライン script には nonce が付き、script-src 'self' のままでも読み込める" do
     expect(response.body).to match(/<script type="importmap"[^>]*nonce="/)
+  end
+end
+
+# CSP が style 属性を許さないため、View にインライン style を書くとエラーにならずブラウザで
+# 黙って無視され、画面だけが崩れる。request spec では気づけないので、テンプレートを直接検査する。
+RSpec.describe "View のインライン style" do
+  it "app/views に style 属性・style: オプションを書かない（CSS クラスを使う）" do
+    offenders = Dir[Rails.root.join("app/views/**/*.erb")].flat_map do |path|
+      File.readlines(path).each_with_index.filter_map do |line, index|
+        "#{Pathname(path).relative_path_from(Rails.root)}:#{index + 1}" if line.match?(/\bstyle\s*[=:]/)
+      end
+    end
+    expect(offenders).to be_empty
   end
 end

@@ -47,7 +47,7 @@
 - **SQL インジェクション**: ActiveRecord のパラメータバインディングを必須とする（生 SQL の文字列結合は禁止）。
 - **Mass Assignment**: Strong Parameters でホワイトリスト制御する。
 
-> CSP は本プロジェクトでは未導入（既存 ERB のインラインスタイル多用で `style-src` 違反が回帰するため）。スキーム検証 + ホスト制限 + sandbox の多層で担保し、CSP 導入は将来課題（`docs/06`）。
+> フルスタック版は CSP を enforce モードで有効化している。`unsafe-inline` はどのディレクティブにも許可せず、インライン JS は Stimulus、インライン `style` 属性は CSS クラスへ移行済み（詳細は `docs/06`）。
 
 ## 外部 URL プレビューの多層防御
 

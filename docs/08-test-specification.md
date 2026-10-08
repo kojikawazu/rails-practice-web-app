@@ -61,7 +61,7 @@
 | Request spec（fullstack） | Tasks | index/show/create/update/destroy の正常系 / 複製(duplicate)の正常系・create フロー合流・ステータスを引き継がないこと / 他ユーザーリソースの404 / 存在しないprojectでの404 / 確認画面の GET・HEAD がフォームへリダイレクト / 画像削除（blob と attachment の id をずらした状態で、選んだ 1 枚だけが外れる・他タスクの添付は外せない）/ ステータス遷移（許可は更新、禁止は 422 で値も変えない）/ フォームの選択肢が現在状態に応じて絞られること / 画像 signed_id の検証（他ユーザー向け・他ユーザーの画像 URL・改ざん・二重送信で create / update / confirm が 422、添付されない） |
 | Request spec（fullstack） | Sessions | ログイン成功/失敗 / ログアウト（セッション） |
 | Request spec（fullstack） | 認証系のレートリミット | 上限内は通常応答 / 超過で 429・フォーム再描画・メッセージ・`Retry-After` / 上限到達後は正しい認証情報でもログイン・登録させない / 登録の確認と確定はカウンタ共有・ログインとは別カウンタ |
-| Request spec（fullstack） | セキュリティヘッダー | CSP を enforce で返す / script-src に unsafe-inline・unsafe-eval が無い / object-src・base-uri・frame-ancestors の禁止設定 / style は属性のみ暫定許可 / importmap の nonce 付与 |
+| Request spec（fullstack） | セキュリティヘッダー | CSP を enforce で返す / script-src に unsafe-inline・unsafe-eval が無い / object-src・base-uri・frame-ancestors の禁止設定 / CSP のどこにも unsafe-inline が無い（style-src-attr も無い）/ importmap の nonce 付与 / `app/views` に style 属性・`style:` オプションが無い（CSP で黙って無視されるための静的検査） |
 | Request spec（API） | Auth | signup / login の成功・失敗（JWT 発行）/ `user` の公開属性がキー集合の完全一致で `id` `name` `email` のみ（`password_digest` を返さない） |
 | Request spec（API） | レートリミット | login / signup の超過で 429・`{ "error": "Too many requests" }`・`Retry-After` / 上限到達後はトークンを発行しない / login と signup は別カウンタ / API 全体の超過で 429・カウンタはコントローラーをまたいで共有 |
 | Request spec（API） | 認証境界（Authorization ヘッダーの契約） | Bearer は 200（scheme は大小無視）/ ヘッダー無し・生トークン・別スキーム・要素過多・空トークン・改ざんは 401 / 401 の統一形式（`error` 単数形） |

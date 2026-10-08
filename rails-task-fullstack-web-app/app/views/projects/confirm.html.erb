@@ -2,18 +2,18 @@
   <h1>入力内容の確認</h1>
 </div>
 
-<p class="text-sub" style="margin-bottom:16px;">以下の内容で<%= @project.persisted? ? "更新" : "作成" %>します。よろしければ「<%= @project.persisted? ? "更新する" : "作成する" %>」を押してください。</p>
+<p class="text-sub mb-md">以下の内容で<%= @project.persisted? ? "更新" : "作成" %>します。よろしければ「<%= @project.persisted? ? "更新する" : "作成する" %>」を押してください。</p>
 
-<div class="card" style="max-width:600px;">
-  <div style="display:grid; grid-template-columns:120px 1fr; gap:12px 16px; font-size:14px;">
-    <div class="text-sub" style="font-weight:600;">タイトル</div>
+<div class="card card-narrow">
+  <div class="detail-list">
+    <div class="text-sub detail-label">タイトル</div>
     <div><%= @project.title %></div>
 
-    <div class="text-sub" style="font-weight:600;">説明</div>
+    <div class="text-sub detail-label">説明</div>
     <div><%= @project.description.presence || "-" %></div>
   </div>
 
-  <div class="flex gap-sm" style="margin-top:24px;">
+  <div class="flex gap-sm form-actions">
     <% if @project.persisted? %>
       <%# 編集（従来方式）: 入力値を confirm へ再送(back=1)し、入力フォームへ戻す。Turbo は無効。 %>
       <%= button_to "修正する", confirm_project_path(@project),

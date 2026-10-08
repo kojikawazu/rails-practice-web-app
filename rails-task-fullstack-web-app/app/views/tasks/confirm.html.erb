@@ -2,14 +2,14 @@
   <h1>入力内容の確認</h1>
 </div>
 
-<p class="text-sub" style="margin-bottom:16px;">以下の内容で<%= @task.persisted? ? "更新" : "作成" %>します。よろしければ「<%= @task.persisted? ? "更新する" : "作成する" %>」を押してください。</p>
+<p class="text-sub mb-md">以下の内容で<%= @task.persisted? ? "更新" : "作成" %>します。よろしければ「<%= @task.persisted? ? "更新する" : "作成する" %>」を押してください。</p>
 
-<div class="card" style="max-width:600px;">
-  <div style="display:grid; grid-template-columns:120px 1fr; gap:12px 16px; font-size:14px;">
-    <div class="text-sub" style="font-weight:600;">タイトル</div>
+<div class="card card-narrow">
+  <div class="detail-list">
+    <div class="text-sub detail-label">タイトル</div>
     <div><%= @task.title %></div>
 
-    <div class="text-sub" style="font-weight:600;">ステータス</div>
+    <div class="text-sub detail-label">ステータス</div>
     <div>
       <% case @task.status %>
       <% when "completed" %>
@@ -21,13 +21,13 @@
       <% end %>
     </div>
 
-    <div class="text-sub" style="font-weight:600;">開始日</div>
+    <div class="text-sub detail-label">開始日</div>
     <div><%= @task.start_date&.strftime("%Y-%m-%d") || "-" %></div>
 
-    <div class="text-sub" style="font-weight:600;">終了日</div>
+    <div class="text-sub detail-label">終了日</div>
     <div><%= @task.end_date&.strftime("%Y-%m-%d") || "-" %></div>
 
-    <div class="text-sub" style="font-weight:600;">プレビュー URL</div>
+    <div class="text-sub detail-label">プレビュー URL</div>
     <div>
       <% if @task.preview_url.present? %>
         <%# モデルで http/https のみ許可済み。iframe は最小権限の sandbox で隔離する。 %>
@@ -40,8 +40,8 @@
                 allow=""
                 loading="lazy"
                 title="プレビュー"
-                style="width:100%; height:360px; border:1px solid #e2e8f0; border-radius:6px; margin-top:8px;"></iframe>
-        <div class="text-muted" style="font-size:12px; margin-top:4px;">
+                class="preview-frame"></iframe>
+        <div class="hint">
           ※ サイトによっては埋め込みが許可されておらず、表示されない場合があります（上のリンクから開けます）。
         </div>
       <% else %>
@@ -49,29 +49,29 @@
       <% end %>
     </div>
 
-    <div class="text-sub" style="font-weight:600;">添付画像</div>
+    <div class="text-sub detail-label">添付画像</div>
     <div>
       <% remove_ids = Array(@remove_attachment_ids).map(&:to_s) %>
       <% kept = @task.persisted? ? @task.images.reject { |img| remove_ids.include?(img.id.to_s) } : [] %>
       <% pending = Array(@staged_blobs) %>
       <% if kept.any? || pending.any? %>
-        <div class="flex gap-sm" style="flex-wrap:wrap;">
+        <div class="thumb-list">
           <% kept.each do |image| %>
             <%= image_tag image.variant(resize_to_limit: [80, 80]),
-                  style: "width:80px; height:80px; object-fit:cover; border-radius:6px; border:1px solid #e2e8f0;" %>
+                  class: "thumb-sm" %>
           <% end %>
           <% pending.each do |blob| %>
             <%# 新規アップロードは確認ステップで blob 化済み。kept と同様にサムネイル表示する。 %>
             <%# 「新規」はキャプションで示し、未保存（確定で attach される）であることを明示する。 %>
-            <figure style="margin:0; display:flex; flex-direction:column; align-items:center; gap:4px;">
+            <figure class="thumb-new">
               <% if blob.representable? %>
                 <%= image_tag blob.variant(resize_to_limit: [80, 80]),
                       alt: blob.filename, title: blob.filename,
-                      style: "width:80px; height:80px; object-fit:cover; border-radius:6px; border:1px solid #e2e8f0;" %>
+                      class: "thumb-sm" %>
               <% else %>
                 <span class="badge badge-grey" title="<%= blob.filename %>"><%= blob.filename %></span>
               <% end %>
-              <figcaption class="badge badge-grey" style="font-size:11px;">新規</figcaption>
+              <figcaption class="badge badge-grey thumb-caption">新規</figcaption>
             </figure>
           <% end %>
         </div>
@@ -79,14 +79,14 @@
         <span class="text-muted">なし</span>
       <% end %>
       <% if @task.persisted? && remove_ids.any? %>
-        <div class="text-muted" style="font-size:12px; margin-top:4px;">
+        <div class="hint">
           削除予定: <%= @task.images.select { |img| remove_ids.include?(img.id.to_s) }.map { |img| img.filename }.join("、") %>
         </div>
       <% end %>
     </div>
   </div>
 
-  <div class="flex gap-sm" style="margin-top:24px;">
+  <div class="flex gap-sm form-actions">
     <%# Turbo Drive は非リダイレクトの 200 描画を破棄するため、確認画面のフォームはフルページ遷移にする。 %>
     <%# 「修正する」: 入力値を confirm へ再送(back=1)し、入力フォームへ戻す（独立フォーム）。 %>
     <%# 画像の選択（signed_id）・削除予約（remove_attachment_ids）も hidden で持ち回る。 %>
