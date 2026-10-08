@@ -62,9 +62,13 @@ filters: |
 
 ### Markdown lint
 
-- ツールは **markdownlint-cli2**（`npx --yes markdownlint-cli2 "**/*.md"`）。設定はリポジトリルートの `.markdownlint-cli2.jsonc` に置き、**CI とローカル（`make lint-md`）で同一設定**を使う。
+- ツールは **markdownlint-cli2**。ルートの `package.json` の devDependency として**キャレット無しで完全固定**し、`package-lock.json` で間接依存まで固定する。`npx --yes markdownlint-cli2` のように版を指定しない実行は、実行のたびに最新版を取るため、上流のリリースだけでコード無変更の CI が落ちる（#103）。
+- **CI とローカルは同一バージョン・同一コマンド**（`npm ci` → `npm run lint:md`）。`make lint-md` も同じ npm script を呼ぶ。
+- 対象（`globs`）・除外（`ignores`）・ルール設定は `.markdownlint-cli2.jsonc` に一本化し、CI・Makefile からは引数を渡さない。
+- `package.json` / `package-lock.json` の変更は `docs` 側にも分類し、markdownlint の更新時に新バージョンで全 md が通るかを検証する。新バージョンで増えた指摘は抑制せず修正する。
+- CI のパス分類検証（`.github/scripts/verify-path-filters.mjs`）が使う `picomatch` / `js-yaml` も同じ `package.json` で固定する。
 - 見た目のみの規則（`MD013` 行長 / `MD060` 表のパイプ位置 / `MD033` インライン HTML）は無効化している。markdown formatter を導入していないため、Linter で見た目を見ない方針（`.claude/rules/static-analysis.md`）。
-- 対象は 49 ファイル・**違反ゼロ**が基準。自動修正は `make lint-md-fix`。
+- **違反ゼロ**が基準。自動修正は `make lint-md-fix`。
 
 ### テストマトリクスと :js ジョブ
 

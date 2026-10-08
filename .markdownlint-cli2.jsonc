@@ -1,6 +1,7 @@
 {
   // markdownlint 設定。CI（.github/workflows/ci.yml の markdown-lint ジョブ）と
-  // ローカル（make lint-md）で同じ設定を使う。
+  // ローカル（make lint-md）で同じ設定・同じコマンド（npm run lint:md）を使う。
+  // markdownlint-cli2 のバージョンはルートの package.json / package-lock.json で固定する。
   //
   // 方針: 表記ゆれ・構造の崩れは検出するが、見た目の好みは検出しない。
   // 「警告ゼロを維持し、守れないルールは有効にしない」（.claude/rules/static-analysis.md）
@@ -30,6 +31,10 @@
     // frontmatter を見出しの前段として許可する。
     "MD041": { "front_matter_title": "" }
   },
+
+  // リント対象。対象範囲の定義はこのファイルに一本化し、CI・Makefile からは引数で渡さない
+  // （片方だけ変えて手元と CI で対象がずれるのを防ぐ）。
+  "globs": ["**/*.md"],
 
   // 生成物・依存物は対象外。
   "ignores": [

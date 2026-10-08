@@ -100,6 +100,7 @@ clone 後、以下で両アプリを起動できます（`make` ショートカ�
 | Docker / Docker Compose | PostgreSQL・MinIO の起動に使用 |
 | Git | — |
 | ImageMagick または libvips | 画像サムネイル生成用: `brew install imagemagick` |
+| Node.js 22 以上 | `make lint-md` / `make lint-md-fix` のみで使用（markdownlint をルートの `package.json` で固定）。Rails アプリ本体は Node に依存しない |
 
 ### 起動手順
 
@@ -176,7 +177,7 @@ make test          # RSpec（既定アプリ）
 make test-all      # 両アプリでテスト
 make test-js       # JS system spec（fullstack のみ、要 Chrome）
 make ci            # ローカル CI 一括（rubocop + security + tests）
-make lint-md       # markdownlint（CI と同一設定。自動修正は make lint-md-fix）
+make lint-md       # markdownlint（CI と同一バージョン・同一設定。初回は npm ci を自動実行。自動修正は make lint-md-fix）
 ```
 
 `make` を使わない場合の素のコマンド:

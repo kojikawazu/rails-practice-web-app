@@ -1,0 +1,15 @@
+{
+  "name": "rails-practice-web-app-tooling",
+  "private": true,
+  "description": "リポジトリ全体の補助ツール（markdownlint・CI のパス分類検証）。Rails アプリ本体は Node に依存しない。",
+  "scripts": {
+    "lint:md": "markdownlint-cli2",
+    "lint:md:fix": "markdownlint-cli2 --fix",
+    "verify:path-filters": "node .github/scripts/verify-path-filters.mjs"
+  },
+  "devDependencies": {
+    "js-yaml": "5.4.2",
+    "markdownlint-cli2": "0.23.3",
+    "picomatch": "4.0.7"
+  }
+}

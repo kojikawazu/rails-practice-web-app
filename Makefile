@@ -121,12 +121,18 @@ lint-fix: ## RuboCop 自動修正（APP 対象）
 	cd $(APP) && bin/rubocop -A
 
 .PHONY: lint-md
-lint-md: ## markdownlint 実行（リポジトリ全体, CI と同一設定）
-	npx --yes markdownlint-cli2 "**/*.md"
+lint-md: node_modules ## markdownlint 実行（リポジトリ全体, CI と同一バージョン・同一コマンド）
+	npm run lint:md
 
 .PHONY: lint-md-fix
-lint-md-fix: ## markdownlint 自動修正（リポジトリ全体）
-	npx --yes markdownlint-cli2 --fix "**/*.md"
+lint-md-fix: node_modules ## markdownlint 自動修正（リポジトリ全体）
+	npm run lint:md:fix
+
+# ルートの補助ツール（markdownlint 等）を package-lock.json どおりに入れる。
+# lockfile が更新されたら入れ直す。
+node_modules: package-lock.json
+	npm ci
+	@touch node_modules
 
 .PHONY: security
 security: ## Brakeman + bundler-audit（APP 対象）

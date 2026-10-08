@@ -54,6 +54,7 @@ APIクライアント → Rails（Router → Controller → Service → Model �
 | テスト | RSpec, FactoryBot, Shoulda Matchers |
 | 認証 | has_secure_password（bcrypt） |
 | テンプレート | ERB（Project 1のみ） |
+| 補助ツール | Node.js（ルートの `package.json`。markdownlint-cli2 と CI のパス分類検証のみ。アプリ本体は Node 非依存） |
 
 ## インフラストラクチャ
 
@@ -113,6 +114,8 @@ rails-task-web-app/
 ├── README.md
 ├── Makefile                       # 開発用タスクランナー（docker/setup/test/lint/ci）
 ├── docker-compose.yml             # PostgreSQL + MinIO コンテナ定義
+├── package.json                   # 補助ツール（markdownlint 等）の固定。package-lock.json もコミットする
+├── .markdownlint-cli2.jsonc       # markdownlint の対象・除外・ルール設定
 ├── .env                           # DB接続情報・MinIO 認証情報（.gitignore 対象）
 ├── docs/                          # 仕様書
 ├── rails-task-fullstack-web-app/  # Project 1: フルスタック

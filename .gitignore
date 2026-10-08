@@ -12,9 +12,8 @@
 *.swp
 *.swo
 
-# CI 補助スクリプト（.github/scripts）をローカル実行したときの一時ファイル
+# ルートの補助ツール（package.json）の依存。package-lock.json はバージョン固定のためコミットする
 node_modules/
-package-lock.json
 
 # Claude Code の個人設定（権限ルール等。共有しない）
 .claude/settings.local.json
