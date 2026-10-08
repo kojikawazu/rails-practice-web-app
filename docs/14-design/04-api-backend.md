@@ -75,8 +75,12 @@
 ### JSON シリアライズ
 
 - レスポンスは `render json:` で返す。
-- **現状はモデルを直接シリアライズ**している（`render json: @project`）。
-- レスポンス整形の規約は Serializer 層（`app/serializers/`、ActiveModel Serializers / Blueprinter 等）に寄せる方向だが、**未導入**。表現の出し分けが必要になった時点で導入する。
+- **API 版**は Serializer 層（`app/serializers/`）で公開属性だけに整形する。モデルを直接シリアライズしない。
+  - gem（ActiveModel Serializers / Blueprinter / jbuilder）は使わず PORO で書く。公開属性が少なく出し分けも無いため DSL の利点が小さく、変換の仕組みが読める形を優先した。
+  - 各 Serializer は `ATTRIBUTES` に公開属性を allowlist で列挙する。`as_json` の全カラム出力から除外する denylist 方式にしないのは、カラム追加がそのまま API に露出するため。
+  - 変換は Controller で行う（`XxxSerializer.render(...)` / `render_result(result, serializer:)`）。Service はモデルを返し、表現を知らない。
+  - 公開属性は request spec でキー集合の完全一致として固定する。
+- フルスタック版は HTML を返すため Serializer を持たない（JSON は 404 の `{ "error": ... }` のみ）。
 
 ### 統一エラーハンドリング
 
@@ -104,6 +108,7 @@ app/
 │   ├── application_controller.rb   # ActionController::API + authenticate_user!
 │   └── api/v1/                      # Auth / Projects / Tasks
 ├── lib/json_web_token.rb           # JWT encode/decode
-└── models/                          # User / Project / Task
-# （services/ serializers/ は規約上の置き場。現状未作成）
+├── models/                          # User / Project / Task
+├── serializers/                     # User / Project / Task のレスポンス整形（PORO）
+└── services/                        # Auth / Project / Task のビジネスロジック
 ```

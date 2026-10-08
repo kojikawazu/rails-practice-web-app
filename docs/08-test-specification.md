@@ -62,10 +62,10 @@
 | Request spec（fullstack） | Sessions | ログイン成功/失敗 / ログアウト（セッション） |
 | Request spec（fullstack） | 認証系のレートリミット | 上限内は通常応答 / 超過で 429・フォーム再描画・メッセージ・`Retry-After` / 上限到達後は正しい認証情報でもログイン・登録させない / 登録の確認と確定はカウンタ共有・ログインとは別カウンタ |
 | Request spec（fullstack） | セキュリティヘッダー | CSP を enforce で返す / script-src に unsafe-inline・unsafe-eval が無い / object-src・base-uri・frame-ancestors の禁止設定 / style は属性のみ暫定許可 / importmap の nonce 付与 |
-| Request spec（API） | Auth | signup / login の成功・失敗（JWT 発行）|
+| Request spec（API） | Auth | signup / login の成功・失敗（JWT 発行）/ `user` の公開属性がキー集合の完全一致で `id` `name` `email` のみ（`password_digest` を返さない） |
 | Request spec（API） | レートリミット | login / signup の超過で 429・`{ "error": "Too many requests" }`・`Retry-After` / 上限到達後はトークンを発行しない / login と signup は別カウンタ / API 全体の超過で 429・カウンタはコントローラーをまたいで共有 |
 | Request spec（API） | 認証境界（Authorization ヘッダーの契約） | Bearer は 200（scheme は大小無視）/ ヘッダー無し・生トークン・別スキーム・要素過多・空トークン・改ざんは 401 / 401 の統一形式（`error` 単数形） |
-| Request spec（API） | Projects / Tasks | CRUD 正常系 / 他ユーザーリソースの404 / **未認証時は 401**（リダイレクトではない）/ `Authorization: Bearer` 検証 / ステータス遷移違反は 422 + `errors`（作成時の completed 指定を含む） |
+| Request spec（API） | Projects / Tasks | CRUD 正常系 / 他ユーザーリソースの404 / **未認証時は 401**（リダイレクトではない）/ `Authorization: Bearer` 検証 / ステータス遷移違反は 422 + `errors`（作成時の completed 指定を含む）/ index・show・create・update のレスポンスが公開属性のキー集合と完全一致（カラム追加時の意図しない露出を検出） |
 | Scenario spec（API） | ユーザージャーニー | signup→project 作成→task 作成→一覧→status 更新（not_started→in_progress→completed と遷移規則どおりに進む）→詳細反映（signup の token だけで全書き込みが認可される） |
 | Scenario spec（API） | 認可分離 | 他ユーザーの project/task は 404 / project 一覧は自分のものだけ（実DBでスコープ保証を固定） |
 | Scenario spec（API） | 認証ライフサイクル | signup token が保護EPで即利用可 / login 成功・誤パスワード 401 / 期限切れ・改ざんトークンは保護EPで 401 |

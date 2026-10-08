@@ -69,17 +69,22 @@ class ApplicationController < ActionController::API
   end
 
   # サービスの Result に従って JSON レスポンスを render する。
-  # 失敗: `{ errors: [...] }`／204: ボディ無し／それ以外の成功: data を Result.status で render。
+  # 失敗: `{ errors: [...] }`／204: ボディ無し／それ以外の成功: data を serializer で整形して Result.status で render。
+  #
+  # Service はモデルを返し、公開属性への変換はここ（HTTP 層）で行う。data を素通しで render する
+  # 分岐は持たない。ボディを返す Result で serializer を渡し忘れると nil.render で落ちるため、
+  # 渡し忘れがモデルの全カラム露出につながらない。
   #
   # @param result [ApplicationService::Result] サービスの実行結果
+  # @param serializer [Class<ApplicationSerializer>, nil] 成功時の data を整形する serializer（204 のみ省略可）
   # @return [void]
-  def render_result(result)
+  def render_result(result, serializer: nil)
     if result.failure?
       render json: { errors: result.errors }, status: result.status
     elsif result.status == :no_content
       head :no_content
     else
-      render json: result.data, status: result.status
+      render json: serializer.render(result.data), status: result.status
     end
   end
 end

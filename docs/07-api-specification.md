@@ -8,6 +8,7 @@
 - [リクエスト/レスポンス形式](#リクエストレスポンス形式)
   - [例: ログイン（JWT 発行）](#例-ログインjwt-発行)
   - [例: タスク作成](#例-タスク作成)
+  - [リソースの公開属性](#リソースの公開属性)
 - [認証](#認証)
   - [CORS](#cors)
 - [エラーハンドリング](#エラーハンドリング)
@@ -90,6 +91,20 @@ Content-Type: application/json
   "updated_at": "2026-04-07T10:00:00.000Z"
 }
 ```
+
+### リソースの公開属性
+
+レスポンスに含める属性は `app/serializers/` の各 Serializer が `ATTRIBUTES` で列挙したものだけ（allowlist）。モデルを直接 `render json:` しないため、**カラムを追加しても API レスポンスには自動で露出しない**。公開する場合は Serializer に属性を追加し、本表と request spec を同時に更新する。
+
+| リソース | Serializer | 公開属性（この順で返す） | 返すエンドポイント |
+|---|---|---|---|
+| User | `UserSerializer` | `id`, `name`, `email` | signup / login の `user` |
+| Project | `ProjectSerializer` | `id`, `title`, `description`, `user_id`, `created_at`, `updated_at` | projects の index（配列）/ show / create / update |
+| Task | `TaskSerializer` | `id`, `title`, `status`, `due_date`, `project_id`, `created_at`, `updated_at` | tasks の index（配列）/ show / create / update |
+
+- `status` は enum のキー文字列（`not_started` / `in_progress` / `completed`）、`due_date` は `YYYY-MM-DD`、日時は ISO 8601（UTC・ミリ秒）で返す。
+- `password_digest` などの認証情報は返さない。
+- 削除（destroy）はボディ無しの `204 No Content`。
 
 ## 認証
 

@@ -2,6 +2,7 @@ module Api
   module V1
     # タスクの CRUD エンドポイント。projects 配下のネストルーティングで、
     # ロジックは TaskService に委譲する。認可スコープ・404 はサービス + 基底の rescue_from に委ねる。
+    # レスポンスは TaskSerializer で公開属性だけに整形する（モデルを直接 render しない）。
     class TasksController < ApplicationController
       before_action :set_project
 
@@ -9,21 +10,21 @@ module Api
       #
       # @return [void] タスク一覧を JSON で render（200）
       def index
-        render json: TaskService.list(@project)
+        render json: TaskSerializer.render(TaskService.list(@project))
       end
 
       # タスク詳細を返す。
       #
       # @return [void] 取得したタスクを JSON で render（200）／不存在は 404
       def show
-        render json: TaskService.fetch_task(@project, params[:id])
+        render json: TaskSerializer.render(TaskService.fetch_task(@project, params[:id]))
       end
 
       # タスクを作成する。
       #
       # @return [void] 成功: 作成した Task（201）／失敗: `{ errors: [...] }`（422）
       def create
-        render_result TaskService.create(@project, task_params)
+        render_result TaskService.create(@project, task_params), serializer: TaskSerializer
       end
 
       # タスクを更新する。
@@ -31,7 +32,7 @@ module Api
       # @return [void] 成功: 更新後の Task（200）／失敗: `{ errors: [...] }`（422）／不存在は 404
       def update
         task = TaskService.fetch_task(@project, params[:id])
-        render_result TaskService.update(task, task_params)
+        render_result TaskService.update(task, task_params), serializer: TaskSerializer
       end
 
       # タスクを削除する。
