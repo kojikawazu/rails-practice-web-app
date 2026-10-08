@@ -1,0 +1,42 @@
+# Dependabot によるバージョン更新の設定（#108）。
+#
+# 手で一括置換すると、次の非推奨化（Node 20 → 24 のようなランタイム移行）でまた手作業になるため、
+# 更新 PR の作成を Dependabot に任せる。PR はエコシステムごとに 1 本へまとめ、
+# マージのたびに CI が何本も走る状態を避ける。
+#
+# 対象外:
+#   - 両 Rails アプリの gem（bundler）: 更新は手動で行い、既知の脆弱性は CI の bundler-audit が止める。
+#   - run: やスクリプト内で固定しているツール（setup-ruby が読む .ruby-version 等）。
+version: 2
+updates:
+  # workflows の `uses:` で参照するアクション。
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Tokyo
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: chore(ci)
+
+  # ルートの補助ツール（markdownlint-cli2 / picomatch / js-yaml）。package.json で完全固定しているため、
+  # Dependabot が無いと固定したまま古くなる。更新 PR は package.json / package-lock.json を変えるので、
+  # CI の docs 分類にも流れ、新バージョンで全 Markdown が通るかを Markdown lint が検証する。
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: Asia/Tokyo
+    groups:
+      tooling:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: chore(deps)

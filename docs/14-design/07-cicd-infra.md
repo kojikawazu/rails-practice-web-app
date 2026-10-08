@@ -9,6 +9,7 @@
   - [パスフィルターで発火条件を分ける](#パスフィルターで発火条件を分ける)
   - [Markdown lint](#markdown-lint)
   - [テストマトリクスと :js ジョブ](#テストマトリクスと-js-ジョブ)
+  - [依存の更新（Dependabot）](#依存の更新dependabot)
 - [ローカルインフラ（docker-compose）](#ローカルインフラdocker-compose)
 - [Makefile（タスクランナー）](#makefileタスクランナー)
 - [デプロイについて](#デプロイについて)
@@ -76,6 +77,14 @@ filters: |
   - テストは RSpec に一本化している（Rails 標準の Minitest は #67 で廃止。`test/` は置かない）。
 - **System (:js) ジョブ**はフルスタック版のみ（`working-directory` 固定）。headless Chrome で `bundle exec rspec --tag js` を実行し、Turbo 退行の回帰ガードとする（Selenium が不要な API 版には無い）。
 - Ruby バージョンは各アプリの `.ruby-version`、依存は `bundler-cache: true` でキャッシュする。
+
+### 依存の更新（Dependabot）
+
+- `.github/dependabot.yml` で、**GitHub Actions**（workflows の `uses:`）と**ルートの npm**（markdownlint-cli2 / picomatch / js-yaml）の更新 PR を毎週月曜 09:00（JST）に作る。
+- PR は**エコシステムごとに 1 本へまとめる**（groups）。アクションごとに分かれると、マージのたびに全ジョブが走るため。
+- 手で一括置換しないのは、Node 20 → 24 のようなランタイム移行のたびに同じ手作業が発生するため（#108）。
+- npm の更新 PR は `package.json` / `package-lock.json` を変えるため、`docs` 分類にも流れ、**新バージョンで全 Markdown が通るか**を Markdown lint が検証する。
+- 両 Rails アプリの gem（bundler）は対象外。更新は手動で行い、既知の脆弱性は CI の `bundler-audit check --update` が止める。
 
 ## ローカルインフラ（docker-compose）
 
