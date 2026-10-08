@@ -12,6 +12,11 @@ RSpec.describe "Api::V1::Projects", type: :request do
       expect(JSON.parse(response.body).length).to eq(1)
     end
 
+    it "各要素は公開属性だけを返す（カラムを追加しても自動では露出しない）" do
+      get api_v1_projects_path, headers: headers, as: :json
+      expect(JSON.parse(response.body).first.keys).to contain_exactly(*%w[id user_id title description created_at updated_at])
+    end
+
     it "Authorization ヘッダーが無ければ 401 を返す" do
       get api_v1_projects_path, as: :json
       expect(response).to have_http_status(:unauthorized)
@@ -23,6 +28,11 @@ RSpec.describe "Api::V1::Projects", type: :request do
       get api_v1_project_path(project), headers: headers, as: :json
       expect(response).to have_http_status(:ok)
       expect(JSON.parse(response.body)["id"]).to eq(project.id)
+    end
+
+    it "公開属性だけを返す" do
+      get api_v1_project_path(project), headers: headers, as: :json
+      expect(JSON.parse(response.body).keys).to contain_exactly(*%w[id user_id title description created_at updated_at])
     end
 
     it "他ユーザーのプロジェクトは、403 ではなく 404 を返して存在自体を秘匿する" do
@@ -38,6 +48,7 @@ RSpec.describe "Api::V1::Projects", type: :request do
         post api_v1_projects_path, params: { project: { title: "新プロジェクト" } }, headers: headers, as: :json
       }.to change(Project, :count).by(1)
       expect(response).to have_http_status(:created)
+      expect(JSON.parse(response.body).keys).to contain_exactly(*%w[id user_id title description created_at updated_at])
     end
 
     it "検証に失敗したら統一エラー形式で 422 を返す" do
@@ -51,6 +62,7 @@ RSpec.describe "Api::V1::Projects", type: :request do
       patch api_v1_project_path(project), params: { project: { title: "更新後" } }, headers: headers, as: :json
       expect(response).to have_http_status(:ok)
       expect(project.reload.title).to eq("更新後")
+      expect(JSON.parse(response.body).keys).to contain_exactly(*%w[id user_id title description created_at updated_at])
     end
   end
 

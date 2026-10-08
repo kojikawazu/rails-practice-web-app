@@ -12,6 +12,11 @@ RSpec.describe "Api::V1::Tasks", type: :request do
       expect(response).to have_http_status(:ok)
       expect(JSON.parse(response.body).length).to eq(1)
     end
+
+    it "各要素は公開属性だけを返す（カラムを追加しても自動では露出しない）" do
+      get api_v1_project_tasks_path(project), headers: headers, as: :json
+      expect(JSON.parse(response.body).first.keys).to contain_exactly(*%w[id project_id title status due_date created_at updated_at])
+    end
   end
 
   describe "GET /api/v1/projects/:project_id/tasks/:id（詳細）" do
@@ -19,6 +24,11 @@ RSpec.describe "Api::V1::Tasks", type: :request do
       get api_v1_project_task_path(project, task), headers: headers, as: :json
       expect(response).to have_http_status(:ok)
       expect(JSON.parse(response.body)["id"]).to eq(task.id)
+    end
+
+    it "公開属性だけを返す" do
+      get api_v1_project_task_path(project, task), headers: headers, as: :json
+      expect(JSON.parse(response.body).keys).to contain_exactly(*%w[id project_id title status due_date created_at updated_at])
     end
   end
 
@@ -30,6 +40,7 @@ RSpec.describe "Api::V1::Tasks", type: :request do
              headers: headers, as: :json
       }.to change(Task, :count).by(1)
       expect(response).to have_http_status(:created)
+      expect(JSON.parse(response.body).keys).to contain_exactly(*%w[id project_id title status due_date created_at updated_at])
     end
 
     it "検証に失敗したら統一エラー形式で 422 を返す" do
@@ -45,6 +56,7 @@ RSpec.describe "Api::V1::Tasks", type: :request do
             headers: headers, as: :json
       expect(response).to have_http_status(:ok)
       expect(task.reload.status).to eq("in_progress")
+      expect(JSON.parse(response.body).keys).to contain_exactly(*%w[id project_id title status due_date created_at updated_at])
     end
   end
 

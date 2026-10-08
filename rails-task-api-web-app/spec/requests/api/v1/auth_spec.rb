@@ -10,6 +10,8 @@ RSpec.describe "Api::V1::Auth", type: :request do
       post api_v1_signup_path, params: valid_params, as: :json
       expect(response).to have_http_status(:created)
       expect(JSON.parse(response.body)).to include("token")
+      # password_digest などの内部カラムを返さない
+      expect(JSON.parse(response.body)["user"].keys).to contain_exactly(*%w[id name email])
     end
 
     it "検証に失敗したら統一エラー形式で 422 を返す" do
@@ -25,6 +27,7 @@ RSpec.describe "Api::V1::Auth", type: :request do
       post api_v1_login_path, params: { email: user.email, password: "password123" }, as: :json
       expect(response).to have_http_status(:ok)
       expect(JSON.parse(response.body)).to include("token")
+      expect(JSON.parse(response.body)["user"].keys).to contain_exactly(*%w[id name email])
     end
 
     it "パスワードが誤っていれば 401 を返し、トークンを発行しない" do
