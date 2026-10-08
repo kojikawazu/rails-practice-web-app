@@ -31,7 +31,7 @@ jobs:
       code: ${{ steps.code.outputs.code }}
       docs: ${{ steps.docs.outputs.docs }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # コード判定は「除外リスト」で書く（.claude/rules/github-actions.md）。
       # 「対象リスト」で書くと、新しいディレクトリが増えたときに黙ってテストが走らなくなる。
@@ -40,7 +40,7 @@ jobs:
       # predicate-quantifier: every は「すべてのパターンに一致したファイルだけを対象にする」
       # 指定。既定の some（どれか 1 つに一致）のままだと、否定パターン単体が
       # 「md 以外のすべて」に一致してしまい除外として機能しない。
-      - uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@v4
         id: code
         with:
           predicate-quantifier: every
@@ -58,7 +58,7 @@ jobs:
       # 「ドキュメント変更で何も動かさない」を避けるため markdown lint を回す。
       # package.json / package-lock.json は markdownlint のバージョンを決めるため、
       # 更新時に新バージョンで全 md が通るかを確かめる（code 側にも依存関係として流れる）。
-      - uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@v4
         id: docs
         with:
           filters: |
@@ -96,10 +96,10 @@ jobs:
     if: needs.changes.outputs.docs == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 22
 
@@ -120,7 +120,7 @@ jobs:
     name: Secret scan
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Assert no key files are tracked
         run: |
@@ -149,7 +149,7 @@ jobs:
       matrix:
         app: [rails-task-fullstack-web-app, rails-task-api-web-app]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Ruby
         id: setup
@@ -204,7 +204,7 @@ jobs:
       POSTGRES_USER: rails_task
       POSTGRES_PASSWORD: password
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -243,7 +243,7 @@ jobs:
       POSTGRES_USER: rails_task
       POSTGRES_PASSWORD: password
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
