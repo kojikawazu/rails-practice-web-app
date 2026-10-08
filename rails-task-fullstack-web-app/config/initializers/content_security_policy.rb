@@ -5,10 +5,8 @@
 # 特に確認画面は利用者が入力した preview_url を iframe に埋め込むため、
 # モデルの URL 検証と sandbox に加えて、ブラウザ側でも実行可能な資源を限定する。
 #
-# 段階導入（.claude/rules/static-analysis.md「厳しいルールは段階導入する」）:
-#   script-src は unsafe-inline を許可しない（インライン JS は Stimulus へ移行済み）。
-#   一方、View に残るインライン style 属性は style-src-attr で当面許可する。
-#   解消は別 issue で追跡し、移行が完了したら style_src_attr の行を削除する。
+# unsafe-inline はどのディレクティブにも許可しない。インライン JS は Stimulus へ、
+# インライン style 属性は application.css のクラスへ移行済み（#101）。
 Rails.application.configure do
   # development の Active Storage は MinIO（別オリジン）へリダイレクトするため、
   # blob の配信元を img-src に許可する。production は Disk（同一オリジン）配信のため不要。
@@ -29,11 +27,9 @@ Rails.application.configure do
     # nonce が自動付与される（importmap-rails が content_security_policy_nonce を渡す）。
     policy.script_src :self
 
-    # <style> ブロックと外部 CSS は自オリジンのみ。
+    # CSS は自オリジンのみ。style_src_attr を指定しないため、style 属性も style_src に従い拒否される
+    # （View では style 属性を使わない。spec/requests/security_headers_spec.rb で検査する）。
     policy.style_src :self
-    # TODO(#101): View に残るインライン style 属性（76 箇所）を CSS クラスへ移行したら、この行を削除する。
-    # 属性のみを許可し、<style> ブロックの注入は style_src 側で禁止したままにする。
-    policy.style_src_attr :unsafe_inline
 
     # タスクの preview_url プレビュー用。任意の外部サイトを埋め込むため http/https を許可し、
     # javascript: / data: スキームの frame は拒否する。埋め込みの封じ込めは

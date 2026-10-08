@@ -10,7 +10,7 @@
   <% end %>
 
   <div class="card">
-    <h2 style="font-size:18px; margin-bottom:20px;">ログイン</h2>
+    <h2 class="card-title">ログイン</h2>
     <%= form_with(url: login_path, method: :post) do |form| %>
       <div class="form-group">
         <%= form.label :email, "メールアドレス" %>
@@ -20,11 +20,11 @@
         <%= form.label :password, "パスワード" %>
         <%= form.password_field :password, class: "form-input", placeholder: "6文字以上" %>
       </div>
-      <%= form.submit "ログイン", class: "btn btn-primary", style: "width:100%; margin-top:8px;" %>
+      <%= form.submit "ログイン", class: "btn btn-primary btn-block" %>
     <% end %>
 
-    <hr style="margin:24px 0; border:none; border-top:1px solid #e2e8f0;">
-    <p style="text-align:center; font-size:14px; color:#64748b;">
+    <hr class="divider">
+    <p class="auth-switch">
       アカウントをお持ちでない方は <%= link_to "新規登録", signup_path %>
     </p>
   </div>

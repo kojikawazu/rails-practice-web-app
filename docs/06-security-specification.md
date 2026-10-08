@@ -74,8 +74,7 @@ XSS 対策は「入力検証 + 出力エスケープ + CSP」の多層防御と�
 |---|---|---|
 | `default-src` | `'self'` | 既定は自オリジンのみ |
 | `script-src` | `'self'` + リクエストごとの `nonce` | **インライン JS を許可しない**。importmap / Turbo のインライン script には `importmap-rails` が nonce を自動付与する |
-| `style-src` | `'self'` | `<style>` ブロックの注入を禁止する |
-| `style-src-attr` | `'unsafe-inline'`（**暫定**） | View に残るインライン `style` 属性のための段階導入。移行は [#101](https://github.com/kojikawazu/rails-practice-web-app/issues/101) で追跡し、完了時にこの行を削除する |
+| `style-src` | `'self'` | CSS は自オリジンのスタイルシートのみ。`style-src-attr` を指定しないため **インライン `style` 属性も拒否**し、`<style>` ブロックの注入と合わせて CSS インジェクションによる情報漏えいの経路を塞ぐ。View は `application.css` のクラスだけを使う（#101 で移行。`spec/requests/security_headers_spec.rb` がテンプレートに `style` 属性が無いことを検査する） |
 | `img-src` | `'self' data:` + （development のみ）MinIO の配信元 | development の Active Storage は MinIO へリダイレクトするため。production は Disk（同一オリジン）で不要 |
 | `frame-src` | `http: https:` | タスクの `preview_url` プレビュー用。`javascript:` / `data:` の frame は拒否する。埋め込みの封じ込めは iframe の `sandbox` とモデルの URL 検証が担う |
 | `frame-ancestors` | `'none'` | 自アプリを他サイトに埋め込ませない（クリックジャッキング対策） |
@@ -112,7 +111,7 @@ sandbox="allow-scripts allow-same-origin"  referrerpolicy="no-referrer"  allow="
 - 脱獄が成立するのは「枠内 URL が**当アプリと同一オリジン**」の場合のみ。これを **モデルバリデーション**（`localhost` / `0.0.0.0` / `app_host` 一致 / ループバック・プライベート・リンクローカル IP の拒否）で塞ぐ。`app_host` はコントローラーが `request.host` を渡す。
 - ホスト判定は **正規化してから**行う（IPv6 リテラルの角括弧 `[::1]` を除去、FQDN 末尾ドット `localhost.` を除去）。表記揺れによる allowlist/denylist バイパスを防ぐ。
 - 詳細画面では iframe を出さず、`rel="noopener noreferrer"` の安全リンクのみ表示する。
-- **CSP は本プロジェクトでは未導入**（既存 ERB のインラインスタイルを多用しており `style-src` 違反で回帰するため）。スキーム検証＋ホスト制限＋sandbox の多層で担保し、CSP `frame-src` 導入は将来課題とする。
+- ブラウザ側では CSP の `frame-src http: https:` で `javascript:` / `data:` の frame を拒否する（上記「Content Security Policy」）。任意の外部サイトを埋め込むため `frame-src` でホストは絞らず、封じ込めはスキーム検証＋ホスト制限＋sandbox の多層で担保する。
 - 多くのサイトは `X-Frame-Options` / `frame-ancestors` で埋め込みを拒否するため、プレビューは**ベストエフォート**（表示されない場合は安全リンクから開く）。
 
 ## シークレット管理
