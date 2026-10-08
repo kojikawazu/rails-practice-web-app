@@ -56,6 +56,8 @@ jobs:
       # 未検証のコードがマージされる方向には倒れない）。
       # docs/ 配下の画像や .claude/ のルールなど md 以外の変更でも、
       # 「ドキュメント変更で何も動かさない」を避けるため markdown lint を回す。
+      # package.json / package-lock.json は markdownlint のバージョンを決めるため、
+      # 更新時に新バージョンで全 md が通るかを確かめる（code 側にも依存関係として流れる）。
       - uses: dorny/paths-filter@v3
         id: docs
         with:
@@ -65,13 +67,16 @@ jobs:
               - 'docs/**'
               - '.claude/**'
               - '.markdownlint-cli2.jsonc'
+              - 'package.json'
+              - 'package-lock.json'
 
       # 代表パスの分類が期待どおりかを、paths-filter と同じ picomatch で検証する。
       # フィルタを書き換えて分類が崩れたら、下流のテストより先にここで落とす。
+      # picomatch / js-yaml はルートの package-lock.json で固定したバージョンを使う。
       - name: Verify filter classification
         run: |
-          npm install --no-save --silent picomatch js-yaml
-          node .github/scripts/verify-path-filters.mjs
+          npm ci --silent
+          npm run verify:path-filters
 
       # 今回の変更がどちらに分類されたかをジョブサマリに残す（レビューで追えるようにする）。
       - name: Summarize classification
@@ -98,9 +103,13 @@ jobs:
         with:
           node-version: 22
 
-      # 設定は .markdownlint-cli2.jsonc（ローカルの make lint-md と同一）。
+      # バージョンは package-lock.json、対象と設定は .markdownlint-cli2.jsonc で固定する。
+      # ローカルの make lint-md と同じコマンドを使う（npx で最新版を引くと、上流のリリースだけで CI が落ちる）。
+      - name: Install tooling
+        run: npm ci
+
       - name: markdownlint
-        run: npx --yes markdownlint-cli2 "**/*.md"
+        run: npm run lint:md
 
   # 鍵ファイルの再混入を防ぐガード。
   # master.key は一度 push すると履歴から消せず、鍵のローテーション以外に対処手段が
