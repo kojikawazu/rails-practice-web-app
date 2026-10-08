@@ -168,6 +168,8 @@ GitHub Actions（`.github/workflows/ci.yml`）で、`main` への push と全 PR
 | `Test (matrix)` | 両アプリで RSpec（`bundle exec rspec`） | コード変更時 |
 | `System (:js)` | フルスタック版の JS system spec（`rspec --tag js`、headless Chrome） | コード変更時 |
 
+GitHub Actions と、ルートの npm 補助ツール（markdownlint 等）のバージョン更新は、Dependabot（`.github/dependabot.yml`）が毎週 PR を作ります。Rails の gem は手動で更新します。
+
 ローカル実行（`make` ショートカット推奨。全 target は `make help` で一覧）:
 
 ```bash

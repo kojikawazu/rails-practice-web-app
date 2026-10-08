@@ -33,6 +33,7 @@ const EXPECTATIONS = [
   ["package-lock.json", true, true],
   [".github/workflows/ci.yml", true, false],
   [".github/scripts/verify-path-filters.mjs", true, false],
+  [".github/dependabot.yml", true, false],
   ["Makefile", true, false],
   ["docker-compose.yml", true, false],
   [".env.example", true, false],
