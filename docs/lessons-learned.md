@@ -21,6 +21,21 @@
 
 -->
 
+## 2026-10-08 form_with に渡した style: が黙って捨てられ、フォームの幅指定が一度も効いていなかった
+
+### 概要
+
+フルスタック版のプロジェクト / タスクのフォームに `form_with(..., class: "card", style: "max-width:600px;")` と書いていたが、`style:` は HTML に出力されず、フォームは全幅で表示され続けていた。エラーも警告も出ないため、書かれた当初からコードレビューでも気づかれず、#101 で移行前後のスクリーンショットをピクセル比較して初めて判明した。
+
+### 詳細
+
+- 何が起きたか: `app/views/projects/_form.html.erb` と `app/views/tasks/_form.html.erb` の `max-width:600px` が適用されず、新規作成・編集フォーム（5 画面）のカードが全幅になっていた。確認画面・詳細画面のカードは 600px のため、フォームから確認画面へ進むとカードの幅が変わっていた。機能・データへの影響はない。
+- なぜ起きたか（根本原因）: `form_with` が直下のキーワード引数から HTML 属性として拾うのは `id` / `class` / `multipart` / `method` / `data` / `authenticity_token` だけで（`ActionView::Helpers::FormHelper#html_options_for_form_with` の `options.slice(...)`）、それ以外の属性は `html: { ... }` で渡さないと捨てられる。`link_to` や `image_tag` は任意の属性をそのまま出力するため、同じ感覚で `style:` を直下に書いてしまい、捨てられたことにも気づけなかった。
+- 教訓 / 次からどうする:
+  - `form_with` に `id` / `class` / `data` 以外の HTML 属性を付けるときは `html: { ... }` で渡す。付けた属性は、ブラウザの DOM か request spec のレスポンス HTML で、実際に出力されていることを確かめる。
+  - 「見た目を変えない」前提のリファクタ（CSS 移行・レイアウト整理）は、前後のスクリーンショットをピクセル単位で比較し（ImageMagick の `compare -metric AE`）、差分が出た画面は原因を説明できるまで調べる。差分ゼロを確認できない変更を「見た目は同じ」と報告しない。
+- 関連: #101 / PR #130（インライン style の CSS 移行で判明し、`card-narrow` で 600px に揃えた）、#131、`.claude/rules/testing.md`
+
 ## 2026-10-07 既存 issue を検索せずに起票し、2 か月放置されていた同じ issue と重複した
 
 ### 概要
