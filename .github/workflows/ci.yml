@@ -18,6 +18,7 @@ jobs:
   # 変更内容に関係のあるジョブだけを動かすための入口（.claude/rules/github-actions.md）。
   #   code=true  -> 静的解析・セキュリティ検査（lint-security）とテスト（test / system-js）を実行する
   #   docs=true  -> markdown lint を実行する
+  #   workflows=true -> actionlint を実行する
   # 判定に関係なく常に実行するジョブ: secret-scan / link-check（理由は各ジョブのコメント）。
   # 下流ジョブはワークフローレベルの paths ではなく if 条件でスキップする。
   # skip されたジョブは required check 上では成功扱いになるため、
@@ -31,6 +32,7 @@ jobs:
     outputs:
       code: ${{ steps.code.outputs.code }}
       docs: ${{ steps.docs.outputs.docs }}
+      workflows: ${{ steps.workflows.outputs.workflows }}
     steps:
       - uses: actions/checkout@v7
 
@@ -75,6 +77,20 @@ jobs:
               - 'package.json'
               - 'package-lock.json'
 
+      # actionlint の発火判定。対象リストで書くが fail-open にならない:
+      # actionlint の検査対象は .github/workflows/*.{yml,yaml} で閉じており、
+      # 未知のファイルが増えても検査対象は増えないため。
+      # Makefile は actionlint のバージョン（ACTIONLINT_VERSION）を持つため含める
+      # （バージョンを上げた PR で、新しい版の検査を既存 workflow に当てる）。
+      # 既存の code / docs フィルタとは独立に判定する（追加のみ）。
+      - uses: dorny/paths-filter@v4
+        id: workflows
+        with:
+          filters: |
+            workflows:
+              - '.github/workflows/*.{yml,yaml}'
+              - 'Makefile'
+
       # 代表パスの分類が期待どおりかを、paths-filter と同じ picomatch で検証する。
       # フィルタを書き換えて分類が崩れたら、下流のテストより先にここで落とす。
       # picomatch / js-yaml はルートの package-lock.json で固定したバージョンを使う。
@@ -91,6 +107,7 @@ jobs:
             echo "|---|---|---|"
             echo "| code | ${{ steps.code.outputs.code }} | Lint & Security / Test / System (:js) |"
             echo "| docs | ${{ steps.docs.outputs.docs }} | Markdown lint |"
+            echo "| workflows | ${{ steps.workflows.outputs.workflows }} | actionlint |"
           } >> "$GITHUB_STEP_SUMMARY"
 
   # ドキュメント変更時の軽量チェック。
@@ -115,6 +132,23 @@ jobs:
 
       - name: markdownlint
         run: npm run lint:md
+
+  # workflow 自身の検証（.claude/rules/github-actions.md「.github/workflows/** は actionlint」）。
+  # YAML 構文に加え、${{ }} 式の型・runner ラベル・action の入力・信頼できない入力の直接展開、
+  # run: の中身を shellcheck に流した結果を検査する（レビューで最も見落とされる層）。
+  # バージョンは Makefile の ACTIONLINT_VERSION で Docker イメージのタグとして固定し、
+  # ローカルの make actionlint と同じコマンドを使う（最新版を引くと、上流のリリースだけで CI が落ちる）。
+  # Dependabot は Makefile 内のイメージタグを追えないため、バージョンは手動で更新する。
+  actionlint:
+    name: actionlint
+    needs: changes
+    if: needs.changes.outputs.workflows == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: actionlint
+        run: make actionlint
 
   # リンク切れチェック（リポジトリ内のリンクのみ。外部 URL は見ない）。
   # markdown-lint と違い、変更種別を問わず常に実行する。docs からコードへのリンク

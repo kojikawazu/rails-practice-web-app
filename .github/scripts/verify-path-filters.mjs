@@ -12,35 +12,39 @@ import picomatch from "picomatch";
 
 const WORKFLOW = path.join(process.cwd(), ".github/workflows/ci.yml");
 
-// [パス, code の期待値, docs の期待値]
-// code=true -> 静的解析・セキュリティ検査とテスト（Lint & Security / Test / System :js）、docs=true -> Markdown lint が動く。
+// [パス, code の期待値, docs の期待値, workflows の期待値]
+// code=true -> 静的解析・セキュリティ検査とテスト（Lint & Security / Test / System :js）、docs=true -> Markdown lint、
+// workflows=true -> actionlint が動く。
 // ドキュメント・ルール以外は未知のパスもテストへ流す（安全側に倒す）ことを固定する。
+// workflows は actionlint の検査対象（.github/workflows/*.{yml,yaml}）と、検査器のバージョンを持つ Makefile に限る。
 const EXPECTATIONS = [
-  ["rails-task-fullstack-web-app/app/models/task.rb", true, false],
-  ["rails-task-api-web-app/app/controllers/application_controller.rb", true, false],
-  ["rails-task-fullstack-web-app/spec/models/task_spec.rb", true, false],
-  ["rails-task-fullstack-web-app/Gemfile.lock", true, false],
-  ["rails-task-fullstack-web-app/README.md", false, true],
-  ["rails-task-api-web-app/app/models/AGENTS.md", false, true],
-  ["docs/03-functional-specification.md", false, true],
-  ["docs/screenshots/login.png", false, true],
-  [".claude/rules/github-actions.md", false, true],
-  ["README.md", false, true],
-  ["CLAUDE.md", false, true],
-  ["AGENTS.md", false, true],
-  [".markdownlint-cli2.jsonc", false, true],
-  [".remarkrc.mjs", false, true],
-  [".remarkignore", false, true],
-  ["package.json", true, true],
-  ["package-lock.json", true, true],
-  [".github/workflows/ci.yml", true, false],
-  [".github/scripts/verify-path-filters.mjs", true, false],
-  [".github/dependabot.yml", true, false],
-  ["Makefile", true, false],
-  ["docker-compose.yml", true, false],
-  [".env.example", true, false],
-  ["scripts/new_tool.sh", true, false],
-  ["terraform/main.tf", true, false],
+  ["rails-task-fullstack-web-app/app/models/task.rb", true, false, false],
+  ["rails-task-api-web-app/app/controllers/application_controller.rb", true, false, false],
+  ["rails-task-fullstack-web-app/spec/models/task_spec.rb", true, false, false],
+  ["rails-task-fullstack-web-app/Gemfile.lock", true, false, false],
+  ["rails-task-fullstack-web-app/README.md", false, true, false],
+  ["rails-task-api-web-app/app/models/AGENTS.md", false, true, false],
+  ["docs/03-functional-specification.md", false, true, false],
+  ["docs/screenshots/login.png", false, true, false],
+  [".claude/rules/github-actions.md", false, true, false],
+  ["README.md", false, true, false],
+  ["CLAUDE.md", false, true, false],
+  ["AGENTS.md", false, true, false],
+  [".markdownlint-cli2.jsonc", false, true, false],
+  [".remarkrc.mjs", false, true, false],
+  [".remarkignore", false, true, false],
+  ["package.json", true, true, false],
+  ["package-lock.json", true, true, false],
+  [".github/workflows/ci.yml", true, false, true],
+  [".github/workflows/release.yaml", true, false, true],
+  [".github/workflows/AGENTS.md", false, true, false],
+  [".github/scripts/verify-path-filters.mjs", true, false, false],
+  [".github/dependabot.yml", true, false, false],
+  ["Makefile", true, false, true],
+  ["docker-compose.yml", true, false, false],
+  [".env.example", true, false, false],
+  ["scripts/new_tool.sh", true, false, false],
+  ["terraform/main.tf", true, false, false],
 ];
 
 // ci.yml の changes ジョブから、指定 id の paths-filter ステップの定義を取り出す。
@@ -60,25 +64,25 @@ function matches({ patterns, every }, file) {
 
 const workflow = yaml.load(fs.readFileSync(WORKFLOW, "utf8"));
 const steps = workflow.jobs.changes.steps;
-const code = filterOf(steps, "code");
-const docs = filterOf(steps, "docs");
+const FILTERS = ["code", "docs", "workflows"];
+const filters = FILTERS.map((id) => filterOf(steps, id));
 
 let failed = 0;
-const rows = EXPECTATIONS.map(([file, expectedCode, expectedDocs]) => {
-  const actualCode = matches(code, file);
-  const actualDocs = matches(docs, file);
-  const ok = actualCode === expectedCode && actualDocs === expectedDocs;
+const rows = EXPECTATIONS.map(([file, ...expected]) => {
+  const actual = filters.map((filter) => matches(filter, file));
+  const ok = actual.every((value, i) => value === expected[i]);
   if (!ok) failed += 1;
-  return { ok, file, actualCode, actualDocs, expectedCode, expectedDocs };
+  return { ok, file, actual, expected };
 });
 
+const format = (values) => FILTERS.map((id, i) => `${id}=${String(values[i]).padEnd(5)}`).join(" ");
 for (const row of rows) {
-  const detail = row.ok ? "" : `  <- 期待 code=${row.expectedCode} docs=${row.expectedDocs}`;
-  console.log(`${row.ok ? "OK " : "NG "} ${row.file.padEnd(60)} code=${String(row.actualCode).padEnd(5)} docs=${row.actualDocs}${detail}`);
+  const detail = row.ok ? "" : `  <- 期待 ${format(row.expected)}`;
+  console.log(`${row.ok ? "OK " : "NG "} ${row.file.padEnd(60)} ${format(row.actual)}${detail}`);
 }
 
 // すべてのパスが最低 1 つの検証に割り当てられていること（何も動かない変更を作らない）。
-const orphans = rows.filter((row) => !row.actualCode && !row.actualDocs).map((row) => row.file);
+const orphans = rows.filter((row) => !row.actual.some(Boolean)).map((row) => row.file);
 if (orphans.length > 0) {
   failed += orphans.length;
   console.log(`\nどのジョブにも割り当てられないパス: ${orphans.join(", ")}`);

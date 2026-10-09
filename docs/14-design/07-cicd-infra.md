@@ -9,6 +9,7 @@
   - [パスフィルターで発火条件を分ける](#パスフィルターで発火条件を分ける)
   - [Markdown lint](#markdown-lint)
   - [Link check](#link-check)
+  - [actionlint](#actionlint)
   - [テストマトリクスと :js ジョブ](#テストマトリクスと-js-ジョブ)
   - [依存の更新（Dependabot）](#依存の更新dependabot)
 - [ローカルインフラ（docker-compose）](#ローカルインフラdocker-compose)
@@ -30,6 +31,7 @@ CI は `.github/workflows/ci.yml` の単一ワークフロー。`push`（main）
 | **Detect changes** | パスフィルターで変更範囲（`code` / `docs` 出力）を 1 か所で判定する |
 | **Markdown lint** | リポジトリ全体の markdown を lint（`docs == 'true'` のときのみ） |
 | **Link check** | markdown のリンク切れを検証（変更種別によらず常時） |
+| **actionlint** | workflow を actionlint で検査（`workflows == 'true'` のときのみ） |
 | **Test (${{ matrix.app }})** | 両アプリで RSpec を実行（`code == 'true'` のときのみ） |
 | **System (:js, headless Chrome)** | フルスタック版の `:js` System spec を実行（`code == 'true'` のときのみ） |
 
@@ -81,6 +83,14 @@ filters: |
 - **変更種別によらず常時実行する**（`Detect changes` の判定を使わない）。docs からコードへのリンクがあり、コードだけの PR でファイル名を変えてもリンクは切れるため。docs の変更時だけ動かすと、この経路を見逃す。
 - **違反ゼロ**が基準。
 
+### actionlint
+
+- workflow 自身を **actionlint** で検査する。YAML 構文に加え、`${{ }}` 式の型・runner ラベル・action の `with:` 入力・信頼できない入力の `run:` への直接展開と、**`run:` の中身を shellcheck に流した結果**を見る。人のレビューは YAML の構造は見ても `run: |` の中のシェルまでは目が届きにくい（#95）。
+- 取得は **Docker イメージのタグ固定**（`rhysd/actionlint:<ver>`。shellcheck もイメージ同梱のため一緒に固定される）。バージョンは `Makefile` の `ACTIONLINT_VERSION` 1 か所に置き、CI は `make actionlint` を呼ぶ（CI とローカルが同一コマンド）。download スクリプトを引数なしで実行する方式は、毎回最新版を取り、上流に新ルールが入った日にコード無変更の CI が落ちるため採らない。
+- 発火は `Detect changes` の `workflows` 出力（`.github/workflows/*.{yml,yaml}` と `Makefile`）。対象リストで書くが、actionlint の検査対象がこの範囲で閉じているため fail-open にならない。`Makefile` を含めるのは、バージョンを上げた PR で新しい版の検査を既存 workflow に当てるため。同じディレクトリの `AGENTS.md` だけを変えた PR では動かない。
+- **Dependabot はこのタグを追えない**（`run:` や Makefile の中は対象外）ため、バージョンは手動で更新する。
+- 導入時の指摘は抑制せず修正で解消する。**違反ゼロ**が基準。
+
 ### テストマトリクスと :js ジョブ
 
 - **Test ジョブ**は `matrix.app = [fullstack, api]` で 2 アプリを並列実行（`fail-fast: false`）。各ジョブで `postgres:16` サービスを起動し、`bin/rails db:test:prepare` → `bundle exec rspec`（RSpec）の順に走らせる。
@@ -119,7 +129,7 @@ filters: |
 | DB | `db-setup` / `migrate` / `db-prepare` / `db-reset` / `seed` |
 | 実行 | `server` / `console` |
 | テスト | `test`（RSpec） / `test-js`（`:js`、fullstack のみ） / `test-all`（両アプリ） |
-| 品質 | `lint` / `lint-fix`（RuboCop） / `lint-md` / `lint-md-fix`（markdownlint） / `lint-links`（リンク切れ） / `security`（bundler-audit + Brakeman） / `ci` / `ci-all` |
+| 品質 | `lint` / `lint-fix`（RuboCop） / `lint-md` / `lint-md-fix`（markdownlint） / `lint-links`（リンク切れ） / `actionlint`（workflow の検査） / `security`（bundler-audit + Brakeman） / `ci` / `ci-all` |
 
 > ローカル CI（`make ci`）と GitHub Actions の Test ジョブは同等のチェックを意図する。push 前にローカルで揃えられる。
 

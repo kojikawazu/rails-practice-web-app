@@ -54,7 +54,7 @@ APIクライアント → Rails（Router → Controller → Service → Model �
 | テスト | RSpec, FactoryBot, Shoulda Matchers |
 | 認証 | has_secure_password（bcrypt） |
 | テンプレート | ERB（Project 1のみ） |
-| 補助ツール | Node.js（ルートの `package.json`。markdownlint-cli2・remark-validate-links（リンク切れチェック）と CI のパス分類検証のみ。アプリ本体は Node 非依存） |
+| 補助ツール | Node.js（ルートの `package.json`。markdownlint-cli2・remark-validate-links（リンク切れチェック）と CI のパス分類検証のみ。アプリ本体は Node 非依存）、actionlint（Docker イメージ `rhysd/actionlint`。バージョンは `Makefile` の `ACTIONLINT_VERSION`） |
 
 ## インフラストラクチャ
 
