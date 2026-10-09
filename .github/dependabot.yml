@@ -6,7 +6,7 @@
 #
 # 対象外:
 #   - 両 Rails アプリの gem（bundler）: 更新は手動で行い、既知の脆弱性は CI の bundler-audit が止める。
-#   - run: やスクリプト内で固定しているツール（setup-ruby が読む .ruby-version 等）。
+#   - run: やスクリプト内で固定しているツール（setup-ruby が読む .ruby-version、Makefile の ACTIONLINT_VERSION 等）。
 version: 2
 updates:
   # workflows の `uses:` で参照するアクション。

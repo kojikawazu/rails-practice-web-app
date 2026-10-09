@@ -17,6 +17,10 @@ API     := rails-task-api-web-app
 APP     ?= $(FS)
 APPS    := $(FS) $(API)
 COMPOSE := docker compose
+# actionlint（workflow の検査）のバージョン。Docker イメージのタグとして固定し、CI（ci.yml の
+# actionlint ジョブ）もこの Makefile を経由して同じバージョン・同じコマンドで実行する。
+# Dependabot はこのタグを追えないため手動で更新する（更新 PR では actionlint ジョブが走る）。
+ACTIONLINT_VERSION := 1.7.12
 
 .DEFAULT_GOAL := help
 
@@ -131,6 +135,10 @@ lint-md-fix: node_modules ## markdownlint 自動修正（リポジトリ全体�
 .PHONY: lint-links
 lint-links: node_modules ## リンク切れチェック（リポジトリ内のリンクのみ, CI と同一バージョン・同一コマンド）
 	npm run lint:links
+
+.PHONY: actionlint
+actionlint: ## GitHub Actions workflow の検査（actionlint + shellcheck, Docker, CI と同一バージョン・同一コマンド）
+	docker run --rm -v "$(CURDIR)":/repo -w /repo rhysd/actionlint:$(ACTIONLINT_VERSION) -color
 
 # ルートの補助ツール（markdownlint 等）を package-lock.json どおりに入れる。
 # lockfile が更新されたら入れ直す。
