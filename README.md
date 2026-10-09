@@ -100,7 +100,7 @@ clone 後、以下で両アプリを起動できます（`make` ショートカ�
 | Docker / Docker Compose | PostgreSQL・MinIO の起動に使用 |
 | Git | — |
 | ImageMagick または libvips | 画像サムネイル生成用: `brew install imagemagick` |
-| Node.js 22 以上 | `make lint-md` / `make lint-md-fix` のみで使用（markdownlint をルートの `package.json` で固定）。Rails アプリ本体は Node に依存しない |
+| Node.js 22 以上 | `make lint-md` / `make lint-md-fix` / `make lint-links` のみで使用（markdownlint・remark-validate-links をルートの `package.json` で固定）。Rails アプリ本体は Node に依存しない |
 
 ### 起動手順
 
@@ -164,6 +164,7 @@ GitHub Actions（`.github/workflows/ci.yml`）で、`main` への push と全 PR
 |---|---|---|
 | `Detect changes` | 差分パスを判定して変更範囲（`code` / `docs`）を後続ジョブへ渡し、代表パスの分類が期待どおりかも検証する軽量ジョブ | 常時 |
 | `Markdown lint` | markdownlint-cli2 でリポジトリ全体の markdown を検証 | ドキュメント変更時 |
+| `Link check` | remark-validate-links で markdown のリンク切れ（リポジトリ内のファイル・見出しアンカー）を検証。外部 URL は対象外 | 常時（docs からコードへのリンクがあるため） |
 | `Lint & Security (matrix)` | 両アプリで RuboCop + bundler-audit（`check --update`）+ Brakeman | コード変更時 |
 | `Test (matrix)` | 両アプリで RSpec（`bundle exec rspec`） | コード変更時 |
 | `System (:js)` | フルスタック版の JS system spec（`rspec --tag js`、headless Chrome） | コード変更時 |
@@ -180,6 +181,7 @@ make test-all      # 両アプリでテスト
 make test-js       # JS system spec（fullstack のみ、要 Chrome）
 make ci            # ローカル CI 一括（rubocop + security + tests）
 make lint-md       # markdownlint（CI と同一バージョン・同一設定。初回は npm ci を自動実行。自動修正は make lint-md-fix）
+make lint-links    # リンク切れチェック（リポジトリ内のリンクのみ。CI と同一バージョン・同一設定）
 ```
 
 `make` を使わない場合の素のコマンド:

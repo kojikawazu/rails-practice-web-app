@@ -18,6 +18,7 @@ jobs:
   # 変更内容に関係のあるジョブだけを動かすための入口（.claude/rules/github-actions.md）。
   #   code=true  -> 静的解析・セキュリティ検査（lint-security）とテスト（test / system-js）を実行する
   #   docs=true  -> markdown lint を実行する
+  # 判定に関係なく常に実行するジョブ: secret-scan / link-check（理由は各ジョブのコメント）。
   # 下流ジョブはワークフローレベルの paths ではなく if 条件でスキップする。
   # skip されたジョブは required check 上では成功扱いになるため、
   # ブランチ保護を有効にしてもマージが pending で止まらない。
@@ -51,6 +52,8 @@ jobs:
               - '!docs/**'
               - '!.claude/**'
               - '!.markdownlint-cli2.jsonc'
+              - '!.remarkrc.mjs'
+              - '!.remarkignore'
 
       # ドキュメント側は対象リストでよい（漏れても「lint が走らない」だけで、
       # 未検証のコードがマージされる方向には倒れない）。
@@ -67,6 +70,8 @@ jobs:
               - 'docs/**'
               - '.claude/**'
               - '.markdownlint-cli2.jsonc'
+              - '.remarkrc.mjs'
+              - '.remarkignore'
               - 'package.json'
               - 'package-lock.json'
 
@@ -110,6 +115,29 @@ jobs:
 
       - name: markdownlint
         run: npm run lint:md
+
+  # リンク切れチェック（リポジトリ内のリンクのみ。外部 URL は見ない）。
+  # markdown-lint と違い、変更種別を問わず常に実行する。docs からコードへのリンク
+  # （docs/10 → app/**/*.rb 等）があり、コードだけの PR でファイル名を変えても
+  # リンクは切れるため。docs の変更時だけ動かすと、この経路を見逃す。
+  # 設定は .remarkrc.mjs / .remarkignore、バージョンは package-lock.json で固定し、
+  # ローカルの make lint-links と同じコマンドを使う。
+  link-check:
+    name: Link check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install tooling
+        run: npm ci
+
+      - name: remark-validate-links
+        run: npm run lint:links
 
   # 鍵ファイルの再混入を防ぐガード。
   # master.key は一度 push すると履歴から消せず、鍵のローテーション以外に対処手段が

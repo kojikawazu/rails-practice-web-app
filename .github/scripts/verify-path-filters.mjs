@@ -29,6 +29,8 @@ const EXPECTATIONS = [
   ["CLAUDE.md", false, true],
   ["AGENTS.md", false, true],
   [".markdownlint-cli2.jsonc", false, true],
+  [".remarkrc.mjs", false, true],
+  [".remarkignore", false, true],
   ["package.json", true, true],
   ["package-lock.json", true, true],
   [".github/workflows/ci.yml", true, false],

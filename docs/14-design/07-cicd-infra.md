@@ -8,6 +8,7 @@
   - [ジョブ構成](#ジョブ構成)
   - [パスフィルターで発火条件を分ける](#パスフィルターで発火条件を分ける)
   - [Markdown lint](#markdown-lint)
+  - [Link check](#link-check)
   - [テストマトリクスと :js ジョブ](#テストマトリクスと-js-ジョブ)
   - [依存の更新（Dependabot）](#依存の更新dependabot)
 - [ローカルインフラ（docker-compose）](#ローカルインフラdocker-compose)
@@ -28,6 +29,7 @@ CI は `.github/workflows/ci.yml` の単一ワークフロー。`push`（main）
 |--------|------|
 | **Detect changes** | パスフィルターで変更範囲（`code` / `docs` 出力）を 1 か所で判定する |
 | **Markdown lint** | リポジトリ全体の markdown を lint（`docs == 'true'` のときのみ） |
+| **Link check** | markdown のリンク切れを検証（変更種別によらず常時） |
 | **Test (${{ matrix.app }})** | 両アプリで RSpec を実行（`code == 'true'` のときのみ） |
 | **System (:js, headless Chrome)** | フルスタック版の `:js` System spec を実行（`code == 'true'` のときのみ） |
 
@@ -71,6 +73,14 @@ filters: |
 - 見た目のみの規則（`MD013` 行長 / `MD060` 表のパイプ位置 / `MD033` インライン HTML）は無効化している。markdown formatter を導入していないため、Linter で見た目を見ない方針（`.claude/rules/static-analysis.md`）。
 - **違反ゼロ**が基準。自動修正は `make lint-md-fix`。
 
+### Link check
+
+- ツールは **remark-cli + remark-validate-links**。markdownlint と同じくルートの `package.json` で完全固定し、CI とローカルは同一コマンド（`npm run lint:links` / `make lint-links`）。設定は `.remarkrc.mjs`、対象外は `.remarkignore`（markdownlint の `ignores` と同じ範囲）。
+- 検査するのは**リポジトリ内のリンクのみ**（相対パスのファイル・見出しアンカー）。**別ファイルの見出し**（`other.md#heading`）と **md 以外のファイル**（docs → `app/**/*.rb` 等）も検証する。日本語見出しのアンカーは GitHub と同じ規則で解決する。markdown-link-check は別ファイルの見出し切れを検出できないため採用しなかった（#73）。
+- **外部 URL は検査しない**。レート制限・一時的な不調で、無関係な PR が落ちるため。
+- **変更種別によらず常時実行する**（`Detect changes` の判定を使わない）。docs からコードへのリンクがあり、コードだけの PR でファイル名を変えてもリンクは切れるため。docs の変更時だけ動かすと、この経路を見逃す。
+- **違反ゼロ**が基準。
+
 ### テストマトリクスと :js ジョブ
 
 - **Test ジョブ**は `matrix.app = [fullstack, api]` で 2 アプリを並列実行（`fail-fast: false`）。各ジョブで `postgres:16` サービスを起動し、`bin/rails db:test:prepare` → `bundle exec rspec`（RSpec）の順に走らせる。
@@ -80,7 +90,7 @@ filters: |
 
 ### 依存の更新（Dependabot）
 
-- `.github/dependabot.yml` で、**GitHub Actions**（workflows の `uses:`）と**ルートの npm**（markdownlint-cli2 / picomatch / js-yaml）の更新 PR を毎週月曜 09:00（JST）に作る。
+- `.github/dependabot.yml` で、**GitHub Actions**（workflows の `uses:`）と**ルートの npm**（markdownlint-cli2 / remark-cli / remark-validate-links / picomatch / js-yaml）の更新 PR を毎週月曜 09:00（JST）に作る。
 - PR は**エコシステムごとに 1 本へまとめる**（groups）。アクションごとに分かれると、マージのたびに全ジョブが走るため。
 - 手で一括置換しないのは、Node 20 → 24 のようなランタイム移行のたびに同じ手作業が発生するため（#108）。
 - npm の更新 PR は `package.json` / `package-lock.json` を変えるため、`docs` 分類にも流れ、**新バージョンで全 Markdown が通るか**を Markdown lint が検証する。
@@ -109,7 +119,7 @@ filters: |
 | DB | `db-setup` / `migrate` / `db-prepare` / `db-reset` / `seed` |
 | 実行 | `server` / `console` |
 | テスト | `test`（RSpec） / `test-js`（`:js`、fullstack のみ） / `test-all`（両アプリ） |
-| 品質 | `lint` / `lint-fix`（RuboCop） / `lint-md` / `lint-md-fix`（markdownlint） / `security`（bundler-audit + Brakeman） / `ci` / `ci-all` |
+| 品質 | `lint` / `lint-fix`（RuboCop） / `lint-md` / `lint-md-fix`（markdownlint） / `lint-links`（リンク切れ） / `security`（bundler-audit + Brakeman） / `ci` / `ci-all` |
 
 > ローカル CI（`make ci`）と GitHub Actions の Test ジョブは同等のチェックを意図する。push 前にローカルで揃えられる。
 
