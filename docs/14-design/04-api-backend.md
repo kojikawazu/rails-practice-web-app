@@ -67,7 +67,7 @@
 
 - 認証は **JWT（Bearer トークン）**。`rails new --api` はセッション/Cookie を持たないため、Cookie 非依存のトークン認証を採る。
 - トークンの encode / decode は `app/lib/json_web_token.rb`（`JsonWebToken` モジュール）に集約する。
-  - 署名鍵は `Rails.application.secret_key_base`、`exp` は既定 24 時間。decode は `JWT::DecodeError` を捕捉して `nil` を返す。
+  - 署名鍵は `Rails.application.secret_key_base`、`exp` は既定 24 時間。署名鍵は環境依存値のため定数化せず、`JsonWebToken.secret_key`（private）で呼び出しごとに参照する（ローテーション・テストでの差し替えを効かせるため）。decode は `JWT::DecodeError` を捕捉して `nil` を返す。
 - `ApplicationController#authenticate_user!`（`before_action`）が `Authorization: Bearer <token>` を検証し、`current_user` を確立する。無効・未存在なら **401**。
 - `AuthController` のみ `skip_before_action :authenticate_user!` で signup / login を公開する。
 - ステートレスのため**ログアウト API は持たない**（クライアントがトークンを破棄）。

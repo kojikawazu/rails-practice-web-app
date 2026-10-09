@@ -29,7 +29,7 @@
 
 | 対象 | 方針 |
 |------|------|
-| `JsonWebToken`（API・`spec/lib/`） | **モック無し（純粋）**。DB非依存のため実物の JWT ライブラリで round-trip / 有効期限 / 改ざん / 不正入力を検証 |
+| `JsonWebToken`（API・`spec/lib/`） | **モック無し（純粋）**。DB非依存のため実物の JWT ライブラリで round-trip / 有効期限 / 改ざん / 不正入力を検証。鍵ローテーションの検証のみ `Rails.application.secret_key_base` を差し替える（環境依存値の入口であり、JWT ライブラリはモックしない） |
 | `AuthService.login`（両アプリ・`spec/services/`） | **DB 境界をモック**。`User.find_by` **だけ**を `allow` でスタブ（verified `instance_double`）。呼び出し順を assert する `expect(...).to receive` は使わない。API 版は Result（token 検証）、フルスタック版は `User`/nil を返す点のみ異なる |
 | `TaskImageService`（fullstack・`spec/services/`） | **モック無し（実 substrate）**。test 環境の Active Storage は Disk（`tmp/storage`）で実物が安く動くため、実 blob / attachment で stage のオーファン防止・signed_id の照合（用途・利用者・期限・添付済み）・attach・purge を検証。`create_and_upload!`/`attach`/`purge` をモックすると委譲の実装追認になる |
 | `AuthService.signup` | UT を書かない（分岐が save 成否のみ＝モデル検証の二重化になる）。IT + シナリオ/System で担保 |
@@ -48,7 +48,7 @@
 
 | テスト種別 | 対象 | テスト内容 |
 |-----------|------|-----------|
-| Unit spec（API） | JsonWebToken | encode/decode の round-trip / 既定 exp ≒24h / 明示 exp 尊重 / 期限切れ・改ざん・不正入力で nil（例外を投げない） |
+| Unit spec（API） | JsonWebToken | encode/decode の round-trip / 既定 exp ≒24h / 明示 exp 尊重 / 期限切れ・改ざん・不正入力で nil（例外を投げない）/ 署名鍵を呼び出しごとに参照（`secret_key_base` のローテーション後は旧トークンが nil・新トークンは検証成功） |
 | Unit spec（API） | AuthService.login | 正資格情報で成功・token に user_id / 誤パスワードで 401・token なし / メール不在も 401（誤り時と同一メッセージ＝列挙攻撃対策） |
 | Unit spec（fullstack） | AuthService.login | 正資格情報で該当ユーザーを返す / 誤パスワードで nil / メール不在も nil（誤り時と同一結果＝列挙攻撃対策）。`User.find_by` のみモック |
 | Unit spec（fullstack） | TaskImageService | stage: 全有効→blob 返す + blob 生成 / 不正混在→nil・blob 未生成（オーファン防止）/ 空→[] ・ signed_id_for/resolve: 発行した利用者なら blob を返す / 他ユーザー向け・既定用途（画像 URL）・改ざん・期限切れ（`travel_to`）・添付済み・不正混在→nil ・ attach→images 増 ・ purge→attachment 削除。実 test-disk・モック無し |
