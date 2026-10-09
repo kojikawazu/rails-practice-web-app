@@ -46,4 +46,22 @@ RSpec.describe JsonWebToken do
       expect(described_class.decode(nil)).to be_nil
     end
   end
+
+  # 署名鍵は環境ごとに変わる値（ruby.md「定数の配置」）のため、クラスロード時に固定せず
+  # 呼び出しごとに参照する。鍵のローテーションを再現するため secret_key_base だけを差し替える。
+  describe "署名鍵の参照タイミング" do
+    it "secret_key_base をローテーションすると、旧鍵で発行したトークンは検証に失敗する" do
+      token = described_class.encode(user_id: 1)
+      allow(Rails.application).to receive(:secret_key_base).and_return(SecureRandom.hex(64))
+
+      expect(described_class.decode(token)).to be_nil
+    end
+
+    it "ローテーション後の鍵で発行したトークンは検証に成功する" do
+      allow(Rails.application).to receive(:secret_key_base).and_return(SecureRandom.hex(64))
+      token = described_class.encode(user_id: 1)
+
+      expect(described_class.decode(token)[:user_id]).to eq(1)
+    end
+  end
 end
