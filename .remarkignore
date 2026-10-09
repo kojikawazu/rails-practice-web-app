@@ -1,0 +1,6 @@
+# リンク切れチェック（npm run lint:links）の対象外。生成物・依存物を除く。
+# markdownlint の ignores（.markdownlint-cli2.jsonc）と同じ範囲に揃える。
+node_modules/
+vendor/
+tmp/
+log/

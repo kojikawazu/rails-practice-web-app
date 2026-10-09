@@ -128,6 +128,10 @@ lint-md: node_modules ## markdownlint 実行（リポジトリ全体, CI と同�
 lint-md-fix: node_modules ## markdownlint 自動修正（リポジトリ全体）
 	npm run lint:md:fix
 
+.PHONY: lint-links
+lint-links: node_modules ## リンク切れチェック（リポジトリ内のリンクのみ, CI と同一バージョン・同一コマンド）
+	npm run lint:links
+
 # ルートの補助ツール（markdownlint 等）を package-lock.json どおりに入れる。
 # lockfile が更新されたら入れ直す。
 node_modules: package-lock.json
