@@ -17,8 +17,13 @@ RSpec.configure do |config|
   # JS 必須の挙動（Turbo の turbo_confirm 等）は :js タグを付けた spec のみ
   # headless Chrome（selenium）で駆動する。selenium-webdriver の Selenium Manager が
   # 対応する chromedriver を自動取得する。
+  #
+  # CSP 違反はブラウザのコンソールに出るだけで、ページ操作は成功してしまう（例外にならない）。
+  # spec から検出できるよう、ブラウザログ（goog:loggingPrefs）を取得可能にしておく。
   config.before(:each, type: :system, js: true) do
-    driven_by :selenium, using: :headless_chrome
+    driven_by :selenium, using: :headless_chrome do |options|
+      options.logging_prefs = { browser: "ALL" }
+    end
   end
 
   # 通常の `rspec` 実行では JS テストを除外し、Chrome 不要・高速を維持する。

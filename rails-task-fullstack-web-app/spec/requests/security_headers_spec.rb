@@ -33,12 +33,19 @@ RSpec.describe "セキュリティヘッダー（CSP）", type: :request do
     expect(csp).to include("frame-ancestors 'none'")
   end
 
-  # インライン style 属性は CSS クラスへ移行済み（#101）。属性・<style> ブロックのどちらも
-  # 自オリジンの CSS 以外を許さず、CSS インジェクションによる情報漏えいの経路を残さない。
-  it "style は自オリジンの CSS だけを許可し、CSP のどこにも unsafe-inline を含まない" do
+  # インライン style 属性は CSS クラスへ移行済み（#101）。属性は一切許さず、<style> ブロックも
+  # nonce の無いもの（＝注入されたもの）は許さず、CSS インジェクションによる情報漏えいの経路を残さない。
+  it "style は自オリジンの CSS を許可し、CSP のどこにも unsafe-inline を含まない" do
     expect(csp).to match(/style-src [^;]*'self'/)
     expect(csp).not_to include("style-src-attr")
     expect(csp).not_to include("'unsafe-inline'")
+  end
+
+  # Turbo はプログレスバーの <style> に csp_meta_tag の nonce を付けて挿入する（#132）。
+  # style-src に nonce が無いとブロックされ、ブラウザのコンソールに CSP 違反が出続ける。
+  it "style-src に nonce を含め、Turbo が挿入する <style> を許可する" do
+    expect(csp).to match(/style-src [^;]*'nonce-/)
+    expect(response.body).to match(/<meta name="csp-nonce" content="[^"]+"/)
   end
 
   it "preview_url のプレビューのため frame-src は http/https に限る（javascript: や data: は許可しない）" do

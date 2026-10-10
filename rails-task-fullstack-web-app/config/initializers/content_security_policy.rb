@@ -29,6 +29,7 @@ Rails.application.configure do
 
     # CSS は自オリジンのみ。style_src_attr を指定しないため、style 属性も style_src に従い拒否される
     # （View では style 属性を使わない。spec/requests/security_headers_spec.rb で検査する）。
+    # 例外として、nonce を持つ <style> 要素だけは許可する（下記 nonce_directives）。
     policy.style_src :self
 
     # タスクの preview_url プレビュー用。任意の外部サイトを埋め込むため http/https を許可し、
@@ -37,7 +38,10 @@ Rails.application.configure do
     policy.frame_src :http, :https
   end
 
-  # nonce はレスポンスごとに使い捨てる（推測されると script-src の制限を回避されるため）。
+  # nonce はレスポンスごとに使い捨てる（推測されると script-src / style-src の制限を回避されるため）。
   config.content_security_policy_nonce_generator = ->(_request) { SecureRandom.base64(16) }
-  config.content_security_policy_nonce_directives = %w[script-src]
+  # style-src にも nonce を付ける。Turbo はプログレスバーの CSS を <style> として挿入し、
+  # csp_meta_tag の nonce を付与するため、style-src に nonce が無いとブロックされる（#132）。
+  # nonce は要素にしか付けられないため、style 属性の拒否は維持される（unsafe-inline は付けない）。
+  config.content_security_policy_nonce_directives = %w[script-src style-src]
 end
