@@ -69,7 +69,7 @@ class ProjectsController < ApplicationController
     if @project.valid?
       render :confirm
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 
@@ -83,7 +83,7 @@ class ProjectsController < ApplicationController
       reset_pending_project
       redirect_to @project, notice: "プロジェクトを作成しました。"
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -94,7 +94,7 @@ class ProjectsController < ApplicationController
     if ProjectService.update(@project, project_params)
       redirect_to @project, notice: "プロジェクトを更新しました。", status: :see_other
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 
@@ -130,7 +130,7 @@ class ProjectsController < ApplicationController
       session[:pending_project] = project_params.to_h
       redirect_to confirm_projects_path, status: :see_other
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 

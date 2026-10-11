@@ -66,7 +66,7 @@ RSpec.describe "Tasks", type: :request do
     it "タイトルが空なら作成せず、new を 422 で再描画する" do
       log_in
       post project_tasks_path(project), params: { task: { title: "" } }
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
   end
 
@@ -85,7 +85,7 @@ RSpec.describe "Tasks", type: :request do
     it "検証に失敗したら確認画面へ進ませず、new を 422 で再描画する" do
       log_in
       post confirm_project_tasks_path(project), params: { task: { title: "" } }
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
 
     it "「修正する」押下時は入力値を保持したままフォームへ戻す" do
@@ -110,7 +110,7 @@ RSpec.describe "Tasks", type: :request do
     it "検証に失敗したら edit を 422 で再描画する" do
       log_in
       post confirm_project_task_path(project, task), params: { task: { title: "" } }
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
   end
 
@@ -170,7 +170,7 @@ RSpec.describe "Tasks", type: :request do
     it "未着手 → 完了 は UI を経由しない直接送信でも拒否し、edit を 422 で再描画して値も変えない" do
       log_in
       patch project_task_path(project, task), params: { task: { status: "completed" } }
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(task.reload.status).to eq("not_started")
     end
 
@@ -178,7 +178,7 @@ RSpec.describe "Tasks", type: :request do
       done = create(:task, :completed, project: project)
       log_in
       patch project_task_path(project, done), params: { task: { status: "not_started" } }
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(done.reload.status).to eq("completed")
     end
   end
@@ -195,7 +195,7 @@ RSpec.describe "Tasks", type: :request do
       expect {
         post project_tasks_path(project), params: { task: { title: "完了で作成", status: "completed" } }
       }.not_to change(Task, :count)
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
   end
 
@@ -331,7 +331,7 @@ RSpec.describe "Tasks", type: :request do
                   images: [ fixture_file_upload("not_image.txt", "text/plain") ] }
         }
       }.not_to change(ActiveStorage::Blob, :count)
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).to include("png / jpeg / gif / webp")
     end
   end
@@ -365,7 +365,7 @@ RSpec.describe "Tasks", type: :request do
           task: { title: "横取り", status: "not_started", image_signed_ids: [ foreign_id ] }
         }
       }.not_to change(Task, :count)
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).to include(invalid_image_message)
     end
 
@@ -381,7 +381,7 @@ RSpec.describe "Tasks", type: :request do
           task: { title: "横取り", status: "not_started", image_signed_ids: [ url_signed_id ] }
         }
       }.not_to change(ActiveStorage::Attachment, :count)
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
 
     it "改ざんされた signed_id は 500 にせず 422 を返す" do
@@ -389,7 +389,7 @@ RSpec.describe "Tasks", type: :request do
       post project_tasks_path(project), params: {
         task: { title: "改ざん", status: "not_started", image_signed_ids: [ "tampered--signature" ] }
       }
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).to include(invalid_image_message)
     end
 
@@ -402,7 +402,7 @@ RSpec.describe "Tasks", type: :request do
       expect(response).to redirect_to(project_path(project))
 
       expect { post project_tasks_path(project), params: params }.not_to change(Task, :count)
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
 
     it "更新でも不正な signed_id は添付せず 422 を返す" do
@@ -412,7 +412,7 @@ RSpec.describe "Tasks", type: :request do
           task: { title: task.title, status: task.status, image_signed_ids: [ "tampered--signature" ] }
         }
       }.not_to change { task.reload.images.count }
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).to include(invalid_image_message)
     end
 
@@ -421,7 +421,7 @@ RSpec.describe "Tasks", type: :request do
       post confirm_project_tasks_path(project), params: {
         task: { title: "改ざん", status: "not_started", image_signed_ids: [ "tampered--signature" ] }
       }
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).to include(invalid_image_message)
       expect(response.body).not_to include('name="task[image_signed_ids][]"')
     end
@@ -558,7 +558,7 @@ RSpec.describe "Tasks", type: :request do
       post confirm_project_tasks_path(project), params: {
         task: { title: "自ホスト", status: "not_started", preview_url: "http://www.example.com/admin" }
       }
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).not_to include("<iframe")
     end
 
@@ -567,7 +567,7 @@ RSpec.describe "Tasks", type: :request do
       post confirm_project_tasks_path(project), params: {
         task: { title: "ローカル", status: "not_started", preview_url: "http://localhost:3000/" }
       }
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
 
     it "確認→作成で preview_url が永続化される" do
@@ -585,7 +585,7 @@ RSpec.describe "Tasks", type: :request do
       post confirm_project_tasks_path(project), params: {
         task: { title: "悪意URL", status: "not_started", preview_url: "javascript:alert(document.cookie)" }
       }
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(response.body).not_to include("<iframe")
     end
 
@@ -596,7 +596,7 @@ RSpec.describe "Tasks", type: :request do
           task: { title: "悪意URL", status: "not_started", preview_url: "javascript:alert(1)" }
         }
       }.not_to change(Task, :count)
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
   end
 end

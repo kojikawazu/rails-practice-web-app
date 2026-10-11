@@ -45,7 +45,7 @@ RSpec.describe "Api::V1::Tasks", type: :request do
 
     it "検証に失敗したら統一エラー形式で 422 を返す" do
       post api_v1_project_tasks_path(project), params: { task: { title: "" } }, headers: headers, as: :json
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
   end
 
@@ -75,7 +75,7 @@ RSpec.describe "Api::V1::Tasks", type: :request do
       patch api_v1_project_task_path(project, doing),
             params: { task: { status: "not_started" } },
             headers: headers, as: :json
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(doing.reload.status).to eq("in_progress")
     end
 
@@ -92,7 +92,7 @@ RSpec.describe "Api::V1::Tasks", type: :request do
       patch api_v1_project_task_path(project, task),
             params: { task: { status: "completed" } },
             headers: headers, as: :json
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(JSON.parse(response.body)["errors"]).to be_present
       expect(task.reload.status).to eq("not_started")
     end
@@ -102,7 +102,7 @@ RSpec.describe "Api::V1::Tasks", type: :request do
       patch api_v1_project_task_path(project, done),
             params: { task: { status: "not_started" } },
             headers: headers, as: :json
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
       expect(done.reload.status).to eq("completed")
     end
   end
@@ -122,7 +122,7 @@ RSpec.describe "Api::V1::Tasks", type: :request do
              params: { task: { title: "完了で作成", status: "completed" } },
              headers: headers, as: :json
       }.not_to change(Task, :count)
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
   end
 

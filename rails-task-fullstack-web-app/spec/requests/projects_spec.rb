@@ -45,7 +45,7 @@ RSpec.describe "Projects", type: :request do
     it "タイトルが空なら作成せず、new を 422 で再描画する" do
       log_in
       post projects_path, params: { project: { title: "" } }
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
 
     it "作成成功で session の退避データをクリアする" do
@@ -76,7 +76,7 @@ RSpec.describe "Projects", type: :request do
     it "検証に失敗したら確認画面へ進ませず、new を 422 で再描画する" do
       log_in
       post confirm_projects_path, params: { project: { title: "" } }
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
   end
 
@@ -145,7 +145,7 @@ RSpec.describe "Projects", type: :request do
     it "検証に失敗したら edit を 422 で再描画する" do
       log_in
       post confirm_project_path(project), params: { project: { title: "" } }
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
   end
 
