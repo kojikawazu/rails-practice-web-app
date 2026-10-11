@@ -63,6 +63,21 @@ RSpec.describe Task, type: :model do
       expect(task).not_to be_valid
       expect(task.errors[:images]).to be_present
     end
+
+    it '上限ちょうど（Task::MAX_IMAGE_SIZE）の画像は valid' do
+      task = build(:task)
+      task.images.attach(io: StringIO.new("\0" * Task::MAX_IMAGE_SIZE),
+                         filename: 'limit.png', content_type: 'image/png')
+      expect(task).to be_valid
+    end
+
+    it '上限を 1 バイトでも超える画像は invalid' do
+      task = build(:task)
+      task.images.attach(io: StringIO.new("\0" * (Task::MAX_IMAGE_SIZE + 1)),
+                         filename: 'large.png', content_type: 'image/png')
+      expect(task).not_to be_valid
+      expect(task.errors[:images]).to include("は1枚あたり5MB以下にしてください")
+    end
   end
 
   describe 'preview_url のバリデーション' do

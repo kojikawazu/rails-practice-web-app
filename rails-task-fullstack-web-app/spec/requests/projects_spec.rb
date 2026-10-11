@@ -185,6 +185,14 @@ RSpec.describe "Projects", type: :request do
       expect(response).to redirect_to(project_path(project))
       expect(project.reload.title).to eq("更新後タイトル")
     end
+
+    it "検証に失敗したら edit を 422 で再描画し、値を変えない" do
+      log_in
+      expect {
+        patch project_path(project), params: { project: { title: "" } }
+      }.not_to change { project.reload.title }
+      expect(response).to have_http_status(:unprocessable_content)
+    end
   end
 
   describe "DELETE /projects/:id（削除）" do
