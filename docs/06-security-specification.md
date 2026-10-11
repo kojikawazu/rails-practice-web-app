@@ -74,16 +74,17 @@ XSS 対策は「入力検証 + 出力エスケープ + CSP」の多層防御と�
 |---|---|---|
 | `default-src` | `'self'` | 既定は自オリジンのみ |
 | `script-src` | `'self'` + リクエストごとの `nonce` | **インライン JS を許可しない**。importmap / Turbo のインライン script には `importmap-rails` が nonce を自動付与する |
-| `style-src` | `'self'` | CSS は自オリジンのスタイルシートのみ。`style-src-attr` を指定しないため **インライン `style` 属性も拒否**し、`<style>` ブロックの注入と合わせて CSS インジェクションによる情報漏えいの経路を塞ぐ。View は `application.css` のクラスだけを使う（#101 で移行。`spec/requests/security_headers_spec.rb` がテンプレートに `style` 属性が無いことを検査する） |
+| `style-src` | `'self'` + リクエストごとの `nonce` | CSS は自オリジンのスタイルシートと、nonce 付きの `<style>` 要素のみ。nonce は Turbo がプログレスバー用に挿入する `<style>` のため（`csp_meta_tag` の nonce を Turbo が付与する。#132）。`style-src-attr` を指定しないため **インライン `style` 属性も拒否**し、`<style>` ブロックの注入と合わせて CSS インジェクションによる情報漏えいの経路を塞ぐ。View は `application.css` のクラスだけを使う（#101 で移行。`spec/requests/security_headers_spec.rb` がテンプレートに `style` 属性が無いことを検査する） |
 | `img-src` | `'self' data:` + （development のみ）MinIO の配信元 | development の Active Storage は MinIO へリダイレクトするため。production は Disk（同一オリジン）で不要 |
 | `frame-src` | `http: https:` | タスクの `preview_url` プレビュー用。`javascript:` / `data:` の frame は拒否する。埋め込みの封じ込めは iframe の `sandbox` とモデルの URL 検証が担う |
 | `frame-ancestors` | `'none'` | 自アプリを他サイトに埋め込ませない（クリックジャッキング対策） |
 | `object-src` | `'none'` | プラグイン埋め込みを禁止 |
 | `base-uri` / `form-action` | `'self'` | `<base>` 書き換えと外部への form 送信を禁止 |
 
-- **nonce はレスポンスごとに使い捨てる**（`SecureRandom.base64(16)`）。推測できる値にすると `script-src` の制限を回避されるため。
+- **nonce はレスポンスごとに使い捨てる**（`SecureRandom.base64(16)`）。推測できる値にすると `script-src` / `style-src` の制限を回避されるため。
+- nonce は要素（`<script>` / `<style>`）にしか付けられないため、`style-src` に nonce を加えても **インライン `style` 属性の拒否は維持される**。`'unsafe-inline'` はどのディレクティブにも付けない。
 - インライン `onclick` は Stimulus（`row_link_controller.js`）へ移行済み。CSP を有効にしたブラウザではインラインハンドラは実行されない。
-- `:js` の system spec は headless Chrome で実際に CSP が適用されるため、**CSP 違反はテストの失敗として検出できる**（`08-test-specification.md`）。
+- `:js` の system spec は headless Chrome で実際に CSP が適用される。ただし **CSP 違反はブラウザのコンソールに出るだけで、画面操作は成功するため spec は落ちない**（ブロックされた資源が黙って効かないだけ）。そのため `spec/system/csp_violations_js_spec.rb` がブラウザログを取得し、Turbo 遷移を含む操作で CSP 違反が出ないことを検査する（`08-test-specification.md`）。
 
 ## 外部 URL のプレビュー（iframe 埋め込み）
 
