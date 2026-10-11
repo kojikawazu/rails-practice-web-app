@@ -27,7 +27,7 @@ class UsersController < ApplicationController
     if @user.valid?
       render :confirm
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -41,7 +41,7 @@ class UsersController < ApplicationController
       session[:user_id] = @user.id
       redirect_to projects_path, notice: "アカウントを作成しました。"
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 

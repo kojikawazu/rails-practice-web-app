@@ -13,7 +13,7 @@ class ApplicationService
   # @!attribute [rw] errors
   #   @return [Array<String>] 失敗時のエラーメッセージ配列
   # @!attribute [rw] status
-  #   @return [Symbol] render に渡す HTTP ステータス（例: :ok / :created / :unprocessable_entity）
+  #   @return [Symbol] render に渡す HTTP ステータス（例: :ok / :created / :unprocessable_content）
   Result = Struct.new(:success, :data, :errors, :status, keyword_init: true) do
     # @return [Boolean] 成功なら true
     def success? = success
@@ -34,9 +34,9 @@ class ApplicationService
   # 失敗 Result を生成する。
   #
   # @param errors [Array<String>] エラーメッセージ配列（full_messages 相当）
-  # @param status [Symbol] HTTP ステータス（既定 :unprocessable_entity）
+  # @param status [Symbol] HTTP ステータス（既定 :unprocessable_content）
   # @return [Result] 失敗結果
-  def self.failure(errors:, status: :unprocessable_entity)
+  def self.failure(errors:, status: :unprocessable_content)
     Result.new(success: false, data: nil, errors: errors, status: status)
   end
 end

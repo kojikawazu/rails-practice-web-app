@@ -21,14 +21,14 @@ RSpec.describe "Sessions", type: :request do
     context "パスワードが誤っている場合" do
       it "ログイン画面を 422 で再描画する" do
         post login_path, params: { email: user.email, password: 'wrong' }
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
       end
     end
 
     context "存在しないメールアドレスの場合" do
       it "パスワード誤りと同じ 422 を返す（アカウントの存在有無を漏らさない）" do
         post login_path, params: { email: 'nobody@example.com', password: 'password123' }
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
       end
     end
   end

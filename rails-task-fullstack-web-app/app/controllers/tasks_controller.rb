@@ -89,7 +89,7 @@ class TasksController < ApplicationController
     new_blobs = TaskImageService.stage(uploaded_image_files)
     if new_blobs.nil?
       @task.errors.add(:images, "は png / jpeg / gif / webp 形式・1枚5MB以下のみ対応しています")
-      return render(form_template, status: :unprocessable_entity) # 照合済みの既存選択は保持する
+      return render(form_template, status: :unprocessable_content) # 照合済みの既存選択は保持する
     end
 
     # 既存の選択と合算して持ち回る（signed_id はビューで current_user 向けに発行する）。
@@ -101,7 +101,7 @@ class TasksController < ApplicationController
     if @task.valid?
       render :confirm
     else
-      render(form_template, status: :unprocessable_entity)
+      render(form_template, status: :unprocessable_content)
     end
   end
 
@@ -119,7 +119,7 @@ class TasksController < ApplicationController
     if @task.save
       redirect_to project_path(@project), notice: "タスクを作成しました。"
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -139,7 +139,7 @@ class TasksController < ApplicationController
       TaskImageService.purge(@task, @remove_attachment_ids)
       redirect_to project_task_path(@project, @task), notice: "タスクを更新しました。", status: :see_other
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 
@@ -179,7 +179,7 @@ class TasksController < ApplicationController
   def render_invalid_staged_images(template)
     @staged_blobs = []
     @task.errors.add(:images, "の有効期限が切れたか、不正な指定です。もう一度選択してください")
-    render template, status: :unprocessable_entity
+    render template, status: :unprocessable_content
   end
 
   # URL の :project_id から current_user のプロジェクトを取得して @project に設定する。

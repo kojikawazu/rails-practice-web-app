@@ -20,7 +20,7 @@ RSpec.describe "認証系のレートリミット", type: :request do
   describe "POST /login" do
     it "上限回数までは通常どおり 422 でログイン画面を再描画する" do
       auth_limit.times { wrong_login }
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
 
     it "上限を超えると 429 でログイン画面にメッセージを表示し、Retry-After を返す（総当たり攻撃の抑止）" do
@@ -66,7 +66,7 @@ RSpec.describe "認証系のレートリミット", type: :request do
       auth_limit.times { signup_confirm }
       wrong_login
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
   end
 end

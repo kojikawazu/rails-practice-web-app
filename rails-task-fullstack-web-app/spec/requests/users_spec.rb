@@ -25,7 +25,7 @@ RSpec.describe "Users", type: :request do
 
     it "検証に失敗したら確認画面へ進ませず、new を 422 で再描画する" do
       post signup_confirm_path, params: { user: { name: "", email: "", password: "" } }
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
 
     it "「修正する」押下時は入力値を保持したままフォームへ戻す" do
@@ -45,7 +45,7 @@ RSpec.describe "Users", type: :request do
 
     it "検証に失敗したら作成せず、new を 422 で再描画する" do
       post signup_path, params: { user: { name: "", email: "", password: "" } }
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
   end
 end

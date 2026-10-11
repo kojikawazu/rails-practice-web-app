@@ -53,7 +53,7 @@ RSpec.describe "Api::V1::Projects", type: :request do
 
     it "検証に失敗したら統一エラー形式で 422 を返す" do
       post api_v1_projects_path, params: { project: { title: "" } }, headers: headers, as: :json
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
   end
 
