@@ -15,7 +15,9 @@ module RailsTaskApiWebApp
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
-    config.autoload_paths << Rails.root.join("app/lib")
+    # app/lib（JsonWebToken）は app/ 以下のため、既定で autoload と eager load の両方の対象になる。
+    # autoload_paths に足し直さない。Pathname で足すと String の既定値と別物として重複し、
+    # Rails が app/lib を「eager load しない」と登録してしまう（#155。bin/zeitwerk-check で検出する）。
 
     # Configuration for the application, engines, and railties goes here.
     #

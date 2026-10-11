@@ -21,6 +21,21 @@
 
 -->
 
+## 2026-10-11 app/lib を autoload_paths に足し直したことで、本番で JsonWebToken が eager load されていなかった
+
+### 概要
+
+API の `config/application.rb` に `config.autoload_paths << Rails.root.join("app/lib")` と書いていたため、`app/lib` が「eager load しないディレクトリ」として登録され、本番でも `JsonWebToken` が起動時に読み込まれていなかった。`zeitwerk:check` は警告を出していたが exit 0 で終わり、CI でも実行していなかったため、API 版の初回実装から半年近く気づかれなかった。
+
+### 詳細
+
+- 何が起きたか: 本番（`eager_load = true`）でも `app/lib/json_web_token.rb` は最初のリクエストで遅れて autoload されていた。`zeitwerk:check` の検査からも外れていたため、ファイル名と定数名の不一致があっても起動時に検出できない状態だった。動作は正常だったため、利用者への影響はない。SimpleCov 導入（#149）後に不要なスタブを消した際、`zeitwerk:check` を実行して警告に気づいた（#155）。
+- なぜ起きたか（根本原因）: `app/` 以下のディレクトリは Rails の既定で autoload と eager load の両方の対象で、`app/lib` は String として登録済みだった。そこへ **Pathname** の `app/lib` を足したため、`autoload_paths` に型違いで重複した。`Rails::Application::Finisher` は `autoload_paths.uniq.each` で登録し、Pathname と String は `uniq` で別物として残る。先に来る Pathname で `ActiveSupport::Dependencies.eager_load?`（String の集合への `member?`）が false になり、`do_not_eager_load` が登録された。古い Rails の「`lib` は自分で `autoload_paths` に足す」という習慣を `app/lib` にも当てはめたのが発端で、`zeitwerk:check` が警告でも exit 0 になることを知らなかったため、検出の仕組みも無かった。
+- 教訓 / 次からどうする:
+  - `app/` 以下のディレクトリを `autoload_paths` / `eager_load_paths` に足さない（既定で両方の対象）。`lib/` は `config.autoload_lib(ignore: ...)` を使う。パスの一覧に `Rails.root.join(...)`（Pathname）を足すときは、Rails 側が String で比較していないかを確かめる。
+  - ツールを CI に入れるときは、終了コードだけでなく**警告が出たときの終了コード**を確かめる。警告でも exit 0 になるツール（`zeitwerk:check` など）は、出力を検査して失敗に変えるラッパー（`bin/zeitwerk-check`）を通して実行する。
+- 関連: #155 / PR #156、#149（SimpleCov で 0% のスタブを見つけた流れで判明）、`.claude/rules/testing.md`「検出の確かめ方」、`.claude/rules/static-analysis.md`「警告ゼロを維持する」。「エラーにならず黙って効かない」型としては、下の CSP 違反と `form_with` の `style:` に続く 3 件目
+
 ## 2026-10-11 CSP 違反は :js system spec を落とさず、Turbo のプログレスバーがブロックされ続けていた
 
 ### 概要

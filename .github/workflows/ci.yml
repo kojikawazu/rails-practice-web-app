@@ -240,6 +240,14 @@ jobs:
         working-directory: ${{ matrix.app }}
         run: bin/brakeman --quiet --no-pager --exit-on-warn --exit-on-error
 
+      # 本番と同じ eager load で、ファイル名と定数名の対応（Zeitwerk の規約）を検査する。
+      # zeitwerk:check は「eager load されないディレクトリ」を WARNING で出すだけで exit 0 になるため、
+      # 警告も失敗にする bin/zeitwerk-check を使う（#155）。DB 接続は不要。
+      - name: Zeitwerk
+        if: ${{ !cancelled() && steps.setup.outcome == 'success' }}
+        working-directory: ${{ matrix.app }}
+        run: bin/zeitwerk-check
+
   test:
     name: Test (${{ matrix.app }})
     needs: changes
