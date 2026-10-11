@@ -84,7 +84,7 @@
 | 画像ストレージ | Active Storage + MinIO（S3 互換 / Docker） |
 | フロント（フルスタック版） | Turbo / Stimulus（Importmap）+ ERB |
 | 認証 | セッション（フルスタック版）/ JWT（API モード） |
-| テスト | RSpec, FactoryBot, Shoulda Matchers, Capybara（system spec） |
+| テスト | RSpec, FactoryBot, Shoulda Matchers, Capybara（system spec）, SimpleCov（カバレッジ。可視化のみ） |
 | CI | GitHub Actions |
 
 ## Quick Start
@@ -167,7 +167,7 @@ GitHub Actions（`.github/workflows/ci.yml`）で、`main` への push と全 PR
 | `actionlint` | actionlint（Docker イメージのタグで固定）で workflow を検査。`${{ }}` 式・runner ラベル・`run:` 内のシェル（shellcheck）まで見る | workflow（`.github/workflows/*.{yml,yaml}`）・`Makefile` 変更時 |
 | `Link check` | remark-validate-links で markdown のリンク切れ（リポジトリ内のファイル・見出しアンカー）を検証。外部 URL は対象外 | 常時（docs からコードへのリンクがあるため） |
 | `Lint & Security (matrix)` | 両アプリで RuboCop + bundler-audit（`check --update`）+ Brakeman | コード変更時 |
-| `Test (matrix)` | 両アプリで RSpec（`bundle exec rspec`） | コード変更時 |
+| `Test (matrix)` | 両アプリで RSpec（`bundle exec rspec`）。行・分岐カバレッジをジョブサマリーに表示し、HTML レポートを artifact に残す（最低ラインで落とさない） | コード変更時 |
 | `System (:js)` | フルスタック版の JS system spec（`rspec --tag js`、headless Chrome） | コード変更時 |
 
 GitHub Actions と、ルートの npm 補助ツール（markdownlint 等）のバージョン更新は、Dependabot（`.github/dependabot.yml`）が毎週 PR を作ります。Rails の gem は手動で更新します。
@@ -192,7 +192,7 @@ make lint-links    # リンク切れチェック（リポジトリ内のリン�
 make up                                       # PostgreSQL 起動（ルートで）
 cd rails-task-fullstack-web-app
 bin/rails db:test:prepare
-bundle exec rspec                             # 通常スイート（JS 除外）
+bundle exec rspec                             # 通常スイート（JS 除外）。カバレッジは coverage/index.html
 bundle exec rspec --tag js                    # JS system spec（要 Chrome）
 ```
 

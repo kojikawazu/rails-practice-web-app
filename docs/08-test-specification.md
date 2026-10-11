@@ -102,6 +102,22 @@ RSpec の実行中に警告・非推奨警告が出たら、テストが全件�
 - トレーニング目的のため、厳密なカバレッジ目標は設けない
 - 主要なバリデーションと正常系CRUDを網羅することを目標とする
 
+### カバレッジの計測（SimpleCov）
+
+両アプリで SimpleCov（`rails` プロファイル）により、**行カバレッジと分岐カバレッジ**を計測する（#149）。**最低ラインは設けず、可視化だけに使う**。数値を上げるためのテストは書かず、0% の行や通らない分岐は**デッドコードの候補**として扱う（`.claude/rules/dead-code.md`）。
+
+- **計測の開始位置**: `spec/spec_helper.rb` の先頭で `SimpleCov.start` を呼ぶ。Ruby の `Coverage` は計測開始より後に読み込まれたファイルだけを数えるため、Rails・アプリのコードより先に開始しないと、そのファイルは計測対象から黙って外れる。
+- **対象**: `app/**/*.rb`。一度も読み込まれなかったファイルも 0% として計上される（使われていないクラスを見つけられる）。
+- **見方**: ローカルでは `bundle exec rspec` 後に `coverage/index.html`（`bundle exec simplecov open` で開ける）。CI では `Test (matrix)` ジョブのサマリーに行・分岐の % が表示され、HTML レポートは artifact（`coverage-<アプリ名>`、保持 7 日）に残る。
+- **`:js` system spec は含まない**: fullstack の CI では `:js` を別ジョブ（`System (:js)`）で実行するため、ジョブサマリーの値は通常の実行だけの値になる（結果のマージはしない）。
+
+導入時（2026-10-11）の値:
+
+| アプリ | 行 | 分岐 |
+|---|---|---|
+| API | 98.13%（210 / 214） | 91.66%（44 / 48） |
+| fullstack（`:js` を除く） | 98.47%（322 / 327） | 95.74%（90 / 94） |
+
 ## テストツール
 
 | ツール | 用途 |
@@ -112,6 +128,7 @@ RSpec の実行中に警告・非推奨警告が出たら、テストが全件�
 | Shoulda Matchers | バリデーション・関連付けのマッチャー |
 | Capybara + Selenium | System spec（`:js` は headless Chrome、フルスタック版のみ） |
 | rspec-retry | `:js` System spec のフレーク対策（リトライ） |
+| SimpleCov | 行・分岐カバレッジの計測（可視化のみ。上記「カバレッジの計測」） |
 
 > N+1 の回帰ガードは gem ではなく `spec/support/query_counter.rb`（`ActiveSupport::Notifications` の `sql.active_record` を購読して SQL 本数を数えるヘルパー）で行う。クエリキャッシュにヒットした SQL も数に含め、キャッシュ任せで N+1 を見逃さないようにする。
 >
