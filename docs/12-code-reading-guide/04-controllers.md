@@ -28,7 +28,7 @@ app/controllers/api/v1/tasks_controller.rb
 - `head :no_content` — DELETE時に204を返す（ボディなし）
 - `rescue ActiveRecord::RecordNotFound` → 404 JSON を返す
 
-> **差分ポイント**: フルスタック版は `redirect_to` でページ遷移するが、APIモードは `render json:` のみ。エラーも `render json: { error: "..." }, status: :not_found` で返す。
+> **差分ポイント**: フルスタック版は `redirect_to` でページ遷移するが、APIモードは `render json:` のみ。エラーは `render_error(:not_found)` のように code を渡し、形とステータスは `ErrorSerializer` が決める（`{ error: { code, message, details? } }`）。
 
 ---
 

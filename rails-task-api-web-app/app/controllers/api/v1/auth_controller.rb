@@ -22,25 +22,25 @@ module Api
 
       # ユーザー登録。成功時は JWT とユーザー情報を 201 で返す。
       #
-      # @return [void] 成功: `{ token:, user: }`（201）／失敗: `{ errors: [...] }`（422）
+      # @return [void] 成功: `{ token:, user: }`（201）／失敗: code: validation_failed（422）
       def signup
         result = AuthService.signup(user_params)
         if result.success?
           render json: { token: result.data[:token], user: UserSerializer.render(result.data[:user]) }, status: :created
         else
-          render json: { errors: result.errors }, status: result.status
+          render_error(result.code, details: result.errors)
         end
       end
 
       # ログイン。メール・パスワード一致時に JWT を発行する。
       #
-      # @return [void] 成功: `{ token:, user: }`（200）／失敗: `{ error: ... }`（401）
+      # @return [void] 成功: `{ token:, user: }`（200）／失敗: code: invalid_credentials（401）
       def login
         result = AuthService.login(email: params[:email], password: params[:password])
         if result.success?
           render json: { token: result.data[:token], user: UserSerializer.render(result.data[:user]) }
         else
-          render json: { error: result.errors.first }, status: result.status
+          render_error(result.code)
         end
       end
 

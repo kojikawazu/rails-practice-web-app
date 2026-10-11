@@ -21,7 +21,7 @@ class ProjectService < ApplicationService
   #
   # @param user [User] 認証済みユーザー
   # @param params [ActionController::Parameters, Hash] title / description
-  # @return [ApplicationService::Result] 成功: data=Project（201）／失敗: errors=full_messages（422）
+  # @return [ApplicationService::Result] 成功: data=Project（201）／失敗: code=:validation_failed, errors=full_messages
   def self.create(user, params)
     project = user.projects.build(params)
     project.save ? success(data: project, status: :created) : failure(errors: project.errors.full_messages)
@@ -31,7 +31,7 @@ class ProjectService < ApplicationService
   #
   # @param project [Project] 更新対象
   # @param params [ActionController::Parameters, Hash] title / description
-  # @return [ApplicationService::Result] 成功: data=Project（200）／失敗: errors=full_messages（422）
+  # @return [ApplicationService::Result] 成功: data=Project（200）／失敗: code=:validation_failed, errors=full_messages
   def self.update(project, params)
     project.update(params) ? success(data: project) : failure(errors: project.errors.full_messages)
   end

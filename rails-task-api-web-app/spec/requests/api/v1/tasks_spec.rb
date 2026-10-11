@@ -88,12 +88,12 @@ RSpec.describe "Api::V1::Tasks", type: :request do
       expect(done.reload.status).to eq("in_progress")
     end
 
-    it "未着手 → 完了 は途中を飛ばすため 422 と errors を返し、値も変えない" do
+    it "未着手 → 完了 は途中を飛ばすため 422 と details を返し、値も変えない" do
       patch api_v1_project_task_path(project, task),
             params: { task: { status: "completed" } },
             headers: headers, as: :json
       expect(response).to have_http_status(:unprocessable_content)
-      expect(JSON.parse(response.body)["errors"]).to be_present
+      expect(response.parsed_body.dig("error", "details")).to be_present
       expect(task.reload.status).to eq("not_started")
     end
 

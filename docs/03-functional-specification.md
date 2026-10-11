@@ -129,4 +129,4 @@ not_started → in_progress → completed
 - 禁止される例: `not_started → completed`（途中を飛ばす）/ `in_progress → not_started` / `completed → not_started`（一気に起点へ戻す）/ 新規作成時に `in_progress`・`completed` を指定する。
 - **担保はモデル**（`Task::ALLOWED_STATUS_TRANSITIONS` と作成/更新のバリデーション）。フォーム・API・コンソールのどの入口から来ても同じ規則で拒否する（両アプリ共通）。
 - **UI（フルスタック版）**: 新規作成フォームはステータスを選ばせず「未着手」固定を表示し、編集フォームは現在の状態と許可された遷移先だけを選択肢に出す。UI で塞ぐのは誤操作を減らすためで、規則の担保はモデル側にある（多層防御）。
-- **違反時**: フルスタック版はフォームを 422 で再描画しエラーを表示、API 版は `422` と `{ "errors": [...] }` を返す（`07-api-specification.md`）。
+- **違反時**: フルスタック版はフォームを 422 で再描画しエラーを表示、API 版は `422` と `code: validation_failed`（違反内容は `details`）を返す（`07-api-specification.md`）。

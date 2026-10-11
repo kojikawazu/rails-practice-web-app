@@ -58,7 +58,8 @@ RSpec の実行中に警告・非推奨警告が出たら、テストが全件�
 | テスト種別 | 対象 | テスト内容 |
 |-----------|------|-----------|
 | Unit spec（API） | JsonWebToken | encode/decode の round-trip / 既定 exp ≒24h / 明示 exp 尊重 / 期限切れ・改ざん・不正入力で nil（例外を投げない）/ 署名鍵を呼び出しごとに参照（`secret_key_base` のローテーション後は旧トークンが nil・新トークンは検証成功） |
-| Unit spec（API） | AuthService.login | 正資格情報で成功・token に user_id / 誤パスワードで 401・token なし / メール不在も 401（誤り時と同一メッセージ＝列挙攻撃対策） |
+| Unit spec（API） | AuthService.login | 正資格情報で成功・token に user_id / 誤パスワードで `invalid_credentials`・token なし / メール不在も `invalid_credentials`（誤り時と同一の失敗理由＝列挙攻撃対策） |
+| Unit spec（API） | ErrorSerializer | 一覧に無い code は例外にする（仕様外の code を返さない） |
 | Unit spec（fullstack） | AuthService.login | 正資格情報で該当ユーザーを返す / 誤パスワードで nil / メール不在も nil（誤り時と同一結果＝列挙攻撃対策）。`User.find_by` のみモック |
 | Unit spec（fullstack） | TaskImageService | stage: 全有効→blob 返す + blob 生成 / 不正混在→nil・blob 未生成（オーファン防止）/ 空→[] ・ signed_id_for/resolve: 発行した利用者なら blob を返す / 他ユーザー向け・既定用途（画像 URL）・改ざん・期限切れ（`travel_to`）・添付済み・不正混在→nil ・ attach→images 増 ・ purge→attachment 削除。実 test-disk・モック無し |
 | Job spec（fullstack） | PurgeUnattachedBlobsJob | 保持期間を過ぎた未添付 blob だけを削除（添付済み・保持期間内は残す。`perform_enqueued_jobs` で PurgeJob まで実行）/ 保持期間 > staging の有効期限 |
@@ -72,9 +73,10 @@ RSpec の実行中に警告・非推奨警告が出たら、テストが全件�
 | Request spec（fullstack） | 認証系のレートリミット | 上限内は通常応答 / 超過で 429・フォーム再描画・メッセージ・`Retry-After` / 上限到達後は正しい認証情報でもログイン・登録させない / 登録の確認と確定はカウンタ共有・ログインとは別カウンタ |
 | Request spec（fullstack） | セキュリティヘッダー | CSP を enforce で返す / script-src に unsafe-inline・unsafe-eval が無い / object-src・base-uri・frame-ancestors の禁止設定 / CSP のどこにも unsafe-inline が無い（style-src-attr も無い）/ importmap の nonce 付与 / style-src に nonce があり `csp-nonce` の meta を出す（Turbo の `<style>` を許可）/ `app/views` に style 属性・`style:` オプションが無い（CSP で黙って無視されるための静的検査） |
 | Request spec（API） | Auth | signup / login の成功・失敗（JWT 発行）/ `user` の公開属性がキー集合の完全一致で `id` `name` `email` のみ（`password_digest` を返さない） |
-| Request spec（API） | レートリミット | login / signup の超過で 429・`{ "error": "Too many requests" }`・`Retry-After` / 上限到達後はトークンを発行しない / login と signup は別カウンタ / API 全体の超過で 429・カウンタはコントローラーをまたいで共有 |
-| Request spec（API） | 認証境界（Authorization ヘッダーの契約） | Bearer は 200（scheme は大小無視）/ ヘッダー無し・生トークン・別スキーム・要素過多・空トークン・改ざんは 401 / 401 の統一形式（`error` 単数形） |
-| Request spec（API） | Projects / Tasks | CRUD 正常系 / 他ユーザーリソースの404 / **未認証時は 401**（リダイレクトではない）/ `Authorization: Bearer` 検証 / ステータス遷移違反は 422 + `errors`（作成時の completed 指定を含む）/ index・show・create・update のレスポンスが公開属性のキー集合と完全一致（カラム追加時の意図しない露出を検出） |
+| Request spec（API） | レートリミット | login / signup の超過で 429・`code: rate_limited`・`Retry-After` / 上限到達後はトークンを発行しない / login と signup は別カウンタ / API 全体の超過で 429・カウンタはコントローラーをまたいで共有 |
+| Request spec（API） | 認証境界（Authorization ヘッダーの契約） | Bearer は 200（scheme は大小無視）/ ヘッダー無し・生トークン・別スキーム・要素過多・空トークン・改ざんは 401 / 401 の統一形式（`code: unauthorized`） |
+| Request spec（API） | エラーレスポンスの契約 | 400（必須パラメータの欠落・壊れた JSON。送られた本文を反射しない）/ 401（`unauthorized`・`invalid_credentials`。メール不在とパスワード誤りで同一）/ 404（モデル名入り message）/ 422（`details` に内訳）を、キー集合まで完全一致で固定。詳細表示オフ（本番相当）でルートの 404・想定外の 500（例外の内容を出さない）も JSON で返す |
+| Request spec（API） | Projects / Tasks | CRUD 正常系 / 他ユーザーリソースの404 / **未認証時は 401**（リダイレクトではない）/ `Authorization: Bearer` 検証 / ステータス遷移違反は 422 + `details`（作成時の completed 指定を含む）/ index・show・create・update のレスポンスが公開属性のキー集合と完全一致（カラム追加時の意図しない露出を検出） |
 | Scenario spec（API） | ユーザージャーニー | signup→project 作成→task 作成→一覧→status 更新（not_started→in_progress→completed と遷移規則どおりに進む）→詳細反映（signup の token だけで全書き込みが認可される） |
 | Scenario spec（API） | 認可分離 | 他ユーザーの project/task は 404 / project 一覧は自分のものだけ（実DBでスコープ保証を固定） |
 | Scenario spec（API） | 認証ライフサイクル | signup token が保護EPで即利用可 / login 成功・誤パスワード 401 / 期限切れ・改ざんトークンは保護EPで 401 |

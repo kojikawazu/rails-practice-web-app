@@ -68,7 +68,7 @@
 | JWT（JSON Web Token） | ユーザー識別情報を署名付きでクライアントに持たせるトークン。サーバー側にセッションを持たない（ステートレス）ため、API 版の認証方式に採用している。 | [`json_web_token.rb`](../rails-task-api-web-app/app/lib/json_web_token.rb)。 |
 | Bearer トークン | `Authorization: Bearer <token>` ヘッダーでトークンを送る方式。Cookie を使わないため **CSRF 対策が不要**になる一方、トークンの保管はクライアント側の責任になる。 | [`application_controller.rb#authenticate_user!`](../rails-task-api-web-app/app/controllers/application_controller.rb)。 |
 | `ApplicationService::Result` | Service の実行結果（成否・データ・エラー・HTTP ステータス）を表す値オブジェクト。Controller は例外や真偽値でなく Result を見て render を分岐する。 | [`application_service.rb`](../rails-task-api-web-app/app/services/application_service.rb)、[`tasks_controller.rb`](../rails-task-api-web-app/app/controllers/api/v1/tasks_controller.rb) の `render_result`。 |
-| 統一エラーレスポンス | エラー時の JSON 構造を揃える方針。認証失敗・404 は `{ error: ... }`、バリデーション失敗は `{ errors: [...] }`。 | [`application_controller.rb`](../rails-task-api-web-app/app/controllers/application_controller.rb)。 |
+| 統一エラーレスポンス | エラー時の JSON 構造を揃える方針。API はすべてのエラーを `{ error: { code, message, details? } }` の 1 形態で返し、クライアントは `code` で分岐する。 | [`error_serializer.rb`](../rails-task-api-web-app/app/serializers/error_serializer.rb)、[`application_controller.rb`](../rails-task-api-web-app/app/controllers/application_controller.rb)。 |
 | 存在秘匿（404） | 他ユーザーのリソースへアクセスされたとき、403 ではなく 404 を返して**リソースの存在自体を漏らさない**扱い。association scope の `find` が投げる `RecordNotFound` をそのまま 404 に写している。 | [`project_service.rb`](../rails-task-api-web-app/app/services/project_service.rb)、[`authorization_isolation_spec.rb`](../rails-task-api-web-app/spec/scenarios/authorization_isolation_spec.rb)。 |
 
 ### テスト

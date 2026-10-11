@@ -20,14 +20,14 @@ module Api
 
       # プロジェクトを作成する。
       #
-      # @return [void] 成功: 作成した Project（201）／失敗: `{ errors: [...] }`（422）
+      # @return [void] 成功: 作成した Project（201）／失敗: code: validation_failed（422）
       def create
         render_result ProjectService.create(current_user, project_params), serializer: ProjectSerializer
       end
 
       # プロジェクトを更新する。
       #
-      # @return [void] 成功: 更新後の Project（200）／失敗: `{ errors: [...] }`（422）／不存在は 404
+      # @return [void] 成功: 更新後の Project（200）／失敗: code: validation_failed（422）／不存在は 404
       def update
         project = ProjectService.fetch(current_user, params[:id])
         render_result ProjectService.update(project, project_params), serializer: ProjectSerializer

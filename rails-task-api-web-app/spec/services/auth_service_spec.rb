@@ -22,18 +22,18 @@ RSpec.describe AuthService do
       expect(JsonWebToken.decode(result.data[:token])[:user_id]).to eq(7)
     end
 
-    it "パスワードが誤りなら token を返さず 401 になる" do
+    it "パスワードが誤りなら token を返さず invalid_credentials で失敗する" do
       allow(User).to receive(:find_by).with(email: "a@example.com").and_return(user)
       allow(user).to receive(:authenticate).with("wrong").and_return(false)
 
       result = described_class.login(email: "a@example.com", password: "wrong")
 
       expect(result).to be_failure
-      expect(result.status).to eq(:unauthorized)
+      expect(result.code).to eq(:invalid_credentials)
       expect(result.data).to be_nil
     end
 
-    it "メールが存在しない場合も 401 で、誤り時と同一メッセージ（列挙攻撃対策）" do
+    it "メールが存在しない場合も、パスワード誤りと同じ失敗理由になる（列挙攻撃対策）" do
       allow(User).to receive(:find_by).with(email: "missing@example.com").and_return(nil)
       allow(User).to receive(:find_by).with(email: "a@example.com").and_return(user)
       allow(user).to receive(:authenticate).with("wrong").and_return(false)
@@ -42,7 +42,8 @@ RSpec.describe AuthService do
       wrong_pw  = described_class.login(email: "a@example.com", password: "wrong")
 
       expect(not_found).to be_failure
-      expect(not_found.status).to eq(:unauthorized)
+      expect(not_found.code).to eq(:invalid_credentials)
+      expect(not_found.code).to eq(wrong_pw.code)
       expect(not_found.errors).to eq(wrong_pw.errors)
     end
   end
