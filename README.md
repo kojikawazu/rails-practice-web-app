@@ -166,7 +166,7 @@ GitHub Actions（`.github/workflows/ci.yml`）で、`main` への push と全 PR
 | `Markdown lint` | markdownlint-cli2 でリポジトリ全体の markdown を検証 | ドキュメント変更時 |
 | `actionlint` | actionlint（Docker イメージのタグで固定）で workflow を検査。`${{ }}` 式・runner ラベル・`run:` 内のシェル（shellcheck）まで見る | workflow（`.github/workflows/*.{yml,yaml}`）・`Makefile` 変更時 |
 | `Link check` | remark-validate-links で markdown のリンク切れ（リポジトリ内のファイル・見出しアンカー）を検証。外部 URL は対象外 | 常時（docs からコードへのリンクがあるため） |
-| `Lint & Security (matrix)` | 両アプリで RuboCop + bundler-audit（`check --update`）+ Brakeman | コード変更時 |
+| `Lint & Security (matrix)` | 両アプリで RuboCop + bundler-audit（`check --update`）+ Brakeman + Zeitwerk（`bin/zeitwerk-check`。eager load の検査を、警告も失敗として実行） | コード変更時 |
 | `Test (matrix)` | 両アプリで RSpec（`bundle exec rspec`） | コード変更時 |
 | `System (:js)` | フルスタック版の JS system spec（`rspec --tag js`、headless Chrome） | コード変更時 |
 
@@ -180,7 +180,7 @@ make db-prepare    # テスト用 DB 準備（既定: fullstack。APP= で切替
 make test          # RSpec（既定アプリ）
 make test-all      # 両アプリでテスト
 make test-js       # JS system spec（fullstack のみ、要 Chrome）
-make ci            # ローカル CI 一括（rubocop + security + tests）
+make ci            # ローカル CI 一括（rubocop + security + zeitwerk + tests）
 make lint-md       # markdownlint（CI と同一バージョン・同一設定。初回は npm ci を自動実行。自動修正は make lint-md-fix）
 make actionlint    # GitHub Actions workflow の検査（Docker。CI と同一バージョン・同一コマンド）
 make lint-links    # リンク切れチェック（リポジトリ内のリンクのみ。CI と同一バージョン・同一設定）

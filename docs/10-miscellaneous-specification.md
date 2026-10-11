@@ -94,6 +94,7 @@
 | RuboCop | Ruby の Linter / Formatter。このリポジトリは `rubocop-rails-omakase` に従い、独自オーバーライドを原則入れない。 | [`.rubocop.yml`（フルスタック）](../rails-task-fullstack-web-app/.rubocop.yml)、[`.rubocop.yml`（API）](../rails-task-api-web-app/.rubocop.yml)。運用は [`static-analysis.md`](../.claude/rules/static-analysis.md)。CI の `Lint & Security` ジョブで `bin/rubocop` を実行する。 |
 | Brakeman | Rails 向けの静的セキュリティ解析ツール。SQL インジェクション・XSS 等のパターンを検出する。 | 両プロジェクトの `Gemfile`（development / test グループ）に導入済み。[`ci.yml`](../.github/workflows/ci.yml) の `Lint & Security` ジョブで `bin/brakeman` を実行する（Rails 既定の `--ensure-latest` により本体が最新版でなければ失敗する）。ローカルは `make security`。 |
 | bundler-audit | `Gemfile.lock` の gem に既知の脆弱性がないか照合するツール。 | Brakeman と同じく `Gemfile` に導入済み。`Lint & Security` ジョブで `bin/bundler-audit check --update` を実行し、実行時点の最新アドバイザリで照合する。 |
+| Zeitwerk / eager load | Rails のコード読み込み機構。ファイル名から定数名を決めて必要になった時点で読み込み（autoload）、本番では起動時にすべて読み込む（eager load）。`app/` 以下のディレクトリは既定で両方の対象で、`autoload_paths` に足し直すと型違い（Pathname / String）の重複で eager load から外れることがある（#155）。`zeitwerk:check` はその場合も警告だけで exit 0 になるため、警告も失敗にするスクリプトで検査する。 | [`bin/zeitwerk-check`](../rails-task-api-web-app/bin/zeitwerk-check)、[`config/application.rb`（API）](../rails-task-api-web-app/config/application.rb)。 |
 | YARD | Ruby のドキュメントコメント形式（`@param` / `@return` / `@raise`）。`app/` 配下のクラス・public メソッドに付与する。 | 規約は [`.claude/rules/coding-standards.md`](../.claude/rules/coding-standards.md)。 |
 | scaffold | Model / Controller / View / Migration / Route を一括生成する Rails のコード生成機能。 | 初期実装の出発点として使用（以降は手で調整している）。 |
 

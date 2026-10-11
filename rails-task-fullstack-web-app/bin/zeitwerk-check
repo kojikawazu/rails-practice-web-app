@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# Zeitwerk の検査（bin/rails zeitwerk:check）を、警告も失敗として扱って実行する。
+#
+# zeitwerk:check はファイル名と定数名の不一致を例外で検出するが、「eager load されず検査できない
+# ディレクトリ」は WARNING を出すだけで exit 0 で終わる。そのままでは CI で素通りし、本番で
+# eager load されないディレクトリが残っても気づけない（#155）。そのため出力に WARNING があれば失敗にする。
+# CI（.github/workflows/ci.yml）と bin/ci（config/ci.rb）の両方から呼ぶ。
+set -uo pipefail
+
+cd "$(dirname "$0")/.." || exit 1
+
+output="$(bin/rails zeitwerk:check 2>&1)"
+status=$?
+echo "$output"
+
+if [ "$status" -ne 0 ]; then
+  exit "$status"
+fi
+
+if grep -q "WARNING" <<<"$output"; then
+  echo "zeitwerk:check: eager load されないディレクトリがあります（上記 WARNING）。" >&2
+  exit 1
+fi
