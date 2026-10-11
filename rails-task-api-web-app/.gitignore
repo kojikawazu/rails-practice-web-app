@@ -40,3 +40,6 @@
 # Ignore yarn files
 yarn-error.log
 .yarn-integrity
+
+# SimpleCov のカバレッジレポート（spec 実行のたびに生成される）
+/coverage/

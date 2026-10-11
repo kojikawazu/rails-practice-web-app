@@ -65,8 +65,8 @@ RSpec の実行中に警告・非推奨警告が出たら、テストが全件�
 | Job spec（fullstack） | PurgeUnattachedBlobsJob | 保持期間を過ぎた未添付 blob だけを削除（添付済み・保持期間内は残す。`perform_enqueued_jobs` で PurgeJob まで実行）/ 保持期間 > staging の有効期限 |
 | Model spec | User | 有効なデータで作成できる / name必須 / email必須・一意・形式 / password最小文字数 |
 | Model spec | Project | 有効なデータで作成できる / title必須 / user関連付け / 削除時にtasksも削除 / `.with_task_counts` が件数を tasks_count として載せる（タスク0件のプロジェクトも落とさない） |
-| Model spec | Task | 有効なデータで作成できる / title必須 / status必須・値の制限 / project関連付け / ステータス遷移の許可・禁止（作成時は not_started のみ、飛ばし・逆行の拒否、変更なしの更新は許可） |
-| Request spec（fullstack） | Projects | index/show/create/update/destroy の正常系 / 複製(duplicate)の正常系・create フロー合流 / 他ユーザーリソースの404 / 未ログイン時のリダイレクト / 確認画面の HEAD が GET と同じ結果になる / 一覧のタスク件数表示（0件・複数件・プロジェクト0件）/ 件数集計がプロジェクト件数に比例しない（N+1 回帰ガード） |
+| Model spec | Task | 有効なデータで作成できる / title必須 / status必須・値の制限 / project関連付け / ステータス遷移の許可・禁止（作成時は not_started のみ、飛ばし・逆行の拒否、変更なしの更新は許可）/ 添付画像の形式と上限サイズ（上限ちょうどは有効、1 バイト超過で無効） |
+| Request spec（fullstack） | Projects | index/show/create/update/destroy の正常系 / 更新の検証失敗は edit を 422 で再描画し値を変えない / 複製(duplicate)の正常系・create フロー合流 / 他ユーザーリソースの404 / 未ログイン時のリダイレクト / 確認画面の HEAD が GET と同じ結果になる / 一覧のタスク件数表示（0件・複数件・プロジェクト0件）/ 件数集計がプロジェクト件数に比例しない（N+1 回帰ガード） |
 | Request spec（fullstack） | Not Found | 存在しないプロジェクト・タスクは 404 でレイアウト内にメッセージと一覧への戻り先を表示 / 他ユーザーのプロジェクトは存在しない場合と同じ本文の 404（秘匿）/ JSON は `{ "error": "Not found" }` の 404 / 未ログインは require_login が先にログイン画面へ誘導 |
 | Request spec（fullstack） | Tasks | index/show/create/update/destroy の正常系 / 複製(duplicate)の正常系・create フロー合流・ステータスを引き継がないこと / 他ユーザーリソースの404 / 存在しないprojectでの404 / 確認画面の GET・HEAD がフォームへリダイレクト / 画像削除（blob と attachment の id をずらした状態で、選んだ 1 枚だけが外れる・他タスクの添付は外せない）/ ステータス遷移（許可は更新、禁止は 422 で値も変えない）/ フォームの選択肢が現在状態に応じて絞られること / 画像 signed_id の検証（他ユーザー向け・他ユーザーの画像 URL・改ざん・二重送信で create / update / confirm が 422、添付されない） |
 | Request spec（fullstack） | Sessions | ログイン成功/失敗 / ログアウト（セッション） |
@@ -102,6 +102,22 @@ RSpec の実行中に警告・非推奨警告が出たら、テストが全件�
 - トレーニング目的のため、厳密なカバレッジ目標は設けない
 - 主要なバリデーションと正常系CRUDを網羅することを目標とする
 
+### カバレッジの計測（SimpleCov）
+
+両アプリで SimpleCov（`rails` プロファイル）により、**行カバレッジと分岐カバレッジ**を計測する（#149）。**最低ラインは設けず、可視化だけに使う**。数値を上げるためのテストは書かず、0% の行や通らない分岐は**デッドコードの候補**として扱う（`.claude/rules/dead-code.md`）。
+
+- **計測の開始位置**: `spec/spec_helper.rb` の先頭で `SimpleCov.start` を呼ぶ。Ruby の `Coverage` は計測開始より後に読み込まれたファイルだけを数えるため、Rails・アプリのコードより先に開始しないと、そのファイルは計測対象から黙って外れる。
+- **対象**: `app/**/*.rb`。一度も読み込まれなかったファイルも 0% として計上される（使われていないクラスを見つけられる）。
+- **見方**: ローカルでは `bundle exec rspec` 後に `coverage/index.html`（`bundle exec simplecov open` で開ける）。CI では `Test (matrix)` ジョブのサマリーに行・分岐の % が表示され、HTML レポートは artifact（`coverage-<アプリ名>`、保持 7 日）に残る。
+- **`:js` system spec は含まない**: fullstack の CI では `:js` を別ジョブ（`System (:js)`）で実行するため、ジョブサマリーの値は通常の実行だけの値になる（結果のマージはしない）。
+
+導入時（2026-10-11）の値:
+
+| アプリ | 行 | 分岐 |
+|---|---|---|
+| API | 98.13%（210 / 214） | 91.66%（44 / 48） |
+| fullstack（`:js` を除く） | 98.47%（322 / 327） | 95.74%（90 / 94） |
+
 ## テストツール
 
 | ツール | 用途 |
@@ -112,6 +128,7 @@ RSpec の実行中に警告・非推奨警告が出たら、テストが全件�
 | Shoulda Matchers | バリデーション・関連付けのマッチャー |
 | Capybara + Selenium | System spec（`:js` は headless Chrome、フルスタック版のみ） |
 | rspec-retry | `:js` System spec のフレーク対策（リトライ） |
+| SimpleCov | 行・分岐カバレッジの計測（可視化のみ。上記「カバレッジの計測」） |
 
 > N+1 の回帰ガードは gem ではなく `spec/support/query_counter.rb`（`ActiveSupport::Notifications` の `sql.active_record` を購読して SQL 本数を数えるヘルパー）で行う。クエリキャッシュにヒットした SQL も数に含め、キャッシュ任せで N+1 を見逃さないようにする。
 >

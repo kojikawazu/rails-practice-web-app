@@ -291,6 +291,30 @@ jobs:
         working-directory: ${{ matrix.app }}
         run: bundle exec rspec
 
+      # カバレッジは可視化のみで、最低ラインで落とさない（docs/08-test-specification.md「カバレッジ目標」）。
+      # 行・分岐の % をジョブサマリーに書き、HTML レポートを artifact で残す。
+      # SimpleCov は spec が全件成功したときだけ .last_run.json を書くため、どちらも成功時だけ実行する。
+      # fullstack の :js system spec は system-js ジョブで実行するため、この値には含まれない。
+      - name: Coverage summary
+        working-directory: ${{ matrix.app }}
+        env:
+          APP: ${{ matrix.app }}
+        run: |
+          {
+            echo "### Coverage: ${APP}"
+            echo
+            echo "| 行 | 分岐 |"
+            echo "|---|---|"
+            jq -r '"| \(.result.line)% | \(.result.branch)% |"' coverage/.last_run.json
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-${{ matrix.app }}
+          path: ${{ matrix.app }}/coverage/
+          retention-days: 7
+
   system-js:
     name: System (:js, headless Chrome)
     needs: changes

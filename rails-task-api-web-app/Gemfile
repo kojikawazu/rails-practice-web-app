@@ -64,4 +64,7 @@ end
 group :test do
   # One-liner matchers for validations and associations
   gem "shoulda-matchers", "~> 6.0"
+
+  # Code coverage (line / branch). Visibility only, no minimum [https://github.com/simplecov-ruby/simplecov]
+  gem "simplecov", require: false
 end

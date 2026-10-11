@@ -52,7 +52,7 @@
 - **確認画面フロー（入力 → 確認 → 確定）** — DB に保存せずメモリ上で `valid?` だけ実行して確認画面を描画。プロジェクト新規作成のみ **PRG（Post/Redirect/Get）+ Turbo Drive** で実装し、リロード安全性と白画面回避を両立。他は `data: { turbo: false }` でフルページ遷移。→ [機能仕様](docs/03-functional-specification.md#確認画面登録作成編集)
 - **画像添付の round-trip** — HTML の file input は確認画面の hidden で値を持ち回れないため、確認ステップで一旦 blob 化し `signed_id` を「修正する」「確定」で持ち回る（JS 不要・オーファン防止）。Active Storage + MinIO（S3 互換）。→ [データ仕様](docs/05-data-specification.md#画像添付active-storage)
 - **外部 URL プレビューの iframe 多層防御** — 任意のユーザー入力 URL を確認画面で iframe プレビューする際、**スキーム検証（http/https のみ）＋ sandbox ＋ 内部/プライベート IP 拒否**でサンドボックス脱獄・トップナビ乗っ取り・XSS を抑止。→ [セキュリティ仕様](docs/06-security-specification.md#外部-url-のプレビューiframe-埋め込み)
-- **CSP（Content Security Policy）を enforce で運用** — `script-src` はインライン JS を許可せず（nonce + Stimulus へ移行）、`frame-ancestors 'none'` / `object-src 'none'` などで実行可能な資源を限定。`:js` system spec は headless Chrome で実際に CSP が適用されるため、違反はテストの失敗として現れる。→ [セキュリティ仕様](docs/06-security-specification.md#content-security-policyフルスタック版)
+- **CSP（Content Security Policy）を enforce で運用** — `script-src` はインライン JS を許可せず（nonce + Stimulus へ移行）、`frame-ancestors 'none'` / `object-src 'none'` などで実行可能な資源を限定。CSP 違反はコンソールに出るだけで画面操作は成功するため、`:js` system spec がブラウザログを取得して違反が無いことを検査する。→ [セキュリティ仕様](docs/06-security-specification.md#content-security-policyフルスタック版)
 - **認可スコープ** — 他ユーザーのリソースへアクセスすると 404（`current_user.projects.find(...)`）。フルスタックはリダイレクト、API は 401 と挙動を作り分け。
 - **変更内容で発火条件を分ける CI** — GitHub Actions のパスフィルタで、コード変更にはテスト、ドキュメント変更には markdown lint と、関係のあるジョブだけを実行。スキップされたジョブは required check 上で成功扱いとなり、マージをブロックしない。
 
@@ -84,7 +84,7 @@
 | 画像ストレージ | Active Storage + MinIO（S3 互換 / Docker） |
 | フロント（フルスタック版） | Turbo / Stimulus（Importmap）+ ERB |
 | 認証 | セッション（フルスタック版）/ JWT（API モード） |
-| テスト | RSpec, FactoryBot, Shoulda Matchers, Capybara（system spec） |
+| テスト | RSpec, FactoryBot, Shoulda Matchers, Capybara（system spec）, SimpleCov（カバレッジ。可視化のみ） |
 | CI | GitHub Actions |
 
 ## Quick Start
@@ -167,7 +167,7 @@ GitHub Actions（`.github/workflows/ci.yml`）で、`main` への push と全 PR
 | `actionlint` | actionlint（Docker イメージのタグで固定）で workflow を検査。`${{ }}` 式・runner ラベル・`run:` 内のシェル（shellcheck）まで見る | workflow（`.github/workflows/*.{yml,yaml}`）・`Makefile` 変更時 |
 | `Link check` | remark-validate-links で markdown のリンク切れ（リポジトリ内のファイル・見出しアンカー）を検証。外部 URL は対象外 | 常時（docs からコードへのリンクがあるため） |
 | `Lint & Security (matrix)` | 両アプリで RuboCop + bundler-audit（`check --update`）+ Brakeman + Zeitwerk（`bin/zeitwerk-check`。eager load の検査を、警告も失敗として実行） | コード変更時 |
-| `Test (matrix)` | 両アプリで RSpec（`bundle exec rspec`） | コード変更時 |
+| `Test (matrix)` | 両アプリで RSpec（`bundle exec rspec`）。行・分岐カバレッジをジョブサマリーに表示し、HTML レポートを artifact に残す（最低ラインで落とさない） | コード変更時 |
 | `System (:js)` | フルスタック版の JS system spec（`rspec --tag js`、headless Chrome） | コード変更時 |
 
 GitHub Actions と、ルートの npm 補助ツール（markdownlint 等）のバージョン更新は、Dependabot（`.github/dependabot.yml`）が毎週 PR を作ります。Rails の gem は手動で更新します。
@@ -192,7 +192,7 @@ make lint-links    # リンク切れチェック（リポジトリ内のリン�
 make up                                       # PostgreSQL 起動（ルートで）
 cd rails-task-fullstack-web-app
 bin/rails db:test:prepare
-bundle exec rspec                             # 通常スイート（JS 除外）
+bundle exec rspec                             # 通常スイート（JS 除外）。カバレッジは coverage/index.html
 bundle exec rspec --tag js                    # JS system spec（要 Chrome）
 ```
 
