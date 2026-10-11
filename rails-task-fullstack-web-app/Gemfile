@@ -82,6 +82,9 @@ group :test do
   # One-liner matchers for validations and associations
   gem "shoulda-matchers", "~> 6.0"
 
+  # Code coverage (line / branch). Visibility only, no minimum [https://github.com/simplecov-ruby/simplecov]
+  gem "simplecov", require: false
+
   # Retry flaky selenium :js system specs (native full-page submit timing)
   gem "rspec-retry", "~> 0.6.2"
 end

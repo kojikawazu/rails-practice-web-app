@@ -41,7 +41,7 @@ APIクライアント → Rails（Router → Controller → Service → Model �
 - Controller は薄く保ち、ビジネスロジックは **Service 層（`app/services/`）** に集約する（`AuthService` / `ProjectService` / `TaskService`）。サービスの成否は `ApplicationService::Result` 値オブジェクト（`success`/`data`/`errors`/`status`/`code`）で表し、Controller は `render_result` で JSON に変換する。失敗は HTTP ステータスではなく理由（`code`）で表し、HTTP ステータスとエラーの形への変換は `ErrorSerializer` が担う。
 - レスポンスは **Serializer 層（`app/serializers/`、gem を使わない PORO）** で公開属性だけに整形する（`UserSerializer` / `ProjectSerializer` / `TaskSerializer`）。エラーは `ErrorSerializer` が `{ "error": { "code", "message", "details"? } }` の 1 形態に整形し、ルーターの 404 と想定外の 500 は `config.exceptions_app` の `ErrorsController` が同じ形で返す。モデルを直接 `render json:` しない。変換は Controller（HTTP 層）で行い、Service はモデルを返す。
 - 他ユーザー/存在しないリソースの 404 は `ApplicationController` の `rescue_from ActiveRecord::RecordNotFound` に一元化する（`e.model` でモデル別メッセージを再現）。
-- テストは `spec/lib`（UT）・`spec/services`（UT）・`spec/requests`（IT）・`spec/scenarios`（E2E/シナリオ）で構成（詳細は `08-test-specification.md`）。Service 層・Serializer 層の追加による **gem 変更はなし**。
+- テストは `spec/lib`（UT）・`spec/services`（UT）・`spec/requests`（IT）・`spec/scenarios`（E2E/シナリオ）で構成（詳細は `08-test-specification.md`）。Service 層・Serializer 層の追加による **gem 変更はなし**。テスト用 gem として、両アプリに SimpleCov（カバレッジ計測、可視化のみ）を入れている。
 - **ジョブ・メール機能は持たない**。Rails が生成する `ApplicationJob` / `ApplicationMailer` とメール用レイアウトは、使われていないため削除した（#152）。`rails g job` / `rails g mailer` は基底クラスを自動で作り直す（メール用レイアウトは作り直さない）。
 
 ## 技術スタック
