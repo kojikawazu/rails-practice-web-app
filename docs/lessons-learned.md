@@ -34,7 +34,7 @@
 - 教訓 / 次からどうする:
   - CSP 違反を spec で検出したいときは、ブラウザログを取得して違反メッセージの有無を検査する（selenium の `logging_prefs = { browser: "ALL" }` と `page.driver.browser.logs.get(:browser)`）。ログ取得の設定外れで素通りしないよう、既知のメッセージ（`console.error` のプローブ）が取得できることも同じ spec で確認する。
   - 「〇〇はテストで検出できる」とドキュメントに書く前に、〇〇を意図的に起こして、テストが実際に赤になることを確かめる。確かめていない検出能力を書かない。
-- 関連: #132 / PR #139（`style-src` に nonce を追加し、`spec/system/csp_violations_js_spec.rb` を追加）、#101 / PR #130、`.claude/rules/testing.md`。「エラーにならず黙って効かない」という点で、下の 2026-10-08 のエントリ（`form_with` の `style:`）と同じ型の見逃し
+- 関連: #132 / PR #139（`style-src` に nonce を追加し、`spec/system/csp_violations_js_spec.rb` を追加）、#101 / PR #130、`.claude/rules/testing.md`（「検出の確かめ方」としてルール化。#145）。「エラーにならず黙って効かない」という点で、下の 2026-10-08 のエントリ（`form_with` の `style:`）と同じ型の見逃し
 
 ## 2026-10-08 form_with に渡した style: が黙って捨てられ、フォームの幅指定が一度も効いていなかった
 
@@ -49,7 +49,7 @@
 - 教訓 / 次からどうする:
   - `form_with` に `id` / `class` / `data` 以外の HTML 属性を付けるときは `html: { ... }` で渡す。付けた属性は、ブラウザの DOM か request spec のレスポンス HTML で、実際に出力されていることを確かめる。
   - 「見た目を変えない」前提のリファクタ（CSS 移行・レイアウト整理）は、前後のスクリーンショットをピクセル単位で比較し（ImageMagick の `compare -metric AE`）、差分が出た画面は原因を説明できるまで調べる。差分ゼロを確認できない変更を「見た目は同じ」と報告しない。
-- 関連: #101 / PR #130（インライン style の CSS 移行で判明し、`card-narrow` で 600px に揃えた）、#131、`.claude/rules/testing.md`
+- 関連: #101 / PR #130（インライン style の CSS 移行で判明し、`card-narrow` で 600px に揃えた）、#131、`.claude/rules/testing.md`（「検出の確かめ方」としてルール化。#145）
 
 ## 2026-10-07 既存 issue を検索せずに起票し、2 か月放置されていた同じ issue と重複した
 
