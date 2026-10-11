@@ -48,8 +48,9 @@ Rails.application.configure do
   # Set host to be used by links generated in mailer templates.
   config.action_mailer.default_url_options = { host: "example.com" }
 
-  # Print deprecation notices to the stderr.
-  config.active_support.deprecation = :stderr
+  # 非推奨警告はテストを失敗させる。:stderr は $stderr へ出力するだけで、テストが green のまま
+  # 見逃される（Ruby / gem の警告は spec/support/warning_collector.rb が検出する）。
+  config.active_support.deprecation = :raise
 
   # Raises error for missing translations.
   # config.i18n.raise_on_missing_translations = true

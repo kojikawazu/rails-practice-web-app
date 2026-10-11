@@ -44,6 +44,15 @@
 - `database.yml` の test 環境で別データベース名を指定
 - テスト実行前に `rails db:test:prepare` でスキーマ同期
 
+### 警告ゼロの維持
+
+RSpec の実行中に警告・非推奨警告が出たら、テストが全件成功していても**スイートを失敗させる**（両アプリ共通）。警告は出力に流れるだけで CI が green のまま見逃されるため（#135 の Rack 非推奨警告。`.claude/rules/static-analysis.md`「警告ゼロを維持する」）。警告の出口は 2 系統あり、それぞれ別の仕組みで検出する。
+
+| 出元 | 出し方 | 検出 |
+|---|---|---|
+| Ruby / gem（Rack・rspec-rails 等） | `Kernel#warn` → `Warning.warn` | `spec/support/warning_collector.rb` が記録し、`after(:suite)` で 1 件以上あれば失敗させる。警告の場では例外にしない（Capybara のサーバースレッド内で発生すると、原因の分かりにくい別の失敗に化けるため） |
+| Rails（`ActiveSupport::Deprecation`） | `$stderr` へ直接出力（`Warning.warn` を通らない） | `config/environments/test.rb` の `config.active_support.deprecation = :raise` で、発生した example を失敗させる |
+
 ## テストケース
 
 | テスト種別 | 対象 | テスト内容 |
