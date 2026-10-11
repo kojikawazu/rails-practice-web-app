@@ -39,9 +39,9 @@
 | 観点 | フルスタック版 | APIモード |
 |---|---|---|
 | **認証の維持** | `session[:user_id]`（Cookie） | JWT トークン（Authorizationヘッダー） |
-| **未認証時の挙動** | `redirect_to login_path` | `render json: { error: "Unauthorized" }, status: 401` |
+| **未認証時の挙動** | `redirect_to login_path` | `render_error(:unauthorized)`（401。`{ error: { code: "unauthorized", ... } }`） |
 | **削除後の挙動** | `redirect_to projects_url` | `head :no_content`（204） |
-| **バリデーションエラー** | `render :new, status: :unprocessable_content` | `render json: { errors: [...] }, status: 422` |
+| **バリデーションエラー** | `render :new, status: :unprocessable_content` | `render_error(:validation_failed, details: [...])`（422） |
 | **ルーティング** | `/projects` | `/api/v1/projects` |
 | **テストでのログイン** | `post login_url, params: { email:, password: }` | `auth_headers(user)` でトークンをヘッダーに付与 |
 

@@ -23,7 +23,7 @@ RSpec.describe "Api::V1 レートリミット", type: :request do
       wrong_login
 
       expect(response).to have_http_status(:too_many_requests)
-      expect(response.parsed_body).to eq("error" => "Too many requests")
+      expect(response.parsed_body).to eq("error" => { "code" => "rate_limited", "message" => "Too many requests" })
       expect(response.headers["Retry-After"]).to eq(Rails.configuration.x.rate_limit.auth_period.to_i.to_s)
     end
 
@@ -39,7 +39,7 @@ RSpec.describe "Api::V1 レートリミット", type: :request do
       (auth_limit + 1).times { post api_v1_signup_path, params: { user: { email: "" } }, as: :json }
 
       expect(response).to have_http_status(:too_many_requests)
-      expect(response.parsed_body).to eq("error" => "Too many requests")
+      expect(response.parsed_body).to eq("error" => { "code" => "rate_limited", "message" => "Too many requests" })
     end
 
     it "login と signup はカウンタを分ける（登録を繰り返しても、ログインの上限は消費しない）" do
@@ -58,7 +58,7 @@ RSpec.describe "Api::V1 レートリミット", type: :request do
 
       get api_v1_projects_path, headers: headers
       expect(response).to have_http_status(:too_many_requests)
-      expect(response.parsed_body).to eq("error" => "Too many requests")
+      expect(response.parsed_body).to eq("error" => { "code" => "rate_limited", "message" => "Too many requests" })
       expect(response.headers["Retry-After"]).to eq(Rails.configuration.x.rate_limit.api_period.to_i.to_s)
     end
 

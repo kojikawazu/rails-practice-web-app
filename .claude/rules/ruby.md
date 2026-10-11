@@ -26,7 +26,7 @@ globs: "**/*.rb"
 ## レスポンス（AR を直返ししない）
 
 - **ActiveRecord モデル / リレーションをそのまま `render json:` しない**。serializer / PORO / jbuilder テンプレートに変換し、公開してよい属性だけを厳選して返す。
-- エラーレスポンスは統一形（`{ error: ... }` / `{ errors: [...] }`）。`rescue_from ActiveRecord::RecordNotFound` → 404。方針は `error-handling.md` に従う。
+- エラーレスポンスは 1 形態に統一する（API は `{ error: { code:, message:, details: } }`。形と HTTP ステータスは code から 1 箇所で決め、Controller ごとに組み立てない）。`rescue_from ActiveRecord::RecordNotFound` → 404。方針は `error-handling.md` に従う。
 
 ## 定数の配置
 

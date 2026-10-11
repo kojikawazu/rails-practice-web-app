@@ -38,7 +38,7 @@ Rails 8 標準の `rate_limit`（`ActionController::RateLimiting`）で、同一
 - 上限値は環境変数（`AUTH_RATE_LIMIT` / `AUTH_RATE_LIMIT_PERIOD` / `API_RATE_LIMIT` / `API_RATE_LIMIT_PERIOD`）で調整できる（`config.x.rate_limit`）。
 - ログインと登録はカウンタを分ける（目的が違い、登録の失敗でログインまで止めないため）。fullstack の登録は確認と確定で 1 つのカウンタを共有する。API 全体のカウンタは `scope: "api"` で全コントローラーに共有し、エンドポイントを切り替えて回避できないようにする。
 - 単位は IP のみで、**メールアドレス単位にはしない**。他人のアドレスで上限まで失敗させて、その利用者をログインできなくする DoS を避けるため（分散した総当たりへの耐性とのトレードオフ）。
-- 超過時は `Retry-After`（秒）を返す。API は `{ "error": "Too many requests" }`、fullstack は入力フォームを 429 で再描画してフラッシュで伝える（リダイレクトにすると 429 の意味が失われるため）。
+- 超過時は `Retry-After`（秒）を返す。API は `code: rate_limited` の統一エラー形式（`07-api-specification.md`）、fullstack は入力フォームを 429 で再描画してフラッシュで伝える（リダイレクトにすると 429 の意味が失われるため）。
 
 ## 認可
 

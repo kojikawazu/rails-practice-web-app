@@ -30,6 +30,11 @@ module RailsTaskApiWebApp
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
 
+    # ルーターの 404 と想定外の 500 も、統一エラー形式の JSON で返す（ErrorsController）。
+    # 既定の exceptions_app は public/404.html 等を返すため、API では空の HTML になってしまう。
+    # lambda で包み、ErrorsController の解決をリクエスト時まで遅らせる（初期化時点では autoload できないため）。
+    config.exceptions_app = ->(env) { ErrorsController.action(:show).call(env) }
+
     # レートリミット（ActionController::RateLimiting の rate_limit）の上限値。
     # 環境ごとに調整できるよう定数にせず環境変数から読む（.claude/rules/ruby.md「定数の配置」）。
     # 認証系（login / signup）は総当たり攻撃を抑えるため厳しめにする（.claude/rules/security.md）。

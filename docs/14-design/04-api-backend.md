@@ -84,9 +84,10 @@
 
 ### 統一エラーハンドリング
 
-- エラー JSON は用途で 2 形態を使い分ける（詳細は `docs/07`）。
-  - バリデーションエラー（**422**）: `{ "errors": ["..."] }`（複数形・配列）。
-  - 認証エラー（**401**）/ リソース未存在（**404**）: `{ "error": "..." }`（単数形）。
+- API のエラー JSON は `{ "error": { "code", "message", "details"? } }` の **1 形態**に統一する（詳細は `docs/07`。#147）。
+  - **`code` を契約、`message` を表示**に分ける。クライアントは `code` で分岐するため、`message` の文言・言語を変えても互換性を壊さない。
+  - **HTTP ステータスは `code` から決める**（`ErrorSerializer` の一覧）。Service は失敗の理由（`code`）だけを返し、HTTP を知らない。`code` とステータスを別々に渡させないことで、食い違いを作れなくする。
+  - **出口を 2 つに分ける**。想定内のエラーは `ApplicationController` の `rescue_from` と `render_error` で全環境同じ形にし、コントローラーに届かないルーターの 404 と想定外の 500 は `config.exceptions_app`（`ErrorsController`）で本番相当のときだけ整形する（開発中はデバッグ表示を残す）。`rescue_from StandardError` は使わない。
 - 他ユーザーのリソースは `set_*` の `rescue ActiveRecord::RecordNotFound` で **404** に正規化する（存在を秘匿）。
 - グローバルな例外整形は `rescue_from` に寄せる方向。センシティブ情報はレスポンス・ログに含めない（`config.filter_parameters`）。
 

@@ -58,8 +58,8 @@ RSpec.describe "Api::V1 認証（Authorization ヘッダーの契約）", type: 
     expect(response).to have_http_status(:unauthorized)
   end
 
-  it "認証失敗のレスポンスは、統一形式（error・単数形）で返す" do
+  it "認証失敗のレスポンスは、統一形式（code: unauthorized）で返す" do
     get_protected({})
-    expect(JSON.parse(response.body)).to eq("error" => "Unauthorized")
+    expect(response.parsed_body).to eq("error" => { "code" => "unauthorized", "message" => "Unauthorized" })
   end
 end

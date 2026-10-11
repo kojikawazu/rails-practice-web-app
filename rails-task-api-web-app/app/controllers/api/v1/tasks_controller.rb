@@ -22,14 +22,14 @@ module Api
 
       # タスクを作成する。
       #
-      # @return [void] 成功: 作成した Task（201）／失敗: `{ errors: [...] }`（422）
+      # @return [void] 成功: 作成した Task（201）／失敗: code: validation_failed（422）
       def create
         render_result TaskService.create(@project, task_params), serializer: TaskSerializer
       end
 
       # タスクを更新する。
       #
-      # @return [void] 成功: 更新後の Task（200）／失敗: `{ errors: [...] }`（422）／不存在は 404
+      # @return [void] 成功: 更新後の Task（200）／失敗: code: validation_failed（422）／不存在は 404
       def update
         task = TaskService.fetch_task(@project, params[:id])
         render_result TaskService.update(task, task_params), serializer: TaskSerializer

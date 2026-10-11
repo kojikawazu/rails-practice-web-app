@@ -135,40 +135,70 @@ Content-Type: application/json
 
 ## エラーハンドリング
 
-> **実装方針**: Controller はロジックを `app/services/`（`AuthService` / `ProjectService` / `TaskService`）に委譲し、レスポンス整形（`render_result`）に専念する。リソース未存在（404）は `ApplicationController` の `rescue_from ActiveRecord::RecordNotFound` で一元処理し、`e.model` から `{ error: "Project not found" }` / `{ error: "Task not found" }` を返す。エラー JSON の形（`errors` 複数形 vs `error` 単数形）は現行契約を維持しており、完全な統一は将来課題とする。
+> **実装方針**: Controller はロジックを `app/services/`（`AuthService` / `ProjectService` / `TaskService`）に委譲し、レスポンス整形（`render_result`）に専念する。Service は失敗を HTTP ステータスではなく**理由（`code`）**で返し、`code` から HTTP ステータスとレスポンスの形への変換は `ErrorSerializer` が一元的に担う（#147）。
 
-エラーレスポンスは内容に応じて 2 形態を使い分ける。
-
-**バリデーションエラー（422）** — 複数メッセージを配列で返す（`errors`・複数形）:
+API が返すエラーは、**すべて次の 1 形態**で返す。
 
 ```json
 {
-  "errors": ["Title can't be blank"]
+  "error": {
+    "code": "validation_failed",
+    "message": "入力内容に誤りがあります",
+    "details": ["Title can't be blank"]
+  }
 }
 ```
 
-> **ステータス遷移違反も 422 で返す**。`status` は任意の値へ変更できず、`not_started → in_progress → completed` と `completed → in_progress`（差し戻し）のみ許可する。作成時は `not_started` のみ指定できる（省略時の既定値も `not_started`）。違反時のレスポンス例:
+| キー | 型 | 説明 |
+|---|---|---|
+| `code` | string | 機械可読な識別子。**クライアントはこれで分岐する**（下表に閉じる） |
+| `message` | string | 人に見せる文言。契約ではないため、変更しても互換性を壊さない |
+| `details` | string[] | バリデーションの内訳。`validation_failed` のときだけ付き、それ以外では**キーごと無い**（`null` は返さない） |
+
+| `code` | ステータス | `message` | 発生条件 |
+|---|---|---|---|
+| `bad_request` | 400 | `Bad request` | 必須パラメータの欠落（`params.require`）・壊れた JSON。パーサのメッセージには送られた本文の断片が入るため、message は固定で応答に反射させない |
+| `unauthorized` | 401 | `Unauthorized` | トークンが無い・無効・期限切れ、ユーザーが存在しない |
+| `invalid_credentials` | 401 | `メールアドレスまたはパスワードが正しくありません。` | ログイン失敗。メール不在とパスワード誤りを区別しない（列挙攻撃対策） |
+| `not_found` | 404 | `Project not found` / `Task not found` / `Not found` | リソースが無い（他ユーザーのリソースを含む。存在を秘匿する）・存在しないルート |
+| `validation_failed` | 422 | `入力内容に誤りがあります` | バリデーションエラー・ステータス遷移違反。内訳は `details` |
+| `rate_limited` | 429 | `Too many requests` | レートリミット超過（login / signup は 180 秒あたり 10 回、API 全体は 60 秒あたり 300 回。同一 IP 単位・環境変数で調整可）。`Retry-After` ヘッダーに再試行までの秒数 |
+| `internal_error` | 500 | `Internal server error` | 想定外の例外。例外の内容は応答に含めない |
+
+> **ステータス遷移違反も 422（`validation_failed`）で返す**。`status` は任意の値へ変更できず、`not_started → in_progress → completed` と `completed → in_progress`（差し戻し）のみ許可する。作成時は `not_started` のみ指定できる（省略時の既定値も `not_started`）。違反時のレスポンス例:
 >
 > ```json
-> { "errors": ["Status は not_started から completed へは変更できません（許可: in_progress）"] }
+> { "error": { "code": "validation_failed", "message": "入力内容に誤りがあります", "details": ["Status は not_started から completed へは変更できません（許可: in_progress）"] } }
 > ```
 >
 > 規則の詳細は `03-functional-specification.md` の「ステータス遷移」を参照する。
-
-**認証エラー（401）・リソース未存在（404）** — 単一メッセージを返す（`error`・単数形）:
-
-```json
-{ "error": "Unauthorized" }
-{ "error": "Project not found" }
-{ "error": "メールアドレスまたはパスワードが正しくありません。" }
-```
 
 | ステータスコード | 意味 | レスポンス形式 |
 |-----------------|------|---------------|
 | 200 | 成功 | リソース JSON |
 | 201 | 作成成功（signup / create） | リソース JSON |
 | 204 | 削除成功（destroy・`head :no_content`） | ボディ無し |
-| 401 | 未認証（トークン無効 / ログイン失敗） | `{ "error": "..." }` |
-| 404 | リソースが見つからない（他ユーザーのリソース含む） | `{ "error": "..." }` |
-| 422 | バリデーションエラー | `{ "errors": [...] }` |
-| 429 | レートリミット超過（login / signup は 180 秒あたり 10 回、API 全体は 60 秒あたり 300 回。同一 IP 単位・環境変数で調整可）。`Retry-After` ヘッダーに再試行までの秒数 | `{ "error": "Too many requests" }` |
+| 400 / 401 / 404 / 422 / 429 / 500 | エラー（上表） | `{ "error": { "code", "message", "details"? } }` |
+
+### エラーの出口
+
+| 出口 | 対象 | 環境 |
+|---|---|---|
+| `ApplicationController`（`rescue_from` と `render_error`） | コントローラーに届く想定内のエラー（400 / 401 / 404 / 422 / 429） | **全環境で同じ形** |
+| `ErrorsController`（`config.exceptions_app`） | コントローラーに届かないルーターの 404、想定外の 500 | 詳細表示がオフ（本番相当）のときだけ。development / test の既定ではデバッグ表示を優先する |
+
+- `rescue_from StandardError` は使わない。想定外の例外を別のエラーに見せかけず、500 として `exceptions_app` へ流す。
+- `ParseError`（壊れた JSON）は、パラメータが `params` を最初に読んだ時点で解析される（遅延評価）ため、コントローラーの `rescue_from` で捕捉できる。
+
+### 破壊的変更（#147）
+
+v1 のエラー形式を統一した。外部の利用者がいない学習用 API のため、バージョンを上げずに v1 のまま変更した（利用者がいる API であれば、`/api/v2` の新設か、新旧の形を併記する移行期間が必要になる）。
+
+| ケース | 変更前 | 変更後 |
+|---|---|---|
+| 422 | `{ "errors": ["..."] }` | `{ "error": { "code": "validation_failed", "message": "...", "details": ["..."] } }` |
+| 401 | `{ "error": "Unauthorized" }` / `{ "error": "メールアドレスまたは…" }` | `code`: `unauthorized` / `invalid_credentials` |
+| 404 | `{ "error": "Project not found" }` | `code`: `not_found`（message は同じ） |
+| 429 | `{ "error": "Too many requests" }` | `code`: `rate_limited` |
+| 400 | `{ "status": 400, "error": "Bad Request" }`（必須パラメータの欠落）・空の text/html（壊れた JSON） | `code`: `bad_request` |
+| ルートの 404 / 500 | 空の text/html（本番） | `code`: `not_found` / `internal_error` |

@@ -29,7 +29,7 @@ class TaskService < ApplicationService
   #
   # @param project [Project] 親プロジェクト
   # @param params [ActionController::Parameters, Hash] title / status / due_date
-  # @return [ApplicationService::Result] 成功: data=Task（201）／失敗: errors=full_messages（422）
+  # @return [ApplicationService::Result] 成功: data=Task（201）／失敗: code=:validation_failed, errors=full_messages
   def self.create(project, params)
     task = project.tasks.build(params)
     task.save ? success(data: task, status: :created) : failure(errors: task.errors.full_messages)
@@ -39,7 +39,7 @@ class TaskService < ApplicationService
   #
   # @param task [Task] 更新対象
   # @param params [ActionController::Parameters, Hash] title / status / due_date
-  # @return [ApplicationService::Result] 成功: data=Task（200）／失敗: errors=full_messages（422）
+  # @return [ApplicationService::Result] 成功: data=Task（200）／失敗: code=:validation_failed, errors=full_messages
   def self.update(task, params)
     task.update(params) ? success(data: task) : failure(errors: task.errors.full_messages)
   end
