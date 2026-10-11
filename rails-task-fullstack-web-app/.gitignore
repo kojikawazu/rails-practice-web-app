@@ -15,3 +15,6 @@
 
 # Ignore key files for decrypting credentials and more.
 /config/*.key
+
+# SimpleCov のカバレッジレポート（spec 実行のたびに生成される）
+/coverage/
