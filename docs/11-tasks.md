@@ -10,6 +10,7 @@
   - [Day 4：RSpec](#day-4rspec)
   - [Day 5：APIモード（Project 2）](#day-5apiモードproject-2)
   - [追加対応（機能・テスト・CI）](#追加対応機能テストci)
+  - [設計・品質の強化（PR #18〜）](#設計品質の強化pr-18)
 - [進捗](#進捗)
 
 ## マイルストーン
@@ -90,6 +91,56 @@
 - [x] タスクに画像添付機能を追加（Active Storage + MinIO・複数枚＋サムネ）。アップロードは新規/編集フォームから行い、確認画面フローに合流（file input は確認ステップで blob 化し `signed_id` を round-trip）。詳細画面はサムネ表示＋個別削除、編集フォームは既存画像の削除予約に対応（PR #16）
 - [x] タスクにプレビュー URL（`preview_url`）を追加。確認画面で sandbox iframe プレビュー。http/https のみ許可（スキーム検証＋sandbox の多層防御で XSS/トップナビ乗っ取りを抑止）（PR #17）
 
+### 設計・品質の強化（PR #18〜）
+
+PR #18 以降は、作業単位を GitHub issue で管理している（`.claude/rules/github-issue.md`）。ここにはテーマごとの到達点だけを記録し、個々の作業の進捗は issue / PR を参照する。PR を足すたびにこの一覧を更新する必要はない。
+
+#### 機能・設計
+
+- [x] プロジェクト新規作成の確認画面を PRG リダイレクト方式に変更し、タスク確認画面で新規添付画像をサムネイル表示（PR #19, #20）
+- [x] Service 層を新設し、Controller を薄く保つ（API: PR #27、フルスタック: PR #28, #30）
+- [x] API のレスポンスを Serializer 層で整形し、ActiveRecord を直接返さない（PR #126）
+- [x] API のエラーレスポンスを `{ error: { code, message, details } }` に統一（PR #148）
+- [x] 不具合修正: プロジェクト一覧の N+1、ステータス遷移の仕様との不一致、confirm ルートの HEAD、画像削除の識別子、404 画面（PR #94, #96, #99, #100, #124）
+- [x] 本番で `app/lib` が eager load されていなかった問題を修正（PR #156）
+- [x] 非推奨 API の置き換えと、使われていない Rails のスタブの削除（PR #140, #154）
+
+#### セキュリティ
+
+- [x] Authorization ヘッダーを Bearer スキームとして厳密に検証（PR #97）
+- [x] CSP を enforce モードで有効化し、インライン JS を Stimulus へ、インライン style を CSS クラスへ移行（PR #102, #130, #139）
+- [x] master.key / secret_key_base のローテーションと、鍵の再混入を防ぐガード（PR #105）
+- [x] 画像の staging 用 signed_id を利用者限定・期限付きで発行し照合（PR #120）
+- [x] 認証系エンドポイントと API 全体にレートリミットを導入（PR #125）
+- [x] JWT の署名鍵を定数から外し、呼び出しごとに参照（PR #134）
+- [x] Dependabot アラートの脆弱な gem をパッチ版へ更新（PR #113）
+
+#### テスト
+
+- [x] テストピラミッド（UT / IT / E2E・シナリオ）を構築（PR #27, #28）
+- [x] request spec の describe / it を日本語の仕様文にする（PR #86）
+- [x] Minitest を廃止し RSpec に一本化（PR #123）
+- [x] RSpec 実行中の警告・非推奨警告でスイートを失敗させる（PR #143）
+- [x] SimpleCov で行・分岐カバレッジを可視化し、見つかった未検証の分岐にテストを追加（PR #150, #153）
+
+#### CI・静的解析
+
+- [x] 開発用タスクランナー（Makefile）を追加（PR #22）
+- [x] 変更内容に関係のあるジョブだけを動かす（必須チェック対応の条件実行・除外リスト方式のパスフィルタ）（PR #21, #64, #98）
+- [x] Lint & Security ジョブ（RuboCop / bundler-audit / Brakeman）を追加し、Zeitwerk の検査も警告ごと実行（PR #115, #156）
+- [x] markdownlint の版固定、リンク切れチェック、actionlint を追加（PR #127, #136, #138）
+- [x] Dependabot で GitHub Actions とルートの npm 補助ツールの更新 PR を作る（PR #128）
+- [x] ランナーの Ubuntu 26 移行を事前に検証し、`ubuntu-latest` に追従する方針を明記（PR #161）
+
+#### ドキュメント・ルール
+
+- [x] ドキュメント体系の整理と README の改善（PR #18, #23, #24）
+- [x] 両アプリの `app/` に YARD ドキュメントコメントを付与し、規約化（PR #25, #26）
+- [x] `.claude/rules/` の拡充と、Codex 向けの `AGENTS.md` の追加（PR #31, #78, #82）
+- [x] 学習用語集を追加（PR #84）
+- [x] issue 運用（重複確認・優先度ラベル）をルール化（PR #122）
+- [x] 教訓ログ（`docs/lessons-learned.md`）と記録ルールを導入し、繰り返す教訓をルールへ昇格（PR #117, #146, #158）
+
 ## 進捗
 
 | マイルストーン | ステータス |
@@ -100,3 +151,4 @@
 | Day 4 | ✅ 完了（PR #4 マージ済み） |
 | Day 5 | ✅ 完了（PR #5 マージ済み） |
 | 追加対応（機能・テスト・CI） | ✅ 完了（PR #8〜#17 マージ済み） |
+| 設計・品質の強化 | 継続中（PR #163 まで反映。以降の進捗は GitHub issue で管理） |
