@@ -53,18 +53,18 @@ class ApplicationController < ActionController::API
     render_error(:rate_limited)
   end
 
-  # `Authorization: Bearer <token>` ヘッダーを検証し、@current_user を確定する。
-  # トークンが無効・ユーザー未存在の場合は 401 を返して処理を中断する。
+  # `Authorization: Bearer <token>` ヘッダーで認証し、@current_user を確定する。
+  # ここはヘッダーから資格情報を取り出して HTTP 応答に変換するだけで、トークンの検証
+  # （署名・有効期限・失効済みか・ユーザーの存在）は AuthService.authenticate が担う。
+  # トークンが無効な場合は 401 を返して処理を中断する（before_action で render すると以降は実行されない）。
   #
   # @return [void] 認証失敗時は code: unauthorized を 401 で render
   def authenticate_user!
-    decoded = JsonWebToken.decode(bearer_token)
+    result = AuthService.authenticate(bearer_token)
+    return render_error(result.code) if result.failure?
 
-    if decoded
-      @current_user = User.find_by(id: decoded[:user_id])
-    end
-
-    render_error(:unauthorized) unless @current_user
+    @current_user = result.data[:user]
+    @current_token_claims = result.data[:claims]
   end
 
   # Authorization ヘッダーから Bearer スキームの資格情報だけを取り出す。
@@ -88,6 +88,13 @@ class ApplicationController < ActionController::API
   # @return [User, nil] ログイン中のユーザー
   def current_user
     @current_user
+  end
+
+  # 認証に使ったトークンのクレーム（authenticate_user! で検証済み）。ログアウトで失効させる対象を特定する。
+  #
+  # @return [HashWithIndifferentAccess, nil] jti / exp / user_id を含むクレーム
+  def current_token_claims
+    @current_token_claims
   end
 
   # サービスの Result に従って JSON レスポンスを render する。

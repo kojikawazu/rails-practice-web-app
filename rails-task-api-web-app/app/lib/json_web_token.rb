@@ -2,15 +2,18 @@
 # API モードは Cookie/セッションを持たないため、認証はこのトークンで行う。
 #
 # @see Api::V1::AuthController トークンの発行元
-# @see ApplicationController#authenticate_user! トークンの検証元
+# @see AuthService.authenticate トークンの検証元（失効の照合を含む）
 module JsonWebToken
   # ペイロードを署名付き JWT にエンコードする。
+  # 有効期限（exp）に加え、トークンごとに一意な jti を必ず入れる。ログアウトでは
+  # この jti を失効テーブル（RevokedToken）に記録し、そのトークンだけを無効にする。
   #
   # @param payload [Hash] トークンに格納する任意のデータ（例: `{ user_id: 1 }`）
   # @param exp [ActiveSupport::TimeWithZone] 有効期限（既定は発行から 24 時間後）
   # @return [String] エンコード済みの JWT 文字列
   def self.encode(payload, exp = 24.hours.from_now)
     payload[:exp] = exp.to_i
+    payload[:jti] = SecureRandom.uuid
     JWT.encode(payload, secret_key)
   end
 

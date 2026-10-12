@@ -25,6 +25,24 @@ RSpec.describe "Auth lifecycle", type: :request do
     expect(response).to have_http_status(:unauthorized)
   end
 
+  it "login → API 利用 → logout の後は同じ token が 401 になり、再ログインで得た新しい token は使える" do
+    post api_v1_login_path, params: { email: "user@example.com", password: "password123" }, as: :json
+    token = json["token"]
+
+    get api_v1_projects_path, headers: bearer(token), as: :json
+    expect(response).to have_http_status(:ok)
+
+    delete api_v1_logout_path, headers: bearer(token), as: :json
+    expect(response).to have_http_status(:no_content)
+
+    get api_v1_projects_path, headers: bearer(token), as: :json
+    expect(response).to have_http_status(:unauthorized)
+
+    post api_v1_login_path, params: { email: "user@example.com", password: "password123" }, as: :json
+    get api_v1_projects_path, headers: bearer(json["token"]), as: :json
+    expect(response).to have_http_status(:ok)
+  end
+
   it "期限切れトークンは保護エンドポイントで 401 になる" do
     expired = JsonWebToken.encode({ user_id: user.id }, 1.hour.ago)
     get api_v1_projects_path, headers: bearer(expired), as: :json

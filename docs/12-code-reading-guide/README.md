@@ -78,6 +78,10 @@ curl -X POST http://localhost:3100/api/v1/login \
 # プロジェクト一覧（token を置き換える）
 curl http://localhost:3100/api/v1/projects \
   -H "Authorization: Bearer <token>"
+
+# ログアウト → 204。以降、同じ token でのアクセスは 401 になる
+curl -i -X DELETE http://localhost:3100/api/v1/logout \
+  -H "Authorization: Bearer <token>"
 ```
 
 ### テスト実行

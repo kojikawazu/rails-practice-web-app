@@ -26,7 +26,7 @@
 | API 版 | `has_secure_password`（bcrypt）+ **JWT（Bearer トークン）** | クライアント保持（Cookie 不使用） |
 
 - パスワードは両アプリとも **bcrypt** でハッシュ化（`password_digest`）。平文保存しない。
-- API 版が JWT なのは、`rails new --api` がセッション/Cookie ミドルウェアを持たないため。トークン検証は `JsonWebToken` + `authenticate_user!`（`before_action`）に集約する（`04-api-backend.md`）。
+- API 版が JWT なのは、`rails new --api` がセッション/Cookie ミドルウェアを持たないため。トークン検証は `JsonWebToken` + `AuthService.authenticate`（`authenticate_user!` の `before_action` から呼ぶ）に集約する（`04-api-backend.md`）。ログアウトしたトークンは `jti` の denylist（`revoked_tokens`）で失効させる（#166）。
 
 ## 認可（スコープによる 404）
 

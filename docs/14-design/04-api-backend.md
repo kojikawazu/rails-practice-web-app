@@ -68,9 +68,10 @@
 - 認証は **JWT（Bearer トークン）**。`rails new --api` はセッション/Cookie を持たないため、Cookie 非依存のトークン認証を採る。
 - トークンの encode / decode は `app/lib/json_web_token.rb`（`JsonWebToken` モジュール）に集約する。
   - 署名鍵は `Rails.application.secret_key_base`、`exp` は既定 24 時間。署名鍵は環境依存値のため定数化せず、`JsonWebToken.secret_key`（private）で呼び出しごとに参照する（ローテーション・テストでの差し替えを効かせるため）。decode は `JWT::DecodeError` を捕捉して `nil` を返す。
-- `ApplicationController#authenticate_user!`（`before_action`）が `Authorization: Bearer <token>` を検証し、`current_user` を確立する。無効・未存在なら **401**。
-- `AuthController` のみ `skip_before_action :authenticate_user!` で signup / login を公開する。
-- ステートレスのため**ログアウト API は持たない**（クライアントがトークンを破棄）。
+  - encode はトークンごとに一意な `jti`（UUID）を必ず入れる（ログアウトで、そのトークンだけを失効させる識別子）。
+- `ApplicationController#authenticate_user!`（`before_action`）が `Authorization: Bearer <token>` を取り出し、検証（署名・有効期限・失効済みか・ユーザーの存在）は `AuthService.authenticate` に任せて `current_user` を確立する。無効なら **401**。
+- `AuthController` は `skip_before_action :authenticate_user!, only: %i[signup login]` で signup / login だけを公開する。除外は `only` で列挙する（`except` にすると、後から足したアクションが認証なしで公開されるため。Brakeman の `SkipBeforeFilter` も同じ理由で警告する）。
+- **ログアウトはトークン単位の失効**（`DELETE /api/v1/logout`、#166）。JWT はステートレスでそのままでは期限前に無効にできないため、失効させた `jti` を `revoked_tokens` に記録し、認証のたびに照合する（denylist）。認証ごとに DB を 1 回引くことと引き換えになる。期限切れの記録はログアウトのたびに削除する（ジョブ基盤を持たない）。
 
 ### JSON シリアライズ
 

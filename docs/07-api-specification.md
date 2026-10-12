@@ -10,6 +10,7 @@
   - [例: タスク作成](#例-タスク作成)
   - [リソースの公開属性](#リソースの公開属性)
 - [認証](#認証)
+  - [トークンの失効](#トークンの失効)
   - [CORS](#cors)
 - [エラーハンドリング](#エラーハンドリング)
 
@@ -19,6 +20,7 @@
 |----------|------|------|------|
 | POST | /api/v1/signup | ユーザー登録（成功時に JWT を発行） | 不要 |
 | POST | /api/v1/login | ログイン（成功時に JWT を発行） | 不要 |
+| DELETE | /api/v1/logout | ログアウト（認証に使ったトークンを失効させる。成功時は 204） | 必要 |
 | GET | /api/v1/projects | プロジェクト一覧 | 必要 |
 | POST | /api/v1/projects | プロジェクト作成 | 必要 |
 | GET | /api/v1/projects/:id | プロジェクト詳細 | 必要 |
@@ -30,7 +32,7 @@
 | PATCH/PUT | /api/v1/projects/:project_id/tasks/:id | タスク更新 | 必要 |
 | DELETE | /api/v1/projects/:project_id/tasks/:id | タスク削除 | 必要 |
 
-> **ログアウトエンドポイントは無い**: JWT はステートレスのため、ログアウトはクライアント側でトークンを破棄して実現する（サーバー側のトークン失効は未実装）。
+> **ログアウトはトークン単位**: `DELETE /api/v1/logout` は、認証に使ったトークンだけを失効させる（その端末だけのログアウト）。同じユーザーが別の端末で得たトークンは有効のまま残る。詳細は「[認証](#認証)」の「トークンの失効」。
 > プロジェクト/タスクは `resources` ルーティングで生成され、更新は `PATCH` / `PUT` の両方を受け付ける。
 
 ## リクエスト/レスポンス形式
@@ -110,7 +112,7 @@ Content-Type: application/json
 
 - 認証方式は **JWT（Bearer トークン）**。`rails new --api` はセッション/Cookie ミドルウェアが無効なため、Cookie に依存しないトークン認証を採用する。
 - `signup` / `login` 成功時に JWT を発行する（`JsonWebToken` モジュールで encode/decode）。
-- 認証必須エンドポイントは `Authorization: Bearer <token>` ヘッダーを `ApplicationController#authenticate_user!`（`before_action`）で検証する。トークンが無効・ユーザー未存在の場合は `401 Unauthorized`。
+- 認証必須エンドポイントは `Authorization: Bearer <token>` ヘッダーを `ApplicationController#authenticate_user!`（`before_action`）で受け取り、検証は `AuthService.authenticate` が行う。トークンが無効・期限切れ・失効済み、ユーザー未存在の場合は `401 Unauthorized`。
 - **受理するヘッダーは Bearer スキームのみ**（`Authorization: Bearer <token>`）。スキーム名の大文字小文字は区別しない（RFC 7235: auth-scheme is case-insensitive）が、下記は載っている JWT が有効でも `401` を返す。
 
   | ヘッダー | 結果 | 理由 |
@@ -122,8 +124,20 @@ Content-Type: application/json
   | `Anything ignored <token>` / `Bearer <token> extra` | 401 | `credentials = auth-scheme 1*SP token68` の形に合わない |
   | `Bearer`（トークン無し） | 401 | 資格情報が空 |
 
-- `AuthController` のみ `skip_before_action :authenticate_user!` で認証を除外する。
+- `AuthController` の `signup` / `login` のみ `skip_before_action :authenticate_user!, only: %i[signup login]` で認証を除外する（`logout` は失効させるトークンで認証する）。除外は `only` で列挙し、後から足したアクションが認証なしで公開されないようにする。
 - Bearer トークン認証（Cookie 不使用）のため CSRF トークンは不要。
+
+### トークンの失効
+
+JWT は署名と有効期限だけで検証できる（ステートレス）ため、そのままでは発行済みのトークンを期限前に無効にできない。ログアウトしたトークンを使えなくするため、失効させたトークンの ID をサーバー側に記録し、認証のたびに照合する（#166）。
+
+- 発行するトークンには、有効期限（`exp`、既定 24 時間）に加えて一意な ID（`jti`、UUID）を必ず入れる。
+- `DELETE /api/v1/logout` は、認証に使ったトークンの `jti` と有効期限を失効テーブル（`revoked_tokens`。`05-data-specification.md`）に記録し、`204 No Content`（ボディ無し）を返す。以降、同じトークンは `401`（`code: unauthorized`）になる。
+- 失効済みのトークンで再びログアウトすると `401` になる。失効済みかどうかは、ほかの無効なトークンと区別せず同じ `unauthorized` で返す。
+- `jti` または `exp` を持たないトークンは `401` にする（失効させられないトークンを受け付けない）。
+- 失効の記録は、トークンの有効期限を過ぎると意味が無くなる（期限切れのトークンは JWT の検証で弾かれる）。掃除用のジョブは持たず、ログアウトのたびに期限切れの記録を削除する。
+- 引き換えに、認証のたびに失効テーブルを 1 回引く。「ステートレスで DB を引かない」という JWT の利点の一部を、ログアウトできることと交換している。
+- ユーザーの全端末からのログアウト（全トークンの一括失効）は対象外。必要になったら、ユーザーごとの版番号をトークンに入れる方式を検討する。
 
 ### CORS
 
@@ -158,7 +172,7 @@ API が返すエラーは、**すべて次の 1 形態**で返す。
 | `code` | ステータス | `message` | 発生条件 |
 |---|---|---|---|
 | `bad_request` | 400 | `Bad request` | 必須パラメータの欠落（`params.require`）・壊れた JSON。パーサのメッセージには送られた本文の断片が入るため、message は固定で応答に反射させない |
-| `unauthorized` | 401 | `Unauthorized` | トークンが無い・無効・期限切れ、ユーザーが存在しない |
+| `unauthorized` | 401 | `Unauthorized` | トークンが無い・無効・期限切れ・ログアウトで失効済み、ユーザーが存在しない |
 | `invalid_credentials` | 401 | `メールアドレスまたはパスワードが正しくありません。` | ログイン失敗。メール不在とパスワード誤りを区別しない（列挙攻撃対策） |
 | `not_found` | 404 | `Project not found` / `Task not found` / `Not found` | リソースが無い（他ユーザーのリソースを含む。存在を秘匿する）・存在しないルート |
 | `validation_failed` | 422 | `入力内容に誤りがあります` | バリデーションエラー・ステータス遷移違反。内訳は `details` |
@@ -177,7 +191,7 @@ API が返すエラーは、**すべて次の 1 形態**で返す。
 |-----------------|------|---------------|
 | 200 | 成功 | リソース JSON |
 | 201 | 作成成功（signup / create） | リソース JSON |
-| 204 | 削除成功（destroy・`head :no_content`） | ボディ無し |
+| 204 | 削除成功（destroy）・ログアウト成功（`head :no_content`） | ボディ無し |
 | 400 / 401 / 404 / 422 / 429 / 500 | エラー（上表） | `{ "error": { "code", "message", "details"? } }` |
 
 ### エラーの出口
