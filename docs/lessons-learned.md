@@ -21,6 +21,21 @@
 
 -->
 
+## 2026-10-12 create_or_find_by! で競合を吸収するつもりが、モデルの uniqueness 検証で 500 になる実装だった
+
+### 概要
+
+ログアウトの記録（`RevokedToken`）を同時ログアウトでも重複させないよう `create_or_find_by!` を使い、コメントに「一意インデックスで重複を弾き、既存の記録を使う」と書いた。実際には、モデルの `uniqueness` 検証が先に `RecordInvalid` を投げるため、既に記録がある状態で呼ぶと 500 になっていた。セルフレビューで見つけ、マージ前に直した。
+
+### 詳細
+
+- 何が起きたか: #166（PR #167）の `AuthService.logout` で `RevokedToken.create_or_find_by!(jti: ...)` を使った。同じトークンで少しずれて 2 回ログアウトが届くと、2 回目も `authenticate` は通るが、記録の時点では 1 回目の行がすでにある。このとき 500 になる実装だった。テストは green だった。request spec では 2 回目のログアウトが `authenticate` で 401 になるため、この経路を通っていなかった。
+- なぜ起きたか（根本原因）: `create_or_find_by!` は「`create!` を試し、`ActiveRecord::RecordNotUnique`（DB の一意制約違反）が出たら `find_by!` し直す」メソッドで、捕まえるのは `RecordNotUnique` だけである。モデルに `validates :jti, uniqueness: true` があると、`create!` は INSERT の前に検証の SELECT で重複を見つけ、`RecordInvalid` を投げる。DB の一意制約まで届かないので、探し直しが働かない。メソッド名の印象（「作るか、あれば探す」）で動きを想定し、既に記録がある状態で呼ぶテストを書かないままコメントに保証を書いていた。
+- 教訓 / 次からどうする:
+  - 冪等にしたい記録で `create_or_find_by!` を使うときは、そのモデルに同じカラムの `uniqueness` 検証が無いかを確かめる。ある場合は `create_or_find_by!` を使わず、`insert(..., unique_by: :<カラム>)`（PostgreSQL の `ON CONFLICT DO NOTHING`）のように DB の制約で重複を吸収する方法を選ぶ。`insert` は検証を通らないので、値を検証済みの入力から作ることと、DB の NOT NULL・一意制約が最終的な制約になることをコメントに書く。
+  - 「競合しても安全」「重複を弾く」とコメントやドキュメントに書く前に、「既に記録がある状態で呼ぶ」テストを書いて赤を確認する。HTTP 経由で再現できない経路は、Service を実 DB で直接呼んで検証する（`spec/services/auth_service_spec.rb` の「同時ログアウトの競合」）。
+- 関連: #166 / PR #167、#168、`rails-task-api-web-app/app/services/auth_service.rb`（`logout`）、`.claude/rules/testing.md`（「検出の確かめ方」）
+
 ## 2026-10-12 CI の結果を全体の green / fail で判断すると、検証していないものを検証済みと取り違える
 
 ### 概要
