@@ -13,6 +13,12 @@ permissions:
   contents: read
   pull-requests: read
 
+# ランナーは全ジョブ ubuntu-latest とし、OS の版を固定しない（GitHub の移行に追従する）。
+# 固定した版もいずれ提供終了で移行が必要になる一方、壊れるかどうかは移行前に検証できるため。
+# 移行が告知されたら、作業ブランチで runs-on を新しい版（例: ubuntu-26.04）に変えて全ジョブを回し、
+# 通ることを確かめてから移行を迎える（Ubuntu 26.04 は #160 で確認済み）。
+# その検証中は actionlint が新しいラベルを unknown として落とすことがある（ubuntu-26.04 は
+# actionlint 1.7.12 で未対応。rhysd/actionlint#682）。これはラベル名の検査で、OS 上の動作とは無関係。
 jobs:
   # 変更範囲を1か所で判定する軽量ジョブ。
   # 変更内容に関係のあるジョブだけを動かすための入口（.claude/rules/github-actions.md）。
