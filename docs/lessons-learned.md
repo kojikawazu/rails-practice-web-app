@@ -21,6 +21,26 @@
 
 -->
 
+## 2026-10-12 CI の結果を全体の green / fail で判断すると、検証していないものを検証済みと取り違える
+
+### 概要
+
+Dependabot の setup-node 更新（PR #159）では CI が全部 green だったが、更新したアクションを使う Markdown lint は skipped だった。Ubuntu 26.04 の検証（PR #161）では CI が fail したが、落ちたのはラベル名を検査する actionlint だけで、26.04 上のジョブはすべて pass していた。どちらも全体の結果だけで判断していたら、逆の結論を出していた。
+
+### 詳細
+
+- 何が起きたか:
+  - PR #159: `actions/setup-node` を使うのは Markdown lint と Link check の 2 ジョブ。変更が `.github/workflows/**` だけだったため、Markdown lint はパスフィルタで skipped になった。skipped は required check 上で成功扱いになるので、CI は全部 green と表示された。setup-node v7 が動くことを確かめられたのは、常に動く Link check が同じ手順（setup-node + `npm ci`）を持っていたから
+  - PR #161: 全ジョブの `runs-on` を一時的に `ubuntu-26.04` にしたら CI が fail した。ログを見ると、actionlint が `label "ubuntu-26.04" is unknown` で落ちていた。Rails の Lint & Security / Test / System (:js) は 26.04 上ですべて pass していた。全体の fail だけを見ていたら「Ubuntu 26 では動かないので 24.04 に固定する」と誤って判断し、不要な固定と将来の移行作業を抱えるところだった
+- なぜ起きたか（根本原因）:
+  - CI の pass / fail は「ジョブの結果を合成したもの」で、各ジョブが何を検証したかは表さない。skipped は検証していないのに成功として数えられる（マージを止めないための設計）
+  - actionlint は GitHub ホストのランナーのラベルを内部に一覧で持っており、一覧に無いラベルを unknown として落とす。最新の 1.7.12 も本家の main も `ubuntu-26.04` を一覧に持っていない（rhysd/actionlint#682）。ラベル名の検査なので、そのラベルで実際にジョブが動くかとは無関係
+- 教訓 / 次からどうする:
+  - 依存やランナーを更新する PR では、「更新したものを使うジョブ」を先に洗い出し、そのジョブが **pass したか**（skipped ではないか）をジョブ単位で確かめる。skipped なら、同じ手順を持つ別のジョブが pass したか、docs も変えてジョブを起動させるかで検証する
+  - CI が fail したら、全体の結論を出す前に、どのジョブがどの層（実行環境での動作 / 静的検査）で落ちたかを分ける。実行環境の検証が目的なら、静的検査の失敗はその検証結果に含めない
+  - ランナーの移行前に検証する手順と actionlint の注意点は `.github/workflows/ci.yml` のコメント（`jobs:` の直前）に書いてある
+- 関連: PR #159、#160 / PR #161、`.github/workflows/ci.yml`、`.claude/rules/testing.md`（「検出の確かめ方」: 黙って効かないものは green でも効いているとは限らない）、`.claude/rules/github-actions.md`（skipped は必須チェック上で成功扱い）
+
 ## 2026-10-11 app/lib を autoload_paths に足し直したことで、本番で JsonWebToken が eager load されていなかった
 
 ### 概要
