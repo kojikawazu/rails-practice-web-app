@@ -9,6 +9,7 @@
   - [users テーブル](#users-テーブル)
   - [projects テーブル](#projects-テーブル)
   - [tasks テーブル](#tasks-テーブル)
+  - [revoked_tokens テーブル（API 版のみ）](#revoked_tokens-テーブルapi-版のみ)
   - [インデックス](#インデックス)
 - [クエリ設計](#クエリ設計)
 - [画像添付（Active Storage）](#画像添付active-storage)
@@ -30,6 +31,8 @@ Project
 Task
  └── belongs_to :project
 ```
+
+> API 版（Project 2）だけ、上記と関連を持たない `RevokedToken`（ログアウトで失効させた JWT の記録）を持つ（下記「[revoked_tokens テーブル](#revoked_tokens-テーブルapi-版のみ)」）。
 
 ## ER図
 
@@ -89,6 +92,21 @@ Task
 | created_at | datetime | NOT NULL | |
 | updated_at | datetime | NOT NULL | |
 
+### revoked_tokens テーブル（API 版のみ）
+
+ログアウトで失効させた JWT の記録（denylist）。認証のたびに `jti` で照合し、記録があるトークンを 401 にする（`07-api-specification.md` の「トークンの失効」、#166）。ユーザーとの関連は持たない（照合に必要なのはトークンの `jti` だけのため）。
+
+| カラム | 型 | 制約 | 備考 |
+|--------|------|------|------|
+| id | bigint | PK, NOT NULL | 自動採番 |
+| jti | string | NOT NULL, UNIQUE | 失効させたトークンの JWT ID（UUID） |
+| expires_at | datetime | NOT NULL | 失効させたトークンの有効期限（JWT の `exp`）。過ぎた行はログアウト時に削除する |
+| created_at | datetime | NOT NULL | |
+| updated_at | datetime | NOT NULL | |
+
+- 行が意味を持つのはトークンの有効期限まで（期限切れのトークンは JWT の検証で弾かれる）。掃除用のジョブは持たず、`AuthService.logout` がログアウトのたびに `expires_at` を過ぎた行を削除する。テーブルの大きさは「直近の有効期限（24 時間）内にログアウトされた数」に収まる。
+- 同じトークンで同時にログアウトされた場合も、`jti` の一意インデックスで重複を弾く。
+
 ### インデックス
 
 | テーブル | カラム | 種類 |
@@ -96,10 +114,12 @@ Task
 | users | email | UNIQUE |
 | projects | user_id | INDEX |
 | tasks | project_id | INDEX |
+| revoked_tokens（API 版のみ） | jti | UNIQUE |
+| revoked_tokens（API 版のみ） | expires_at | INDEX |
 
 > **制約の実態（DB スキーマ vs モデル）**: 上表の「NOT NULL」「DEFAULT」のうち、DB スキーマ（`schema.rb`）で物理的に `null: false` / default を持つのは以下に限られる。それ以外の必須性・初期値は **モデルのバリデーション/コールバックで担保**している（DB レベルでは NULL 許容）。学習用のため意図的にこの差を残している。
 >
-> - `null: false` を持つカラム: 全テーブルの `created_at` / `updated_at`、`projects.user_id`、`tasks.project_id`、および **フルスタック版のみ** `users.name` / `users.email` / `users.password_digest`。
+> - `null: false` を持つカラム: 全テーブルの `created_at` / `updated_at`、`projects.user_id`、`tasks.project_id`、`revoked_tokens.jti` / `revoked_tokens.expires_at`（API 版のみのテーブル）、および **フルスタック版のみ** `users.name` / `users.email` / `users.password_digest`。
 > - `users.email` の UNIQUE はインデックス制約として両アプリに存在する。
 > - `projects.title` / `tasks.title` は DB では NULL 許容で、必須性はモデルの `presence` バリデーションで担保する（両アプリ）。
 > - `tasks.status` は DB では `integer`・NULL 許容・**デフォルト無し**で、初期値 `not_started`（0）は **モデルの `after_initialize` コールバック（`set_default_status`）** で設定する（両アプリ）。

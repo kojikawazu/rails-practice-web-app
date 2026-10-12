@@ -14,13 +14,13 @@
 
 | レベル | 目的 | 対象 |
 |--------|------|------|
-| Unit spec（UT） | 純粋ロジック・サービスの単体検証（モックあり・DB非依存） | AuthService.login（**両アプリ**。`spec/services/`）・JsonWebToken（**API 版のみ**。`spec/lib/`） |
-| Model spec | バリデーション・関連付けの検証 | User, Project, Task（**フルスタック版のみ**。`spec/models/`） |
+| Unit spec（UT） | 純粋ロジック・サービスの単体検証（モックあり・DB非依存） | AuthService.login（**両アプリ**。`spec/services/`）・AuthService.authenticate / JsonWebToken（**API 版のみ**。`spec/services/` `spec/lib/`） |
+| Model spec | バリデーション・関連付けの検証 | User, Project, Task（**フルスタック版**）・RevokedToken（**API 版**）。`spec/models/` |
 | Request spec（IT） | エンドポイントの動作検証（実DB） | 各CRUDアクション・複製・認可（両アプリ） |
 | Scenario spec（E2E） | 複数エンドポイント縦断の検証（実DB） | signup→CRUD ジャーニー・認可分離・JWT ライフサイクル（**API 版のみ**。`spec/scenarios/`） |
 | System spec（E2E） | 画面操作フローの検証（確認画面・削除確認・複製） | フルスタック版のみ（`spec/system/`） |
 
-> **2 アプリのテスト構成差分**: フルスタック版は **Unit spec（`spec/services/`・AuthService.login + TaskImageService）+ Model spec（`spec/models/`）+ Request spec（`spec/requests/`）+ System spec（`spec/system/`）** を持つ。API 版は Model spec を持たない代わりに、**Unit spec（`spec/lib/` `spec/services/`）+ Request spec（`spec/requests/api/v1/`）+ Scenario spec（`spec/scenarios/`）** でテストピラミッドを構成する。API は UI が無いため **E2E == シナリオ == マルチエンドポイントの request spec**（Capybara はフルスタック版専用）。両アプリとも Controller のロジックは `app/services/` に集約する（フルスタック版は HTML 再描画のため Result 値オブジェクトを使わずレコード/ nil を返す。API 版は JSON のため Result を使う）。
+> **2 アプリのテスト構成差分**: フルスタック版は **Unit spec（`spec/services/`・AuthService.login + TaskImageService）+ Model spec（`spec/models/`）+ Request spec（`spec/requests/`）+ System spec（`spec/system/`）** を持つ。API 版の Model spec は失効記録（`RevokedToken`）だけで、主に **Unit spec（`spec/lib/` `spec/services/`）+ Request spec（`spec/requests/api/v1/`）+ Scenario spec（`spec/scenarios/`）** でテストピラミッドを構成する。API は UI が無いため **E2E == シナリオ == マルチエンドポイントの request spec**（Capybara はフルスタック版専用）。両アプリとも Controller のロジックは `app/services/` に集約する（フルスタック版は HTML 再描画のため Result 値オブジェクトを使わずレコード/ nil を返す。API 版は JSON のため Result を使う）。
 > System spec のうち Turbo 必須の挙動（確認画面遷移・`turbo_confirm` ダイアログ）は `:js` タグを付け、headless Chrome（selenium）で実行する（`rspec --tag js`）。それ以外は `rack_test` で駆動する。
 
 ### モック方針
@@ -32,6 +32,8 @@
 | `JsonWebToken`（API・`spec/lib/`） | **モック無し（純粋）**。DB非依存のため実物の JWT ライブラリで round-trip / 有効期限 / 改ざん / 不正入力を検証。鍵ローテーションの検証のみ `Rails.application.secret_key_base` を差し替える（環境依存値の入口であり、JWT ライブラリはモックしない） |
 | `AuthService.login`（両アプリ・`spec/services/`） | **DB 境界をモック**。`User.find_by` **だけ**を `allow` でスタブ（verified `instance_double`）。呼び出し順を assert する `expect(...).to receive` は使わない。API 版は Result（token 検証）、フルスタック版は `User`/nil を返す点のみ異なる |
 | `TaskImageService`（fullstack・`spec/services/`） | **モック無し（実 substrate）**。test 環境の Active Storage は Disk（`tmp/storage`）で実物が安く動くため、実 blob / attachment で stage のオーファン防止・signed_id の照合（用途・利用者・期限・添付済み）・attach・purge を検証。`create_and_upload!`/`attach`/`purge` をモックすると委譲の実装追認になる |
+| `AuthService.authenticate`（API・`spec/services/`） | **DB 境界をモック**。`User.find_by` と `RevokedToken.exists?` **だけ**を `allow` でスタブし、JWT の検証（署名・有効期限・`jti` / `exp` の有無）は実物で動かす。`jti` / `exp` を欠くトークンは JWT ライブラリで直接署名して作る |
+| `AuthService.logout`（API） | モックの UT を書かない（失効の記録と期限切れの削除という DB 操作への委譲＝モックすると実装追認）。記録・掃除は IT（request spec）+ シナリオで実 DB の結果を検証する。HTTP 経由では再現できない同時ログアウトの競合（同じ `jti` の記録が既にある）だけは、`spec/services/` から実 DB で直接呼んで検証する |
 | `AuthService.signup` | UT を書かない（分岐が save 成否のみ＝モデル検証の二重化になる）。IT + シナリオ/System で担保 |
 | `ProjectService` / `TaskService` の CRUD | **モック UT を書かない**（意図的・両アプリ）。build/save/update/destroy の委譲はモックすると 100% 実装追認。実価値（スコープ→404・検証→422）は IT + シナリオ/System で担保 |
 
@@ -57,14 +59,16 @@ RSpec の実行中に警告・非推奨警告が出たら、テストが全件�
 
 | テスト種別 | 対象 | テスト内容 |
 |-----------|------|-----------|
-| Unit spec（API） | JsonWebToken | encode/decode の round-trip / 既定 exp ≒24h / 明示 exp 尊重 / 期限切れ・改ざん・不正入力で nil（例外を投げない）/ 署名鍵を呼び出しごとに参照（`secret_key_base` のローテーション後は旧トークンが nil・新トークンは検証成功） |
+| Unit spec（API） | JsonWebToken | encode/decode の round-trip / 既定 exp ≒24h / 明示 exp 尊重 / 期限切れ・改ざん・不正入力で nil（例外を投げない）/ 署名鍵を呼び出しごとに参照（`secret_key_base` のローテーション後は旧トークンが nil・新トークンは検証成功）/ トークンごとに一意な `jti`（UUID）を入れる |
 | Unit spec（API） | AuthService.login | 正資格情報で成功・token に user_id / 誤パスワードで `invalid_credentials`・token なし / メール不在も `invalid_credentials`（誤り時と同一の失敗理由＝列挙攻撃対策） |
+| Unit spec（API） | AuthService.authenticate / logout | 有効で失効していないトークンはユーザーとクレームを返す / 失効済み・`jti` 無し・`exp` 無し・ユーザー不在・トークン無し・不正な文字列はすべて `unauthorized`（失効済みかどうかを区別しない）。logout: 同じ `jti` の記録が既にあっても例外にせず 204 相当の成功・記録は 1 件のまま（同時ログアウトの競合。実 DB） |
 | Unit spec（API） | ErrorSerializer | 一覧に無い code は例外にする（仕様外の code を返さない） |
 | Unit spec（fullstack） | AuthService.login | 正資格情報で該当ユーザーを返す / 誤パスワードで nil / メール不在も nil（誤り時と同一結果＝列挙攻撃対策）。`User.find_by` のみモック |
 | Unit spec（fullstack） | TaskImageService | stage: 全有効→blob 返す + blob 生成 / 不正混在→nil・blob 未生成（オーファン防止）/ 空→[] ・ signed_id_for/resolve: 発行した利用者なら blob を返す / 他ユーザー向け・既定用途（画像 URL）・改ざん・期限切れ（`travel_to`）・添付済み・不正混在→nil ・ attach→images 増 ・ purge→attachment 削除。実 test-disk・モック無し |
 | Job spec（fullstack） | PurgeUnattachedBlobsJob | 保持期間を過ぎた未添付 blob だけを削除（添付済み・保持期間内は残す。`perform_enqueued_jobs` で PurgeJob まで実行）/ 保持期間 > staging の有効期限 |
 | Model spec | User | 有効なデータで作成できる / name必須 / email必須・一意・形式 / password最小文字数 |
 | Model spec | Project | 有効なデータで作成できる / title必須 / user関連付け / 削除時にtasksも削除 / `.with_task_counts` が件数を tasks_count として載せる（タスク0件のプロジェクトも落とさない） |
+| Model spec（API） | RevokedToken | `jti` 必須・一意 / `expires_at` 必須 / `.expired` が有効期限を過ぎた行だけを返す |
 | Model spec | Task | 有効なデータで作成できる / title必須 / status必須・値の制限 / project関連付け / ステータス遷移の許可・禁止（作成時は not_started のみ、飛ばし・逆行の拒否、変更なしの更新は許可）/ 添付画像の形式と上限サイズ（上限ちょうどは有効、1 バイト超過で無効） |
 | Request spec（fullstack） | Projects | index/show/create/update/destroy の正常系 / 更新の検証失敗は edit を 422 で再描画し値を変えない / 複製(duplicate)の正常系・create フロー合流 / 他ユーザーリソースの404 / 未ログイン時のリダイレクト / 確認画面の HEAD が GET と同じ結果になる / 一覧のタスク件数表示（0件・複数件・プロジェクト0件）/ 件数集計がプロジェクト件数に比例しない（N+1 回帰ガード） |
 | Request spec（fullstack） | Not Found | 存在しないプロジェクト・タスクは 404 でレイアウト内にメッセージと一覧への戻り先を表示 / 他ユーザーのプロジェクトは存在しない場合と同じ本文の 404（秘匿）/ JSON は `{ "error": "Not found" }` の 404 / 未ログインは require_login が先にログイン画面へ誘導 |
@@ -72,14 +76,14 @@ RSpec の実行中に警告・非推奨警告が出たら、テストが全件�
 | Request spec（fullstack） | Sessions | ログイン成功/失敗 / ログアウト（セッション） |
 | Request spec（fullstack） | 認証系のレートリミット | 上限内は通常応答 / 超過で 429・フォーム再描画・メッセージ・`Retry-After` / 上限到達後は正しい認証情報でもログイン・登録させない / 登録の確認と確定はカウンタ共有・ログインとは別カウンタ |
 | Request spec（fullstack） | セキュリティヘッダー | CSP を enforce で返す / script-src に unsafe-inline・unsafe-eval が無い / object-src・base-uri・frame-ancestors の禁止設定 / CSP のどこにも unsafe-inline が無い（style-src-attr も無い）/ importmap の nonce 付与 / style-src に nonce があり `csp-nonce` の meta を出す（Turbo の `<style>` を許可）/ `app/views` に style 属性・`style:` オプションが無い（CSP で黙って無視されるための静的検査） |
-| Request spec（API） | Auth | signup / login の成功・失敗（JWT 発行）/ `user` の公開属性がキー集合の完全一致で `id` `name` `email` のみ（`password_digest` を返さない） |
+| Request spec（API） | Auth | signup / login の成功・失敗（JWT 発行）/ `user` の公開属性がキー集合の完全一致で `id` `name` `email` のみ（`password_digest` を返さない）/ logout: 204・`jti` と有効期限を失効テーブルに記録 / ログアウトしたトークンは保護エンドポイントで 401（統一形式）/ 同じユーザーの別トークンは有効のまま / 失効済みトークンでの再ログアウトは 401 で記録は増えない / トークン無しは 401 で記録しない / ログアウトのたびに期限切れの記録だけを削除 |
 | Request spec（API） | レートリミット | login / signup の超過で 429・`code: rate_limited`・`Retry-After` / 上限到達後はトークンを発行しない / login と signup は別カウンタ / API 全体の超過で 429・カウンタはコントローラーをまたいで共有 |
-| Request spec（API） | 認証境界（Authorization ヘッダーの契約） | Bearer は 200（scheme は大小無視）/ ヘッダー無し・生トークン・別スキーム・要素過多・空トークン・改ざんは 401 / 401 の統一形式（`code: unauthorized`） |
+| Request spec（API） | 認証境界（Authorization ヘッダーの契約） | Bearer は 200（scheme は大小無視）/ ヘッダー無し・生トークン・別スキーム・要素過多・空トークン・改ざん・`jti` を持たない旧形式のトークンは 401 / 401 の統一形式（`code: unauthorized`） |
 | Request spec（API） | エラーレスポンスの契約 | 400（必須パラメータの欠落・壊れた JSON。送られた本文を反射しない）/ 401（`unauthorized`・`invalid_credentials`。メール不在とパスワード誤りで同一）/ 404（モデル名入り message）/ 422（`details` に内訳）を、キー集合まで完全一致で固定。詳細表示オフ（本番相当）でルートの 404・想定外の 500（例外の内容を出さない）も JSON で返す |
 | Request spec（API） | Projects / Tasks | CRUD 正常系 / 他ユーザーリソースの404 / **未認証時は 401**（リダイレクトではない）/ `Authorization: Bearer` 検証 / ステータス遷移違反は 422 + `details`（作成時の completed 指定を含む）/ index・show・create・update のレスポンスが公開属性のキー集合と完全一致（カラム追加時の意図しない露出を検出） |
 | Scenario spec（API） | ユーザージャーニー | signup→project 作成→task 作成→一覧→status 更新（not_started→in_progress→completed と遷移規則どおりに進む）→詳細反映（signup の token だけで全書き込みが認可される） |
 | Scenario spec（API） | 認可分離 | 他ユーザーの project/task は 404 / project 一覧は自分のものだけ（実DBでスコープ保証を固定） |
-| Scenario spec（API） | 認証ライフサイクル | signup token が保護EPで即利用可 / login 成功・誤パスワード 401 / 期限切れ・改ざんトークンは保護EPで 401 |
+| Scenario spec（API） | 認証ライフサイクル | signup token が保護EPで即利用可 / login 成功・誤パスワード 401 / login → 保護EP → logout の後は同じ token が 401・再ログインの新 token は利用可 / 期限切れ・改ざんトークンは保護EPで 401 |
 | System spec | 確認画面フロー（rack_test） | 登録・プロジェクト/タスク作成の 入力→確認→確定 / 「修正する」で入力値保持 / 不正入力でフォーム留まり |
 | System spec | 確認画面フロー（`:js` / Turbo 有効） | 実ブラウザで 登録・作成・複製 の 入力→確認画面表示→確定 が完了すること（Turbo Drive 退行の回帰ガード） |
 | System spec | 削除確認（`:js`） | `turbo_confirm` ダイアログの承認/キャンセル挙動 |

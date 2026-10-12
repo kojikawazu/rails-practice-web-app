@@ -58,6 +58,12 @@ RSpec.describe "Api::V1 認証（Authorization ヘッダーの契約）", type: 
     expect(response).to have_http_status(:unauthorized)
   end
 
+  it "jti を持たないトークン（失効の仕組みより前の形式）は、署名が正しくても 401 を返す" do
+    legacy = JWT.encode({ user_id: user.id, exp: 1.hour.from_now.to_i }, Rails.application.secret_key_base)
+    get_protected("Authorization" => "Bearer #{legacy}")
+    expect(response).to have_http_status(:unauthorized)
+  end
+
   it "認証失敗のレスポンスは、統一形式（code: unauthorized）で返す" do
     get_protected({})
     expect(response.parsed_body).to eq("error" => { "code" => "unauthorized", "message" => "Unauthorized" })

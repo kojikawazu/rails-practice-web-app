@@ -24,6 +24,14 @@ RSpec.describe JsonWebToken do
       token = described_class.encode({ user_id: 1 }, exp)
       expect(described_class.decode(token)[:exp]).to eq(exp.to_i)
     end
+
+    it "トークンごとに一意な jti を入れる（ログアウトで、そのトークンだけを失効させる識別子になる）" do
+      first = described_class.decode(described_class.encode(user_id: 1))[:jti]
+      second = described_class.decode(described_class.encode(user_id: 1))[:jti]
+
+      expect(first).to match(/\A\h{8}-\h{4}-\h{4}-\h{4}-\h{12}\z/)
+      expect(first).not_to eq(second)
+    end
   end
 
   describe ".decode の失敗系（例外を投げず nil を返す）" do
