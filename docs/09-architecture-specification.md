@@ -14,6 +14,10 @@
 
 ## システム構成
 
+![システム全体図](./diagrams/system-architecture.drawio.svg)
+
+> **図の編集**: [`diagrams/system-architecture.drawio.svg`](./diagrams/system-architecture.drawio.svg) は draw.io の図データを埋め込んだ SVG で、画像として表示でき、そのまま draw.io（デスクトップ版・VS Code 拡張・diagrams.net）で開いて編集できる。保存も同じ `.drawio.svg` に行い、PNG などの書き出し画像を別に置かない（同じ図が 2 つになり、片方だけ更新される）。ラベルは HTML 書式にしない（`html=0`）。HTML ラベルは SVG に文字ごとの代替画像が埋め込まれ、ファイルが 10 倍以上に膨らむため。
+
 ### Project 1: フルスタックRails
 
 ```text

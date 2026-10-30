@@ -35,7 +35,7 @@ Rails Task Web App の仕様・設計ドキュメント一覧。プロジェク�
 | 06 | [セキュリティ仕様書](./06-security-specification.md) | 認証・認可・preview_url の iframe 多層防御 |
 | 07 | [API 仕様書](./07-api-specification.md) | エンドポイント・JWT 認証・リクエスト/レスポンス・ステータスコード |
 | 08 | [テスト仕様書](./08-test-specification.md) | テスト戦略・テストケース・2 アプリのテスト構成差分 |
-| 09 | [アーキテクチャ仕様書](./09-architecture-specification.md) | システム構成・Docker/コンテナ構成・技術スタック・環境変数 |
+| 09 | [アーキテクチャ仕様書](./09-architecture-specification.md) | システム構成（全体図）・Docker/コンテナ構成・技術スタック・環境変数 |
 | 10 | [その他仕様書](./10-miscellaneous-specification.md) | 用語集・参考資料 |
 | 11 | [タスク](./11-tasks.md) | マイルストーン・完了済み実績・進捗 |
 | — | [教訓ログ](./lessons-learned.md) | 誤り・失敗・ハマりから得た教訓（追記のみ・新しいものが上。my-lessons-learned へ自動集約） |
