@@ -81,6 +81,7 @@
 | 言語 | Ruby 3.3.11 |
 | フレームワーク | Ruby on Rails 8.1.4 |
 | データベース | PostgreSQL 16（Docker） |
+| ORM | ActiveRecord（Rails 標準。DB アダプタは `pg`） |
 | 画像ストレージ | Active Storage + MinIO（S3 互換 / Docker） |
 | フロント（フルスタック版） | Turbo / Stimulus（Importmap）+ ERB |
 | 認証 | セッション（フルスタック版）/ JWT（API モード） |
