@@ -17,7 +17,7 @@
 ### Project 1: フルスタックRails
 
 ```text
-ブラウザ → Rails（Router → Controller → Service → Model → View/ERB） → PostgreSQL（Docker）
+ブラウザ → Rails（Router → Controller → Service → Model（ActiveRecord） → View/ERB） → PostgreSQL（Docker）
 ```
 
 - MVC アーキテクチャ（Railsデフォルト）
@@ -33,7 +33,7 @@
 ### Project 2: Rails APIモード
 
 ```text
-APIクライアント → Rails（Router → Controller → Service → Model → JSON） → PostgreSQL（Docker）
+APIクライアント → Rails（Router → Controller → Service → Model（ActiveRecord） → JSON） → PostgreSQL（Docker）
 ```
 
 - MVCのうちViewを省略し、JSONレスポンスを返す
@@ -51,6 +51,7 @@ APIクライアント → Rails（Router → Controller → Service → Model �
 | 言語 | Ruby |
 | フレームワーク | Ruby on Rails |
 | データベース | PostgreSQL 16（Docker コンテナ） |
+| ORM | ActiveRecord（Rails 標準。DB アダプタは `pg`） |
 | オブジェクトストレージ | MinIO（S3 互換。フルスタック版の Active Storage バックエンド） |
 | コンテナ | Docker / Docker Compose |
 | テスト | RSpec, FactoryBot, Shoulda Matchers |
